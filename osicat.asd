@@ -28,7 +28,7 @@
 
 (defvar *gcc* "/usr/bin/gcc")
 (defvar *gcc-options* '(#-darwin "-shared"
-			#+darwin "-bundle"
+			#+darwin "-dynamiclib"
 			"-fPIC"))
 
 (defmethod output-files ((o compile-op) (c c-source-file))
@@ -69,7 +69,7 @@
 ;;;; SYSTEM
 
 (defsystem :osicat
-    :version "0.4.0"
+    :version "0.4.1"
     :depends-on (:uffi)
     :components
     ((:c-source-file "osicat-glue")

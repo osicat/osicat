@@ -21,7 +21,7 @@
 
 (in-package :osicat)
 
-(defparameter *osicat-version* '(0 4 0)
+(defparameter *osicat-version* '(0 4 1)
   "variable *OSICAT-VERSION*
 
 Osicat version number represented as a list of three integers. The
