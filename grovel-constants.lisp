@@ -3,6 +3,7 @@
 (defun write-groveler (file constants)
   (with-open-file (f file :direction :output :if-exists :supersede)
     (format f "
+#include <stdio.h>
 #include <sys/stat.h>
 
 void
@@ -27,18 +28,20 @@ main ()
 (unless (boundp '*grovel*)
   (error "No GROVEL hook!"))
 
+(defvar *grovel*)
+
 (setf *grovel*
       (lambda (c obj lisp)
 	(write-groveler c
 			'( ;; File types
-			  (mode-mask     . S_IFMT)
-			  (directory     . S_IFDIR)
-			  (char-device   . S_IFCHR)
-			  (block-device  . S_IFBLK)
-			  (regular-file  . S_IFREG)
-			  (symbolic-link . S_IFLNK)
-			  (socket        . S_IFSOCK)
-			  (pipe          . S_IFIFO)
+			  (mode-mask         . S_IFMT)
+			  (directory         . S_IFDIR)
+			  (character-device  . S_IFCHR)
+			  (block-device      . S_IFBLK)
+			  (regular-file      . S_IFREG)
+			  (symbolic-link     . S_IFLNK)
+			  (socket            . S_IFSOCK)
+			  (pipe              . S_IFIFO)
 			  ;; Permissions
 			  (user-read    . S_IRUSR)
 			  (user-write   . S_IWUSR)
@@ -51,7 +54,10 @@ main ()
 			  (other-exec   . S_IXOTH)
 			  (set-user-id  . S_ISUID)
 			  (set-group-id . S_ISGID)
-			  (sticky       . S_ISVTX)))
+			  (sticky       . S_ISVTX)
+			  ;; Misc
+			  (eof          . EOF)
+			  ))
 	(and (zerop (run-shell-command "~A ~A -o ~A"
 				       *gcc*
 				       (namestring c)

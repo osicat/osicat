@@ -75,4 +75,4 @@ release:
 #	$(RSYNC_FTP) && $(FTP_PERMS)
 
 public_html:
-#	$(RSYNC_HTML) && $(HTML_PERMS)
+	$(RSYNC_HTML) && $(HTML_PERMS)

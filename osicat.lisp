@@ -40,7 +40,8 @@
 		  (lambda (sym)
 		    (list (eval sym)
 			  (intern (symbol-name sym) :keyword)))
-		  '(directory char-device block-device
+		  ;; KLUDGE: OAOOM. These are in grovel-constants.lisp as well.
+		  '(directory character-device block-device
 		    regular-file symbolic-link pipe socket))
 	       (t (error
 		   'bug :message
@@ -50,6 +51,8 @@
   ;; FIXME: This assumes that OS has the same idea of current dir as Lisp
   (with-unique-names (path)
     `(let ((,path ,pathname))
+       (when (wild-pathname-p ,path)
+	 (error "Pathname is wild: ~S." ,path))
        (with-cstring (,c-file (namestring ,path))
 	 ,(etypecase required-kind
 	     (keyword `(let ((real-kind (c-file-kind ,c-file)))
@@ -63,6 +66,20 @@
 			 (error "~A does not exist." ,path)))
 	     (null nil))
 	 ,@forms))))
+
+(defun file-kind (pathspec)
+  "function FILE-KIND pathspec => file-kind
+
+Returns a keyword indicating the kind of file designated by pathspec,
+or NIL if the file does not exist.
+
+Possible file-kinds in addition to NIL are: :regular-file,
+:symbolic-link, :directory,:pipe, :socket, :character-device, and
+:block-device.
+
+Signals an error if pathspec is wild."
+  (with-c-file (c pathspec)
+    (c-file-kind c)))
 
 (def-function "opendir" ((name :cstring))
   :module "osicat"
@@ -82,7 +99,20 @@
 
 ;;; FIXME: Documentation, DIRECTORY-LIST?
 
-(defmacro with-directory-iterator ((iterator pathspec) &body forms)
+(defmacro with-directory-iterator ((iterator pathspec) &body body)
+  "macro WITH-DIRECTORY-ITERATOR (iterator pathspec) &body forms => value
+
+Within the lexical scope of the body, iterator is defined via flet
+such that successive invocations of (iterator) return the directory
+entries, one by one. Both files and directories are returned, except
+'.' and '..'. The order of entries is not guaranteed. 
+
+Once all entries have been returned, further invocations of (iterator)
+will all return NIL.
+
+The value returned is the value of the last form evaluated in body.
+
+Signal an error if pathspec is wild or does not designate a directory."
   (with-unique-names (dp dir cdir err default)
     `(let ((,dir ,pathspec))
        (with-c-file (,cdir ,dir :directory)
@@ -92,26 +122,31 @@
 					:type nil
 					:defaults ,dir)))
 	   (unwind-protect
-		(flet ((,iterator ()
-			 (let ((entry (readdir ,dp)))
-			   (if (null-pointer-p entry)
-			       nil
-			       (merge-pathnames
-				(convert-from-cstring
-				 (osicat-dirent-name entry))
-				,default)))))
+		(labels ((,iterator ()
+			   (let ((entry (readdir ,dp)))
+			     (if (null-pointer-p entry)
+				 nil
+				 (let ((namestring (convert-from-cstring
+						    (osicat-dirent-name entry))))
+				   (if (member namestring '("." "..") :test #'equal)
+				       (,iterator)
+				       (merge-pathnames namestring ,default)))))))
 		  (setf ,dp (opendir ,cdir))
 		  (when (null-pointer-p ,dp)
 		    (error "Error opening directory ~S." ,dir))
-		  ,@forms)
+		  ,@body)
 	     (when ,dp
 	       (if (zerop (closedir ,dp))
 		   nil
 		   (error "Error closing directory ~S." ,dir)))))))))
 
 (defun mapdir (function pathspec)
-  "Applies FUNCTION to each entry in DIRECTORY in turn and returns a
-list of the results."
+  "function MAPDIR function pathspec => list
+
+Applies function to each entry in directory designated by pathspec in
+turn and returns a list of the results.
+
+Signals an error if pathspec is wild or doesn't designate a directory."
   (with-directory-iterator (next pathspec)
     (loop for entry = (next)
 	  while entry
@@ -122,7 +157,13 @@ list of the results."
     :returning :int)
 
 (defun delete-directory (pathspec)
-  "Deletes DIRECTORY, which must be empty." 
+  "function DELETE-DIRECTORY pathspec => T
+
+Deletes the direcotry designated by pathspec. Returns T.  The
+directory must be empty.
+
+Signals an error if pathspec is wild, doesn't designate a directory,
+or if the direcotry could not be deleted."
   (with-c-file (path pathspec :directory)
     (if (zerop (rmdir path))
 	pathspec
@@ -152,25 +193,35 @@ list of the results."
 	 ,@forms))))
 
 (defun environment-variable (name)
-  "Returns the environment variable identified by NAME, or NIL if one
-does not exist. NAME can either be a symbol or a string."
+  "function ENVIRONMENT-VARIABLE name => string
+function (SETF (ENVIRONMENT-VARIABLE name) value) => value
+
+ENVIRONMENT-VARIABLE returns the environment variable identified by
+name, or NIL if one does not exist. Name can either be a symbol or a
+string.
+
+SETF ENVIRONMENT-VARIABLE sets the environment variable identified by
+name to value. Both name and value can be either a symbols or
+strings. Signals an error on failure."
   (with-c-name (cname name)
     (copy-seq (convert-from-cstring (getenv cname)))))
 
 (defun (setf environment-variable) (value name)
-  "Sets the environment variable identified by NAME to VALUE. Both
-NAME and VALUE can be either a symbol or a string. Signals an error on
-failure."
   (with-c-name (cname name)
     (with-c-name (cvalue value)
       (if (zerop (setenv cname cvalue 1))
 	  value
 	  (error "Could not set environment variable ~S to ~S." name value)))))
 
+(setf (documentation '(setf environment-variable) 'function)
+      (documentation 'environment-variable 'function))
+
 (defun makunbound-environment-variable (name)
-  "Removes the environemtn variable identified by NAME from the
-current environment. NAME can be either a string or a symbol. Signals
-an error on failure."
+  "function MAKUNBOUND-ENVIRONMENT-VARIABLE name => string
+
+Removes the environenr variable identified by NAME from the current
+environment. NAME can be either a string or a symbol. Returns the
+string designated by name. Signals an error on failure."
   (with-c-name (cname name)
     (if (zerop (unsetenv cname))
 	nil
@@ -187,7 +238,9 @@ an error on failure."
 (define-symbol-macro environment (get-environ))
 
 (setf (documentation 'environment 'variable)
-      "The current environment as a read-only assoc-list. To modify
+      "symbol-macro ENVIRONMENT
+
+The current environment as a read-only assoc-list. To modify
 the environment use (SETF ENVIRONMENT-VARIABLE) and
 MAKUNBOUND-ENVIRONMENT-VARIABLE.")
   
@@ -197,6 +250,14 @@ MAKUNBOUND-ENVIRONMENT-VARIABLE.")
   :returning :int)
 
 (defun read-link (pathspec)
+  "function READ-LINK pathspec => pathname
+
+Returns the pathname pointed to by the symbolic link designated by
+pathspec. If the link is relative, then the returned pathname is
+relative to the link, not *default-pathname-defaults*.
+
+Signals an error if pathspec is wild, or does not designate a symbolic
+link."
   (with-c-file (path pathspec :symbolic-link)
     (do* ((size 64 (* size 2))
 	  (buffer #1=(allocate-foreign-string size) #1#)
@@ -211,13 +272,25 @@ MAKUNBOUND-ENVIRONMENT-VARIABLE.")
   :module "osicat"
   :returning :int)
 
-(defun make-link (target link)
-  "Creates LINK as a symbolic link to TARGET."
-  (with-c-file (old target t)
+(def-function "link" ((old :cstring) (new :cstring))
+  :module "osicat"
+  :returning :int)
+
+(defun make-link (target link &key hard)
+  "function MAKE-LINK target link &key hard => pathname
+
+Creates link that points to target. Defaults to a symbolic link, but
+giving a non-NIL value to the keyword argument :HARD creates a hard
+link. Returns the pathname of the link. 
+
+Signals an error if either target or link is wild, target does not
+exist, or link exists already."
+  (with-c-file (old target)
     (with-c-file (new link)
-      (if (zerop (symlink old new))
-	  link
-	  (error "Could not make symbolic link ~S -> ~S." link target)))))
+      (if (zerop (funcall (if hard #'link #'symlink) old new))
+	  (pathname link)
+	  (error "Could not create ~A link ~S -> ~S." 
+		 (if hard "hard" "symbolic") link target)))))
 
 (def-function "chmod" ((name :cstring) (mode :mode-t))
   :module "osicat"
@@ -233,21 +306,28 @@ MAKUNBOUND-ENVIRONMENT-VARIABLE.")
 			       set-user-id set-group-id sticky))))
 
 (defun file-permissions (pathspec)
-  "Returns a list of keywords identifying the permissions of
-PATHSPEC. Permission symbols consist of :USER-READ, :USER-WRITE,
-:USER-EXEC, :GROUP-READ, :GROUP-WRITE, :GROUP-EXEC, :OTHER-READ,
-:OTHER-WRITE, :OTHER-EXEC, :SET-USER-ID, :SET-GROUP-ID, and :STICKY."
+  "function FILE-PERMISSIONS pathspec => list
+function (SETF (FILE-PERMISSIONS pathspec) list) => list
+
+FILE-PERMISSIONS returns a list of keywords identifying the
+permissions of PATHSPEC. 
+
+SETF FILE-PERMISSIONS sets the permissions of PATHSPEC as identified
+by the symbols in list.
+
+Permission symbols consist of :USER-READ, :USER-WRITE, :USER-EXEC,
+:GROUP-READ, :GROUP-WRITE, :GROUP-EXEC, :OTHER-READ, :OTHER-WRITE,
+:OTHER-EXEC, :SET-USER-ID, :SET-GROUP-ID, and :STICKY.
+
+Both signal an error is pathspec is wild, or doesn't designate an
+exiting file."
   (with-c-file (path pathspec t)
-    (let ((mode (osicat-mode path)))
+    (let ((mode (c-file-mode path)))
       (loop for (name . value) in +permissions+
 	    when (plusp (logand mode value))
 	    collecting name))))
 
 (defun (setf file-permissions) (perms pathspec)
-  "Sets the permissions of PATHSPEC as identified by the symbols in
-list PERMS. Permission symbols consist of :USER-READ, :USER-WRITE,
-:USER-EXEC, :GROUP-READ, :GROUP-WRITE, :GROUP-EXEC, :OTHER-READ,
-:OTHER-WRITE, :OTHER-EXEC, :SET-USER-ID, :SET-GROUP-ID, and :STICKY."
   (with-c-file (path pathspec t)
     (if (zerop (chmod path (reduce (lambda (a b)
 				     (logior a (cdr (assoc b +permissions+))))
@@ -255,3 +335,6 @@ list PERMS. Permission symbols consist of :USER-READ, :USER-WRITE,
 				   :initial-value 0)))
 	perms
 	(error "Could not set file permissions of ~S to ~S." pathspec perms))))
+
+(setf (documentation '(setf file-permissions) 'function)
+      (documentation 'file-permissions 'function))
