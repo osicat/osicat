@@ -75,11 +75,12 @@
 
 (defsystem :osicat-test
     :depends-on (:osicat :rt)
-    :components ((:file "osicat-test")))
+    :components ((:file "test-setup")
+		 (:file "test-osicat" :depends-on ("test-setup"))))
 
 (defmethod perform ((o test-op) (c (eql (find-system :osicat))))
   (operate 'load-op :osicat-test)
-  (operate 'test-op :osicat-test))
+  (operate 'test-op :osicat-test :force t))
 
 (defmethod perform ((o test-op) (c (eql (find-system :osicat-test))))
   (or (funcall (intern "DO-TESTS" :rt))

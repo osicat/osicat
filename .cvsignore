@@ -1,0 +1,2 @@
+username.txt README *.fasl a.out
+tmp.c *.lisp-temp
