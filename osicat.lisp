@@ -71,17 +71,25 @@
 (defun relative-pathname-p (pathspec)
   (not (eq :absolute (car (pathname-directory pathspec)))))
 
-(defun absolute-pathname 
-    (pathspec &optional (default *default-pathname-defaults*))
-    (if (relative-pathname-p pathspec)
-	(let ((tmp (merge-pathnames 
-		    pathspec
-		    (make-pathname :name nil :type nil :version nil
-				   :defaults default))))
-	  (if (relative-pathname-p tmp)
-	      (merge-pathnames tmp (current-directory))
-	      tmp))
-	pathspec))
+(defun absolute-pathname (pathspec &optional (default *default-pathname-defaults*))
+  (if (relative-pathname-p pathspec)
+      (let ((tmp (merge-pathnames 
+		  pathspec
+		  (make-pathname :name nil :type nil :version nil
+				 :defaults default))))
+	(if (relative-pathname-p tmp)
+	    (merge-pathnames tmp (current-directory))
+	    tmp))
+      pathspec))
+
+(defun escape-wild-name (name)
+  (declare (simple-string name))
+  (let (stack)
+    (loop for char across name
+	  when (member char '(#\* #\[))
+	  do (push #\\ stack)
+	  do (push char stack))
+    (coerce (nreverse stack) 'simple-string)))
 
 (defun unmerge-pathnames
     (pathspec &optional (known *default-pathname-defaults*))
@@ -107,8 +115,6 @@
 		 dir
 		 (cons :relative dir)))))
     (let ((path (absolute-pathname pathspec)))
-      (when (wild-pathname-p path)
-	(error "Pathname is wild: ~S." path))
       (with-cstring (cfile (namestring path))
 	(let ((abspath (if (eq :directory (c-file-kind cfile t))
 			   (make-pathname :name nil :type nil
@@ -170,13 +176,13 @@ body. Signals an error if pathspec is wild or does not designate a directory."
 			   (let ((entry (readdir ,dp)))
 			     (if (null-pointer-p entry)
 				 nil
-				 (let ((name 
+				 (let ((string
 					(convert-from-cstring
 					 (osicat-dirent-name entry))))
-				   (if (member name '("." "..") 
+				   (if (member string '("." "..") 
 					       :test #'string=)
 				       (,one-iter)
-				       (normpath name)))))))
+				       (normpath (escape-wild-name string))))))))
 		  (macrolet ((,iterator () 
 			       `(,',one-iter)))
 		    (setf ,dp (opendir ,cdir))
