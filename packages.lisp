@@ -26,7 +26,15 @@
 on Unix-platforms. It is not a POSIX-style API, but rather a simple
 lispy accompaniment to the standard ANSI facilities.
 
-Osicat homepage: http://www.common-lisp.net/project/osicat")
+Osicat homepage: http://www.common-lisp.net/project/osicat
+
+Concepts:
+
+ Designated directory
+
+  When a relative pathname designator is used as a directory designator
+  it is first resolved agains *default-pathname-default*, and the
+  against the current directory. (With MERGE-PATHNAMES in both cases.)")
   (:export
    ;;; Evironment
    #:environment   
