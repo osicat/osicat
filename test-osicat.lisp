@@ -50,9 +50,8 @@
   t)
 
 (deftest environment.1
-    (namestring (osicat::normpath (cdr (assoc "HOME" (environment)
-					      :test #'equal))
-				  t))
+    (namestring (probe-file (cdr (assoc "HOME" (environment)
+					:test #'equal))))
   #.(namestring (user-homedir-pathname)))
 
 (deftest environment.2
@@ -158,7 +157,30 @@
 	(delete-file file)
 	(delete-file link)))
   :symbolic-link)
-	 
+
+;; Test the case of reading a link to a directory.
+(deftest read-link.1
+    (let ((link (merge-pathnames "read-link-test-link" *test-dir*)))
+      (unwind-protect
+	   (progn
+	     (make-link link :target *test-dir*)
+	     (namestring (read-link link)))
+	(delete-file link)))
+  #.(namestring *test-dir*))
+
+;; Test the case of reading a link with a very long name.
+(deftest read-link.1
+    (let ((link (merge-pathnames "make-link-test-link" *test-dir*))
+	  (file (ensure-file "a-very-long-tmp-file-name-explicitly-for-the-purpose-of-testing-a-certain-condition-in-read-link-please-ignore-thanks")))
+      (unwind-protect
+	   (progn
+	     (make-link link :target file)
+	     (equal (namestring (merge-pathnames file *test-dir*))
+		    (namestring (read-link link))))
+	(delete-file link)
+	(delete-file file)))
+  t)
+
 (deftest maunbound-environment-variable.1
     (let ((old (environment-variable :path)))
       (unwind-protect
@@ -225,6 +247,63 @@
 	     (when (/= (length list) 2) (error "too many path elements.")))
 	(delete-directory dir)))
   nil)
+
+;; Be careful with this test.  It deletes directories recursively.
+(deftest with-directory-iterator.1
+    (let ((dirs (list "wdi-test-1/" ".wdi-test.2/" ".wdi.test.3../")))
+      (ensure-directories-exist (reduce (lambda (x y) (merge-pathnames y x))
+					(cons *test-dir* dirs)))
+      (labels ((rm-r (dir)
+	       (with-directory-iterator (next dir)
+		 (loop for file = (next)
+		       while file
+		       when (and (eql (file-kind file) :directory)
+				 (member (namestring file) dirs
+					 :test #'string=))
+		       do (progn (rm-r file)
+				 (delete-directory file))))))
+	(rm-r *test-dir*)))
+  nil)
+
+;; Test iteration over a variety of objects.
+(deftest with-directory-iterator.2
+    (let ((playground '(:directory "wdi-test-1/"
+			(:directory "wdi-test-2/"
+			 (:symbolic-link "bar" "foo")
+			 (:directory "baz/"
+			  (:file "quux"))
+			 (:file "foo")))))
+      (labels
+	  ((create-playground (x base-dir)
+	     (case (car x)
+	       (:file (ensure-file (cadr x) base-dir))
+	       (:symbolic-link (make-link (merge-pathnames (cadr x) base-dir)
+					  :target (merge-pathnames
+						   (caddr x) base-dir)))
+	       (:directory (ensure-directories-exist (merge-pathnames
+						      (cadr x) base-dir))
+			   (dolist (y (cddr x))
+			     (create-playground y (merge-pathnames
+						   (cadr x) base-dir))))))
+	   (walk (dir)
+	     (with-directory-iterator (next dir)
+	       (loop for file = (next)
+		     while file
+		     collect (case (file-kind file)
+			       (:directory
+				(append (list :directory (namestring file))
+					(sort (walk file)
+					      (lambda (a b)
+						(string<= (cadr a) (cadr b))))))
+			       (:symbolic-link
+				(list :symbolic-link (namestring file)
+				      (pathname-name (namestring
+						      (read-link file)))))
+			       (t (list :file (namestring file))))))))
+	(create-playground playground *test-dir*)
+	(equal (walk (merge-pathnames (cadr playground) *test-dir*))
+	       (cddr playground))))
+  t)
 
 ;; Test behavior in the case of an obviously incorrect username.
 (deftest user-info.1

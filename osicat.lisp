@@ -306,7 +306,7 @@ link."
     (with-c-file (path (absolute-pathname pathspec) :symbolic-link)
       (do* ((size 64 (* size 2))
 	    (buffer #1=(allocate-foreign-string size) #1#)
-	    (got (readlink path buffer size)))
+	    (got #2=(readlink path buffer size) #2#))
 	   ((< got size)
 	    (let ((str (convert-from-foreign-string buffer :length got)))
 	      (free-foreign-object buffer)
