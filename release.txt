@@ -1,6 +1,6 @@
 osicat.asd
-foreign-types.lisp
-macros.lisp
+ffi.lisp
+early-util.lisp
 grovel-constants.lisp
 packages.lisp
 osicat.lisp

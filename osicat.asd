@@ -1,4 +1,4 @@
-;; Copyright (c) 2003 Nikodemus Siivola <nikodemus@random-state.net>
+;; Copyright (c) 2003, 2004 Nikodemus Siivola <nikodemus@random-state.net>
 ;; 
 ;; Permission is hereby granted, free of charge, to any person obtaining
 ;; a copy of this software and associated documentation files (the
@@ -24,6 +24,8 @@
 
 (in-package :osicat-system)
 
+;;;; C-SOURCE FILE HANDLING
+
 (defvar *gcc* "/usr/bin/gcc")
 (defvar *gcc-options* '(#-darwin "-shared"
 			#+darwin "-bundle"
@@ -47,6 +49,8 @@
 				    (namestring (car (output-files o c)))))
     (error 'operation-error :component c :operation o)))
 
+;;;; GROVELING
+
 (defclass grovel-file (cl-source-file) ())
 
 (defmethod perform ((o compile-op) (c grovel-file))
@@ -57,21 +61,25 @@
 	 (constants (merge-pathnames "grovel.lisp-temp" output-file))
 	 (*grovel*))
     (declare (special *grovel*))
-    (load filename)
+    ;; Loading the groveler will bind the *govel* hook.
+    (load filename)    
     (and (funcall (the function *grovel*) c-source a-dot-out constants)
 	 (compile-file constants :output-file output-file))))
 
-;;; The actual system
+;;;; SYSTEM
+
 (defsystem :osicat
     :depends-on (:uffi)
     :components
     ((:c-source-file "osicat-glue")
      (:file "packages")
-     (:file "macros" :depends-on ("packages"))
      (:grovel-file "grovel-constants" :depends-on ("packages"))
-     (:file "foreign-types" :depends-on ("packages"))
+     (:file "early-util" :depends-on ("packages"))
+     (:file "ffi" :depends-on ("early-util"))
      (:file "osicat" :depends-on
-	    ("osicat-glue" "foreign-types" "macros" "grovel-constants"))))
+	    ("osicat-glue" "ffi" "grovel-constants"))))
+
+;;;; TESTING
 
 (defsystem :osicat-test
     :depends-on (:osicat :rt)

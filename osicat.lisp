@@ -1,4 +1,4 @@
-;; Copyright (c) 2003 Nikodemus Siivola
+;; Copyright (c) 2003, 2004 Nikodemus Siivola
 ;; 
 ;; Permission is hereby granted, free of charge, to any person obtaining
 ;; a copy of this software and associated documentation files (the
@@ -21,53 +21,47 @@
 
 (in-package :osicat)
 
-(def-function ("osicat_mode" c-file-mode) ((name :cstring) (follow-p :int))
-  :module "osicat"
-  :returning :int)
+(macrolet ((def ()
+	       `(defun c-file-kind (c-file follow-p)
+		  (let ((mode (c-file-mode c-file (if follow-p 1 0))))
+		    (unless (minusp mode)
+		      (case (logand mode-mask mode)
+			,@(mapcar
+			   (lambda (sym)
+			     (list (eval sym)
+				   (intern (symbol-name sym) :keyword)))
+			   ;; OAOOM Warning: 
+			   ;; These are in grovel-constants.lisp as well.
+			   '(directory character-device block-device
+			     regular-file symbolic-link pipe socket))
+			(t (error
+			    'bug :message
+			    (format nil "Unknown file mode: ~H." mode)))))))))
+  (def))
 
-(define-condition bug (error) 
-  ((message :reader message :initarg :message))
-  (:report (lambda (condition stream)
-	     (format stream "~A. This seems to be a bug in Osicat.~
-                             Please report on osicat-devel@common-lisp.net."
-		     (message condition)))))
-
-;;; KLUDGE: Would macrolet frob be preferable here? I can't see why...
-(eval 
- `(defun c-file-kind (c-file follow-p)
-    (let ((mode (c-file-mode c-file (if follow-p 1 0))))
-      (unless (minusp mode)
-	(case (logand mode-mask mode)
-	  ,@(mapcar
-	     (lambda (sym)
-	       (list (eval sym)
-		     (intern (symbol-name sym) :keyword)))
-	     ;; OAOOM: These are in grovel-constants.lisp as well.
-	     '(directory character-device block-device
-	       regular-file symbolic-link pipe socket))
-	  (t (error
-	      'bug :message
-	      (format nil "Unknown file mode: ~H." mode))))))))
-
-(defmacro with-c-file ((c-file pathname &optional required-kind follow-p) &body forms)
-  ;; FIXME: This assumes that OS has the same idea of current dir as Lisp
+(defmacro with-c-file 
+    ((c-file pathname &optional required-kind follow-p) &body forms)
   (with-unique-names (path kind)
-    `(let ((,path ,pathname))
+    ;; We merge the pathname to consolidate *default-pathname-defaults*
+    ;; and C-sides idea of current directory: relative *d-p-d* gives
+    ;; way to the C-side, whereas absolute ones take precedence.
+    `(let ((,path (merge-pathnames ,pathname)))
        (when (wild-pathname-p ,path)
 	 (error "Pathname is wild: ~S." ,path))
        (with-cstring (,c-file (namestring ,path))
-	 (let ((,kind (c-file-kind ,c-file ,follow-p)))
-	   ,(etypecase required-kind
-	       (keyword `(unless (eq ,required-kind ,kind)
-			   (if ,kind
-			       (error "~A is ~A, not ~A."
-				      ,path ,kind ,required-kind)
-			       (error "~A ~S does not exist."
-				      ,required-kind ,path))))
-	       ((eql t) `(unless ,kind
-			   (error "~A does not exist." ,path)))
-	       (null nil))
-	   ,@forms)))))
+	 ,@(if required-kind
+	       `((let ((,kind (c-file-kind ,c-file ,follow-p)))
+		   ,(etypecase required-kind
+		     (keyword `(unless (eq ,required-kind ,kind)
+				 (if ,kind
+				     (error "~A is ~A, not ~A."
+					    ,path ,kind ,required-kind)
+				     (error "~A ~S does not exist."
+					    ,required-kind ,path))))
+		     ((eql t) `(unless ,kind
+				 (error "~A does not exist." ,path))))
+		   ,@forms))
+	       forms)))))
 
 (defun file-kind (pathspec)
   "function FILE-KIND pathspec => file-kind
@@ -86,22 +80,6 @@ Signals an error if pathspec is wild."
       (error "Pathname is wild: ~S." path))
     (with-cstring (cfile (namestring path))
       (c-file-kind cfile nil))))
-
-(def-function "opendir" ((name :cstring))
-  :module "osicat"
-  :returning :pointer-void)
-
-(def-function "closedir" ((dir :pointer-void))
-  :module "osicat"
-  :returning :int)
-
-(def-function "readdir" ((dir :pointer-void))
-  :module "osicat"
-  :returning :pointer-void)
-
-(def-function "osicat_dirent_name" ((entry :pointer-void))
-  :module "osicat"
-  :returning :cstring)
 
 (defmacro with-directory-iterator ((iterator pathspec) &body body)
   "macro WITH-DIRECTORY-ITERATOR (iterator pathspec) &body forms => value
@@ -124,26 +102,30 @@ Signal an error if pathspec is wild or does not designate a directory."
     `(let ((,dir ,pathspec))
        (with-c-file (,cdir ,dir :directory t)
 	 (let ((,dp nil)
-	       (,default (make-pathname :name nil
-					:type nil
-					:directory (append ;KLUDGE: deal with missing /'s
-						    (pathname-directory ,dir)
-						    (remove-if (lambda (o)
-								 (or (null o)
-								     (keywordp o)))
-							       (list (pathname-name ,dir)
-								     (pathname-type ,dir))))
-					:defaults ,dir)))
+	       (,default 
+		   (make-pathname :name nil :type nil
+				  :directory 
+				  (append ;KLUDGE: deal with missing /'s
+				   (pathname-directory ,dir)
+				   (remove-if (lambda (o)
+						(or (null o)
+						    (keywordp o)))
+					      (list (pathname-name ,dir)
+						    (pathname-type ,dir))))
+				  :defaults ,dir)))
 	   (unwind-protect
 		(labels ((,iterator ()
 			   (let ((entry (readdir ,dp)))
 			     (if (null-pointer-p entry)
 				 nil
-				 (let ((namestring (convert-from-cstring
-						    (osicat-dirent-name entry))))
-				   (if (member namestring '("." "..") :test #'equal)
+				 (let ((namestring 
+					(convert-from-cstring
+					 (osicat-dirent-name entry))))
+				   (if (member namestring '("." "..") 
+					       :test #'equal)
 				       (,iterator)
-				       (merge-pathnames namestring ,default)))))))
+				       (merge-pathnames namestring 
+							,default)))))))
 		  (setf ,dp (opendir ,cdir))
 		  (when (null-pointer-p ,dp)
 		    (error "Error opening directory ~S." ,dir))
@@ -167,10 +149,6 @@ Signals an error if pathspec is wild or doesn't designate a directory."
 	  while entry
 	  collect (funcall function entry))))
   
-(def-function "rmdir" ((name :cstring))
-    :module "osicat"
-    :returning :int)
-
 (defun delete-directory (pathspec)
   "function DELETE-DIRECTORY pathspec => T
 
@@ -183,21 +161,6 @@ or if the direcotry could not be deleted."
     (if (zerop (rmdir path))
 	pathspec
 	(error "Could not delete directory ~S." pathspec))))
-
-(def-function "getenv" ((name :cstring))
-  :module "osicat"
-  :returning :cstring)
-
-(def-function "setenv" ((name :cstring) (value :cstring) (replace :int))
-  :module "osicat"
-  :returning :int)
-
-(def-function "unsetenv" ((name :cstring))
-  :module "osicat"
-  :returning :int)
-
-(def-array-pointer cstring-array :cstring)
-(def-foreign-var "environ" 'cstring-array "osicat")
 
 (defmacro with-c-name ((cname name) &body forms)
   (with-unique-names (n-name)
@@ -256,11 +219,6 @@ The current environment as a read-only assoc-list. To modify
 the environment use (SETF ENVIRONMENT-VARIABLE) and
 MAKUNBOUND-ENVIRONMENT-VARIABLE.")
   
-(def-function "readlink"
-    ((name :cstring) (buffer (* :unsigned-char)) (size :size-t))
-  :module "osicat"
-  :returning :int)
-
 (defun read-link (pathspec)
   "function READ-LINK pathspec => pathname
 
@@ -283,14 +241,6 @@ link."
 	    (pathname str)))
       (free-foreign-object buffer)))))
 
-(def-function "symlink" ((old :cstring) (new :cstring))
-  :module "osicat"
-  :returning :int)
-
-(def-function "link" ((old :cstring) (new :cstring))
-  :module "osicat"
-  :returning :int)
-
 (defun make-link (target link &key hard)
   "function MAKE-LINK target link &key hard => pathname
 
@@ -306,10 +256,6 @@ exist, or link exists already."
 	  (pathname link)
 	  (error "Could not create ~A link ~S -> ~S." 
 		 (if hard "hard" "symbolic") link target)))))
-
-(def-function "chmod" ((name :cstring) (mode :mode-t))
-  :module "osicat"
-  :returning :int)
 
 (define-symbol-macro +permissions+
     (load-time-value (mapcar (lambda (x)
