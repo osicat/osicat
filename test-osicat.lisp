@@ -63,6 +63,11 @@
       (makunbound-environment-variable 'test-variable))
   ("TEST-VARIABLE" . "TEST-VALUE"))
 
+(deftest environment.3
+    ;; No-op test to ensure setf environment actually works.
+    (setf (environment) (environment))
+  #.(environment))
+
 (deftest environment-variable.1
     (environment-variable 'test-variable)
   nil)
@@ -205,16 +210,48 @@
 	(delete-directory dir)))
   (#.(pathname-directory (merge-pathnames "mapdir-test/" *test-dir*))))
 
+;; Test that directories of form foo.bar/ don't become foo/bar/.
 (deftest mapdir.4
-    ;; Test that directories of form foo.bar/ don't become foo/bar/.
     (let* ((dir (ensure-directories-exist 
-		 (merge-pathnames "mapdir-test.type/" *test-dir*)))
-	   (file (ensure-file "foo.bar" dir)))
+		 (merge-pathnames "mapdir-test.type/" *test-dir*))))
       (unwind-protect
-	   (let ((*default-directory-defaults* (truename "/tmp/")))
-	     (mapdir (lambda (x) 
-		       (pathname-directory (merge-pathnames x))) 
-		     dir))
-	(delete-file file)
+	   (dolist (list (remove-if
+			  #'null
+			  (osicat:mapdir
+			   (lambda (x) (pathname-directory x))
+			   *test-dir*)))
+	     (when (/= (length list) 2) (error "too many path elements.")))
 	(delete-directory dir)))
-  (#.(pathname-directory (merge-pathnames "mapdir-test.type/" *test-dir*))))
+  nil)
+
+;; Test behavior in the case of an obviously incorrect username.
+(deftest user-info.1
+    (user-info "definitely_not_a_user!")
+  nil)
+
+;; Does this test still work in the case of su/sudo?  It should, I
+;; think.
+#+sbcl
+(deftest user-info.2
+    (let ((user-id (cdr (assoc :user-id (user-info (sb-posix:getuid))))))
+      (equal user-id (sb-posix:getuid)))
+  t)
+
+;; Just get our home directory, and see if it exists.  I don't
+;; think this will work 100% of the time, but it should for most
+;; people testing the package; given that, would it be even better
+;; to compare the value to (user-homedir-pathname)?
+#+sbcl
+(deftest user-info.3
+    (let ((home (cdr (assoc :home (user-info (sb-posix:getuid))))))
+      (file-kind home))
+  :directory)
+
+;; We'll go out on a limb and assume that not only does the root
+;; account exist, but its home directory exists, as well.  Note
+;; that this is unfortunately not always true.
+(deftest user-info.4
+    (let ((home (cdr (assoc :home (user-info "root")))))
+      (file-kind home))
+  :directory)
+

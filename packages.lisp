@@ -55,6 +55,8 @@ Concepts:
    #:make-link
    ;; Permissions
    #:file-permissions
+   ;; Password entries
+   #:user-info
    ;; Version info
    #:*osicat-version*
    ))

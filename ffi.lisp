@@ -41,6 +41,34 @@
   :module "osicat"
   :returning :cstring)
 
+(def-function "osicat_pwent_name" ((entry :pointer-void))
+  :module "osicat"
+  :returning :cstring)
+
+(def-function "osicat_pwent_passwd" ((entry :pointer-void))
+  :module "osicat"
+  :returning :cstring)
+
+(def-function "osicat_pwent_uid" ((entry :pointer-void))
+  :module "osicat"
+  :returning :int)
+
+(def-function "osicat_pwent_gid" ((entry :pointer-void))
+  :module "osicat"
+  :returning :int)
+
+(def-function "osicat_pwent_gecos" ((entry :pointer-void))
+  :module "osicat"
+  :returning :cstring)
+
+(def-function "osicat_pwent_home" ((entry :pointer-void))
+  :module "osicat"
+  :returning :cstring)
+
+(def-function "osicat_pwent_shell" ((entry :pointer-void))
+  :module "osicat"
+  :returning :cstring)
+
 ;;;; PLAIN POSIX
 
 (def-function "opendir" ((name :cstring))
@@ -73,6 +101,14 @@
 
 (def-array-pointer cstring-array :cstring)
 (def-foreign-var "environ" 'cstring-array "osicat")
+
+(def-function "getpwnam" ((name :cstring))
+  :module "osicat"
+  :returning :pointer-void)
+
+(def-function "getpwuid" ((id :int))
+  :module "osicat"
+  :returning :pointer-void)
 
 (def-function "readlink"
     ((name :cstring) (buffer (* :unsigned-char)) (size :size-t))

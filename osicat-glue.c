@@ -73,3 +73,46 @@ osicat_getcwd (void)
 	    }
 	}
 }
+
+extern char *
+osicat_pwent_name (struct passwd * pwent)
+{
+    return pwent->pw_name;
+}
+
+extern char *
+osicat_pwent_passwd (struct passwd * pwent)
+{
+    return pwent->pw_passwd;
+}
+
+extern int
+osicat_pwent_uid (struct passwd * pwent)
+{
+    return pwent->pw_uid;
+}
+
+extern int
+osicat_pwent_gid (struct passwd * pwent)
+{
+    return pwent->pw_gid;
+}
+
+extern char *
+osicat_pwent_gecos (struct passwd * pwent)
+{
+    return pwent->pw_gecos;
+}
+
+extern char *
+osicat_pwent_home (struct passwd * pwent)
+{
+    return pwent->pw_dir;
+}
+
+extern char *
+osicat_pwent_shell (struct passwd * pwent)
+{
+    return pwent->pw_shell;
+}
+

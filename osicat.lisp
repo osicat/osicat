@@ -106,9 +106,6 @@
 	     (cond ((equal ".." name) :up)
 		   ((equal "." name) nil)
 		   ((stringp name) name))))
-	 (fixedtype (path)
-	   (let ((type (pathname-type path)))
-	     (and (stringp type) type)))
 	 (fixeddir (path)
 	   (let ((dir (pathname-directory (concatenate 'string
 						       (namestring path)
@@ -275,7 +272,7 @@ of SETF ENVIRONMENT."
       (error "Could not access environment (~S)." e))))
 
 (defun (setf environment) (alist)
-  (let ((oldenv (get-environ)))
+  (let ((oldenv (environment)))
     (loop for (var . val) in alist
 	  do (setf (environment-variable var) (string val)
 		   oldenv (delete var oldenv 
@@ -402,3 +399,23 @@ designate a directory."
     (if (minusp (chdir dir))
 	(error "Could not change current directory.")
 	pathspec)))
+
+;;;; USER INFORMATION
+
+(defun user-info (id)
+  "function USER-INFO name => alist
+function USER-INFO user-id => alist
+
+USER-INFO returns the password entry for the given name or numerical
+user ID, as an alist."
+  (let ((pwent (typecase id
+		 (string (with-cstring (name id) (getpwnam name)))
+		 (integer (getpwuid id))
+		 (t (make-null-pointer :pointer-void)))))
+    (when (not (null-pointer-p pwent))
+      (list (cons :name (osicat-pwent-name pwent))
+	    (cons :user-id (osicat-pwent-uid pwent))
+	    (cons :group-id (osicat-pwent-gid pwent))
+	    (cons :gecos (osicat-pwent-gid pwent))
+	    (cons :home (osicat-pwent-home pwent))
+	    (cons :shell (osicat-pwent-shell pwent))))))
