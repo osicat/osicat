@@ -21,6 +21,21 @@
 
 (in-package :osicat-test)
 
+(deftest current-directory.1
+    (equal (current-directory)
+	   #.(make-pathname :name nil :type nil :version nil
+			    :defaults *compile-file-truename*))
+  t)
+
+(deftest current-directory.2
+    (let ((old (current-directory)))
+      (unwind-protect
+	   (progn
+	     (setf (current-directory) "/tmp/")
+	     (equal (current-directory) (truename "/tmp/")))
+	(setf (current-directory) old)))
+  t)
+
 (deftest delete-directory.1
     (let ((dir (merge-pathnames "delete-directory/" *test-dir*)))
       (ensure-directories-exist dir)
@@ -41,6 +56,10 @@
   t)
 
 (deftest environment.1
+    (cdr (assoc "HOME" (environment) :test #'equal))
+  #.(namestring (user-homedir-pathname)))
+
+(deftest environment.2
     (unwind-protect
 	 (progn
 	   (setf (environment-variable 'test-variable) "TEST-VALUE")
@@ -100,6 +119,21 @@
 	(delete-file file)))
   :regular-file)
 
+(deftest file-permissions.1
+    (and (member :other-read (file-permissions "/tmp/"))
+	 t)
+  t)
+
+(deftest file-permissions.2
+    (let ((file (ensure-file "tmp-exec")))
+      (unwind-protect
+	   (and (not (member :user-exec (file-permissions file)))
+		(push :user-exec (file-permissions file))
+		(member :user-exec (file-permissions file))
+		t)
+	(delete-file file)))
+  t)
+
 (deftest make-link.1
     (let ((link (merge-pathnames "make-link-test-link" *test-dir*))
 	  (file (ensure-file "tmp-file")))
@@ -121,4 +155,13 @@
 	(delete-file file)
 	(delete-file link)))
   :symbolic-link)
-	  
+	 
+(deftest maunbound-environment-variable.1
+    (let ((old (environment-variable :path)))
+      (unwind-protect
+	   (and old
+		(makunbound-environment-variable :path)
+		(null (environment-variable :path))
+		t)
+	(setf (environment-variable :path) old)))
+  t)

@@ -234,7 +234,7 @@ environment. name can be either a string or a symbol. Returns the
 string designated by name. Signals an error on failure."
   (with-c-name (cname name)
     (if (zerop (unsetenv cname))
-	nil
+	(string name)
 	(error "Could not remove environment variable ~S." name))))
 
 (defun environment ()
