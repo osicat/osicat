@@ -21,6 +21,11 @@
 
 (in-package :osicat)
 
+(defparameter *osicat-version* 
+  #.(with-open-file (f (merge-pathnames "version.txt"
+					*compile-file-truename*))
+      (symbol-name (read f))))
+
 (macrolet ((def ()
 	       `(defun c-file-kind (c-file follow-p)
 		  (let ((mode (c-file-mode c-file (if follow-p 1 0))))
@@ -46,6 +51,7 @@
     ;; and C-sides idea of current directory: relative *d-p-d* gives
     ;; way to the C-side, whereas absolute ones take precedence.
     `(let ((,path (merge-pathnames ,pathname)))
+       (print (list :c-file-kind (pathname-directory ,path)))
        (when (wild-pathname-p ,path)
 	 (error "Pathname is wild: ~S." ,path))
        (with-cstring (,c-file (namestring ,path))
@@ -99,7 +105,7 @@ If pathspec designates a symbolic link, it is implicitly resolved.
 
 Signal an error if pathspec is wild or does not designate a directory."  
   (with-unique-names (dp dir cdir err default)
-    `(let ((,dir ,pathspec))
+    `(let ((,dir (merge-pathnames ,pathspec)))
        (with-c-file (,cdir ,dir :directory t)
 	 (let ((,dp nil)
 	       (,default 
@@ -109,7 +115,8 @@ Signal an error if pathspec is wild or does not designate a directory."
 				   (pathname-directory ,dir)
 				   (remove-if (lambda (o)
 						(or (null o)
-						    (keywordp o)))
+						    (keywordp o)
+						    (equal "." o)))
 					      (list (pathname-name ,dir)
 						    (pathname-type ,dir))))
 				  :defaults ,dir)))
@@ -152,11 +159,11 @@ Signals an error if pathspec is wild or doesn't designate a directory."
 (defun delete-directory (pathspec)
   "function DELETE-DIRECTORY pathspec => T
 
-Deletes the direcotry designated by pathspec. Returns T.  The
+Deletes the directory designated by pathspec. Returns T.  The
 directory must be empty. Symbolic links are not followed.
 
 Signals an error if pathspec is wild, doesn't designate a directory,
-or if the direcotry could not be deleted."
+or if the directory could not be deleted."
   (with-c-file (path pathspec :directory)
     (if (zerop (rmdir path))
 	pathspec

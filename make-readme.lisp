@@ -1,4 +1,4 @@
-;; Copyright (c) 2003, 2004 Nikodemus Siivola <nikodemus@random-state.net>
+;; Copyright (c) 2003 Nikodemus Siivola
 ;; 
 ;; Permission is hereby granted, free of charge, to any person obtaining
 ;; a copy of this software and associated documentation files (the
@@ -19,31 +19,24 @@
 ;; TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 ;; SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-(defpackage :osicat  
-  (:use :cl :uffi) 
-  (:documentation 
-   "Osicat is a lightweight operating system interface for Common Lisp
-on Unix-platforms. It is not a POSIX-style API, but rather a simple
-lispy accompaniment to the standard ANSI facilities.
+;;;; Ad-hoc tool to extract documentation for OSICAT
 
-Osicat homepage: http://www.common-lisp.net/project/osicat")
-  (:export
-   ;;; Evironment
-   #:environment   
-   #:environment-variable
-   #:makunbound-environment-variable
-   ;; Directories
-   #:with-directory-iterator
-   #:mapdir
-   #:delete-directory
-   ;; Files
-   #:file-kind
-   ;; Symlinks
-   #:read-link
-   #:make-link
-   ;; Permissions
-   #:file-permissions
-   ;; Version info
-   #:*osicat-version*
-   ))
+(require :asdf)
+(require :osicat)
 
+(with-open-file (*standard-output* "README"
+				   :direction :output 
+				   :if-exists :rename)
+  (let ((syms (loop for sym being each external-symbol in :osicat
+		    for doc = (cond (#1=(documentation sym 'function) #1#)
+				    (#2=(documentation sym 'variable) #2#))
+		    when doc
+		    collect (cons (symbol-name sym) doc))))
+    (setf syms (sort syms #'string< :key #'car))
+    (format t "OSICAT ~A~%~%" osicat:*osicat-version*)
+    (format t "~A~%~%~%" (documentation (find-package :osicat) t))
+    (dolist (cons syms)
+      (format t "~& - ~A~%" (string-downcase (car cons))))
+    (format t "~%~%")
+    (dolist (cons syms)
+      (format t "---~%~%~A~%~%" (cdr cons)))))
