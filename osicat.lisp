@@ -21,7 +21,7 @@
 
 (in-package :osicat)
 
-(def-function ("osicat_mode" c-file-mode) ((name :cstring))
+(def-function ("osicat_mode" c-file-mode) ((name :cstring) (follow-p :int))
   :module "osicat"
   :returning :int)
 
@@ -32,22 +32,24 @@
                              Please report on osicat-devel@common-lisp.net."
 		     (message condition)))))
 
-(eval `(defun c-file-kind (c-file)
-	 (let ((mode (c-file-mode c-file)))
-	   (unless (minusp mode)
-	     (case (logand mode-mask mode)
-	       ,@(mapcar
-		  (lambda (sym)
-		    (list (eval sym)
-			  (intern (symbol-name sym) :keyword)))
-		  ;; KLUDGE: OAOOM. These are in grovel-constants.lisp as well.
-		  '(directory character-device block-device
-		    regular-file symbolic-link pipe socket))
-	       (t (error
-		   'bug :message
-		   (format nil "Unknown file mode: ~H." mode))))))))
+;;; KLUDGE: Would macrolet frob be preferable here? I can't see why...
+(eval 
+ `(defun c-file-kind (c-file follow-p)
+    (let ((mode (c-file-mode c-file (if follow-p 1 0))))
+      (unless (minusp mode)
+	(case (logand mode-mask mode)
+	  ,@(mapcar
+	     (lambda (sym)
+	       (list (eval sym)
+		     (intern (symbol-name sym) :keyword)))
+	     ;; OAOOM: These are in grovel-constants.lisp as well.
+	     '(directory character-device block-device
+	       regular-file symbolic-link pipe socket))
+	  (t (error
+	      'bug :message
+	      (format nil "Unknown file mode: ~H." mode))))))))
 
-(defmacro with-c-file ((c-file pathname &optional required-kind) &body forms)
+(defmacro with-c-file ((c-file pathname &optional required-kind follow-p) &body forms)
   ;; FIXME: This assumes that OS has the same idea of current dir as Lisp
   (with-unique-names (path)
     `(let ((,path ,pathname))
@@ -55,14 +57,14 @@
 	 (error "Pathname is wild: ~S." ,path))
        (with-cstring (,c-file (namestring ,path))
 	 ,(etypecase required-kind
-	     (keyword `(let ((real-kind (c-file-kind ,c-file)))
+	     (keyword `(let ((real-kind (c-file-kind ,c-file ,follow-p)))
 			 (unless (eq ,required-kind real-kind)
 			   (if real-kind
 			       (error "~A is ~A, not ~A."
 				      ,path real-kind ,required-kind)
 			       (error "~A ~S does not exist."
 				      ,required-kind ,path)))))
-	     ((eql t) `(unless (c-file-kind ,c-file)
+	     ((eql t) `(unless (c-file-kind ,c-file ,follow-p)
 			 (error "~A does not exist." ,path)))
 	     (null nil))
 	 ,@forms))))
@@ -71,15 +73,19 @@
   "function FILE-KIND pathspec => file-kind
 
 Returns a keyword indicating the kind of file designated by pathspec,
-or NIL if the file does not exist.
+or NIL if the file does not exist. Does not follow symbolic links.
 
 Possible file-kinds in addition to NIL are: :regular-file,
 :symbolic-link, :directory,:pipe, :socket, :character-device, and
 :block-device.
 
 Signals an error if pathspec is wild."
-  (with-c-file (c pathspec)
-    (c-file-kind c)))
+  ;; KLUDGE: OAOOM: We scurry to avoid an extra lstat here. 
+  (let ((path (pathname pathspec)))
+    (when (wild-pathname-p path)
+      (error "Pathname is wild: ~S." path))
+    (with-cstring (cfile (namestring path))
+      (c-file-kind cfile 0))))
 
 (def-function "opendir" ((name :cstring))
   :module "osicat"
@@ -97,8 +103,6 @@ Signals an error if pathspec is wild."
   :module "osicat"
   :returning :cstring)
 
-;;; FIXME: Documentation, DIRECTORY-LIST?
-
 (defmacro with-directory-iterator ((iterator pathspec) &body body)
   "macro WITH-DIRECTORY-ITERATOR (iterator pathspec) &body forms => value
 
@@ -110,12 +114,15 @@ entries, one by one. Both files and directories are returned, except
 Once all entries have been returned, further invocations of (iterator)
 will all return NIL.
 
-The value returned is the value of the last form evaluated in body.
+The value returned is the value of the last form evaluated in
+body.
 
-Signal an error if pathspec is wild or does not designate a directory."
+If pathspec designates a symbolic link, it is implicitly resolved.
+
+Signal an error if pathspec is wild or does not designate a directory."  
   (with-unique-names (dp dir cdir err default)
     `(let ((,dir ,pathspec))
-       (with-c-file (,cdir ,dir :directory)
+       (with-c-file (,cdir ,dir :directory t)
 	 (let ((,dp nil)
 	       (,default (make-pathname :name nil
 					:version nil
@@ -146,6 +153,8 @@ Signal an error if pathspec is wild or does not designate a directory."
 Applies function to each entry in directory designated by pathspec in
 turn and returns a list of the results.
 
+If pathspec designates a symbolic link, it is implicitly resolved.
+
 Signals an error if pathspec is wild or doesn't designate a directory."
   (with-directory-iterator (next pathspec)
     (loop for entry = (next)
@@ -160,7 +169,7 @@ Signals an error if pathspec is wild or doesn't designate a directory."
   "function DELETE-DIRECTORY pathspec => T
 
 Deletes the direcotry designated by pathspec. Returns T.  The
-directory must be empty.
+directory must be empty. Symbolic links are not followed.
 
 Signals an error if pathspec is wild, doesn't designate a directory,
 or if the direcotry could not be deleted."
@@ -213,14 +222,11 @@ strings. Signals an error on failure."
 	  value
 	  (error "Could not set environment variable ~S to ~S." name value)))))
 
-(setf (documentation '(setf environment-variable) 'function)
-      (documentation 'environment-variable 'function))
-
 (defun makunbound-environment-variable (name)
   "function MAKUNBOUND-ENVIRONMENT-VARIABLE name => string
 
-Removes the environenr variable identified by NAME from the current
-environment. NAME can be either a string or a symbol. Returns the
+Removes the environment variable identified by name from the current
+environment. name can be either a string or a symbol. Returns the
 string designated by name. Signals an error on failure."
   (with-c-name (cname name)
     (if (zerop (unsetenv cname))
@@ -310,10 +316,13 @@ exist, or link exists already."
 function (SETF (FILE-PERMISSIONS pathspec) list) => list
 
 FILE-PERMISSIONS returns a list of keywords identifying the
-permissions of PATHSPEC. 
+permissions of pathspec.
 
-SETF FILE-PERMISSIONS sets the permissions of PATHSPEC as identified
+SETF FILE-PERMISSIONS sets the permissions of pathspec as identified
 by the symbols in list.
+
+If pathspec designates a symbolic link, that link is implicitly
+resolved.
 
 Permission symbols consist of :USER-READ, :USER-WRITE, :USER-EXEC,
 :GROUP-READ, :GROUP-WRITE, :GROUP-EXEC, :OTHER-READ, :OTHER-WRITE,
@@ -321,20 +330,18 @@ Permission symbols consist of :USER-READ, :USER-WRITE, :USER-EXEC,
 
 Both signal an error is pathspec is wild, or doesn't designate an
 exiting file."
-  (with-c-file (path pathspec t)
-    (let ((mode (c-file-mode path)))
+  (with-c-file (path pathspec t t)
+    ;; FIXME: We stat twice here.
+    (let ((mode (c-file-mode path 1)))
       (loop for (name . value) in +permissions+
 	    when (plusp (logand mode value))
 	    collecting name))))
 
 (defun (setf file-permissions) (perms pathspec)
-  (with-c-file (path pathspec t)
+  (with-c-file (path pathspec t t)
     (if (zerop (chmod path (reduce (lambda (a b)
 				     (logior a (cdr (assoc b +permissions+))))
 				   perms
 				   :initial-value 0)))
 	perms
 	(error "Could not set file permissions of ~S to ~S." pathspec perms))))
-
-(setf (documentation '(setf file-permissions) 'function)
-      (documentation 'file-permissions 'function))

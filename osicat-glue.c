@@ -26,17 +26,24 @@
 #include <pwd.h>
 
 extern int
-osicat_mode (char * name)
+osicat_mode (char * name, int follow_p)
 {
     struct stat buf;
-    if (0 == lstat (name, &buf))
+    int err;
+
+    if (follow_p)
+	err = stat (name, &buf);
+    else
+	err = lstat (name, &buf);
+
+    if (! err)
 	return buf.st_mode;
     else
 	/* I assume that -1 is not a valid mode? */
 	return -1;
 }
 
-char *
+extern char *
 osicat_dirent_name (struct dirent * entry)
 {
     return entry->d_name;

@@ -6,3 +6,4 @@ packages.lisp
 osicat.lisp
 osicat-glue.c
 LICENSE
+README

@@ -21,6 +21,9 @@
 
 (defpackage :osicat  
   (:use :cl :uffi) 
+  (:documentation "Osicat is a lightweight operating system interface
+for Common Lisp on Unix-platforms. It is not a POSIX-style API, but
+rather a simple lispy accompaniment to the standard ANSI facilities.")
   (:export
    ;;; Evironment
    #:environment   
