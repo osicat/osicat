@@ -34,7 +34,8 @@ Concepts:
 
   When a relative pathname designator is used as a directory designator
   it is first resolved agains *default-pathname-default*, and then
-  against the current directory. (With MERGE-PATHNAMES in both cases.)")
+  against the current directory. (With MERGE-PATHNAMES in both cases.)
+")
   (:shadow
    ;; DIRECTORY is used as constant internally. Let's not confuse other packages.
    #:directory)

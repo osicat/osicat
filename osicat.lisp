@@ -168,7 +168,7 @@ body. Signals an error if pathspec is wild or does not designate a directory."
 				      (make-pathname
 				       :directory `(:relative ,name)))
 				     (t
-				      (let ((dotpos (position #\. name)))
+				      (let ((dotpos (position #\. name :from-end t)))
 					(if (and dotpos (plusp dotpos))
 					    (make-pathname
 					     :name (subseq name 0 dotpos)
