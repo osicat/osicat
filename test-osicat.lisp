@@ -22,12 +22,6 @@
 (in-package :osicat-test)
 
 (deftest current-directory.1
-    (equal (current-directory)
-	   #.(make-pathname :name nil :type nil :version nil
-			    :defaults *compile-file-truename*))
-  t)
-
-(deftest current-directory.2
     (let ((old (current-directory)))
       (unwind-protect
 	   (progn

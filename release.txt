@@ -5,5 +5,8 @@ grovel-constants.lisp
 packages.lisp
 osicat.lisp
 osicat-glue.c
+version.txt
+test-tools.lisp
+test-osicat.lisp
 LICENSE
 README
