@@ -142,52 +142,58 @@ such that successive invocations of (iterator) return the directory
 entries, one by one. Both files and directories are returned, except
 '.' and '..'. The order of entries is not guaranteed. The entries are
 returned as relative pathnames against the designated
-directory. Entries that are symbolic links are not resolved. Once all
-entries have been returned, further invocations of (iterator) will all
-return NIL.
+directory. Entries that are symbolic links are not resolved, but links
+that point to directories are interpreted as directory
+designators. Once all entries have been returned, further invocations
+of (iterator) will all return NIL.
 
 The value returned is the value of the last form evaluated in
 body. Signals an error if pathspec is wild or does not designate a directory."
-  (with-unique-names (dp dir cdir old-dir one-iter)
-    `(let ((,dir (normpath ,pathspec t))
-	   (,old-dir (current-directory)))
-       (with-c-file (,cdir ,dir :directory t)
-	 (let (,dp)
-	   (unwind-protect
-		(labels ((,one-iter ()
-			   (let ((entry (readdir ,dp)))
-			     (if (null-pointer-p entry)
-				 nil
-				 (let* ((cname (osicat-dirent-name entry))
-					(name (convert-from-cstring cname)))
-				   (declare (type simple-string name))
-				   (cond 
-				     ((member name '("." "..") :test #'string=)
-				      (,one-iter))
-				     ((eq :directory (c-file-kind cname t))
-				      (make-pathname
-				       :directory `(:relative ,name)))
-				     (t
-				      (let ((dotpos (position #\. name :from-end t)))
-					(if (and dotpos (plusp dotpos))
-					    (make-pathname
-					     :name (subseq name 0 dotpos)
-					     :type (subseq name (1+ dotpos)))
-					    (make-pathname
-					     :name name))))))))))
-		  (macrolet ((,iterator () 
-			       `(,',one-iter)))
-		    (setf ,dp (opendir ,cdir))
-		    (when (null-pointer-p ,dp)
-		      (error "Error opening directory ~S." ,dir))
-		    (let ((*default-pathname-defaults* ,dir))
-		      (setf (current-directory) ,dir)
-		      ,@body)))
-	     (when ,dp
-	       (if (zerop (closedir ,dp))
-		   nil
-		   (error "Error closing directory ~S." ,dir)))
-	     (setf (current-directory) ,old-dir)))))))
+  (with-unique-names (one-iter)
+    `(call-with-directory-iterator ,pathspec
+      (lambda (,one-iter)
+	(macrolet ((,iterator () 
+		     `(funcall ,',one-iter)))
+	  ,@body)))))
+
+(defun call-with-directory-iterator (pathspec fun)
+  (let ((dir (normpath pathspec t))
+	(old-dir (current-directory)))
+    (with-c-file (cdir dir :directory t)
+      (let (dp)
+	(unwind-protect
+	     (labels ((one-iter ()
+			(let ((entry (readdir dp)))
+			  (if (null-pointer-p entry)
+			      nil
+			      (let* ((cname (osicat-dirent-name entry))
+				     (name (convert-from-cstring cname)))
+				(declare (type simple-string name))
+				(cond 
+				  ((member name '("." "..") :test #'string=)
+				      (one-iter))
+				  ((eq :directory (c-file-kind cname t))
+				   (make-pathname
+				    :directory `(:relative ,name)))
+				  (t
+				   (let ((dotpos (position #\. name :from-end t)))
+				     (if (and dotpos (plusp dotpos))
+					 (make-pathname
+					  :name (subseq name 0 dotpos)
+					  :type (subseq name (1+ dotpos)))
+					 (make-pathname
+					  :name name))))))))))
+	       (setf dp (opendir cdir))
+	       (when (null-pointer-p dp)
+		 (error "Error opening directory ~S." dir))
+	       (let ((*default-pathname-defaults* dir))
+		 (setf (current-directory) dir)
+		 (funcall fun #'one-iter)))
+	  (when dp
+	    (if (zerop (closedir dp))
+		nil
+		(error "Error closing directory ~S." dir)))
+	  (setf (current-directory) old-dir))))))
 
 (defun mapdir (function pathspec)
   "function MAPDIR function pathspec => list
