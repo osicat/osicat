@@ -69,6 +69,7 @@
 ;;;; SYSTEM
 
 (defsystem :osicat
+    :version "0.3.6"
     :depends-on (:uffi)
     :components
     ((:c-source-file "osicat-glue")

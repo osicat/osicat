@@ -29,7 +29,8 @@
 
 (defun write-groveler (file constants)
   (with-open-file (f file :direction :output :if-exists :supersede)
-    (format f "
+    (let ((*print-case* :upcase))
+      (format f "
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -50,7 +51,7 @@ main ()
     (format f "
       return 0;
 }
-")))
+"))))
 
 (unless (boundp '*grovel*)
   (error "No GROVEL hook!"))
