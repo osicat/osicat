@@ -36,6 +36,7 @@ Osicat homepage: http://www.common-lisp.net/project/osicat")
    #:with-directory-iterator
    #:mapdir
    #:delete-directory
+   #:current-directory
    ;; Files
    #:file-kind
    ;; Symlinks

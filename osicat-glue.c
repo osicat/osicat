@@ -24,6 +24,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <errno.h>
 
 extern int
 osicat_mode (char * name, int follow_p)
@@ -51,6 +52,24 @@ osicat_dirent_name (struct dirent * entry)
     return entry->d_name;
 }
 
-
-    
-    
+extern char *
+osicat_getcwd (void)
+{
+    size_t size = 128;
+    while (1)
+	{
+	    char *buffer = (char *) malloc (size);
+	    if (!buffer) {
+		return 0;
+	    }
+	    else if (getcwd (buffer, size) == buffer) {
+		return buffer;
+	    }
+	    else {
+		free (buffer);
+		if (errno != ERANGE) 
+		    return 0;
+		size += 128;
+	    }
+	}
+}

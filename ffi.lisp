@@ -21,13 +21,27 @@
 
 (in-package :osicat)
 
-;;; FIXME: These should be groveled as well.
+;;;; TYPES
+
+;; FIXME: These should be groveled as well.
 (def-foreign-type :size-t :unsigned-int)
 (def-foreign-type :mode-t :unsigned-int)
+
+;;;; FOREIGN GLUE
 
 (def-function ("osicat_mode" c-file-mode) ((name :cstring) (follow-p :int))
   :module "osicat"
   :returning :int)
+
+(def-function ("osicat_getcwd" c-getcwd) ()
+  :module "osicat"
+  :returning (* :unsigned-char))
+
+(def-function "osicat_dirent_name" ((entry :pointer-void))
+  :module "osicat"
+  :returning :cstring)
+
+;;;; PLAIN POSIX
 
 (def-function "opendir" ((name :cstring))
   :module "osicat"
@@ -40,10 +54,6 @@
 (def-function "readdir" ((dir :pointer-void))
   :module "osicat"
   :returning :pointer-void)
-
-(def-function "osicat_dirent_name" ((entry :pointer-void))
-  :module "osicat"
-  :returning :cstring)
 
 (def-function "rmdir" ((name :cstring))
     :module "osicat"
@@ -81,3 +91,6 @@
   :module "osicat"
   :returning :int)
 
+(def-function "chdir" ((name :cstring))
+  :module "osicat"
+  :returning :int)

@@ -39,7 +39,7 @@
 (defmethod perform ((o load-op) (c c-source-file))
   (let ((loader (intern "LOAD-FOREIGN-LIBRARY" :uffi)))
     (dolist (file (asdf::input-files o c))
-      (funcall loader file :module "osicat"))))
+      (funcall loader file :module "osicat" :force-load t))))
 
 (defmethod perform ((o compile-op) (c c-source-file))
   (unless (zerop (run-shell-command "~A ~A ~{~A ~}-o ~A"

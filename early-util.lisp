@@ -35,3 +35,11 @@
 	     (format stream "~A. This seems to be a bug in Osicat.~
                              Please report on osicat-devel@common-lisp.net."
 		     (message condition)))))
+
+(defmacro with-c-name ((cname name) &body forms)
+  (with-unique-names (n-name)
+    `(let ((,n-name ,name))
+       (with-cstring (,cname (etypecase ,n-name
+			       (string ,n-name)
+			       (symbol (symbol-name ,n-name))))
+	 ,@forms))))

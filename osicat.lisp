@@ -26,6 +26,9 @@
 					*compile-file-truename*))
       (symbol-name (read f))))
 
+;;;; COMMON SUBROUTINES
+
+(declaim (inline c-file-kind))
 (macrolet ((def ()
 	       `(defun c-file-kind (c-file follow-p)
 		  (let ((mode (c-file-mode c-file (if follow-p 1 0))))
@@ -47,27 +50,68 @@
 (defmacro with-c-file 
     ((c-file pathname &optional required-kind follow-p) &body forms)
   (with-unique-names (path kind)
-    ;; We merge the pathname to consolidate *default-pathname-defaults*
-    ;; and C-sides idea of current directory: relative *d-p-d* gives
-    ;; way to the C-side, whereas absolute ones take precedence.
-    `(let ((,path (merge-pathnames ,pathname)))
-       (print (list :c-file-kind (pathname-directory ,path)))
+    `(let ((,path ,pathname))
        (when (wild-pathname-p ,path)
 	 (error "Pathname is wild: ~S." ,path))
        (with-cstring (,c-file (namestring ,path))
 	 ,@(if required-kind
 	       `((let ((,kind (c-file-kind ,c-file ,follow-p)))
 		   ,(etypecase required-kind
-		     (keyword `(unless (eq ,required-kind ,kind)
-				 (if ,kind
-				     (error "~A is ~A, not ~A."
-					    ,path ,kind ,required-kind)
-				     (error "~A ~S does not exist."
-					    ,required-kind ,path))))
-		     ((eql t) `(unless ,kind
-				 (error "~A does not exist." ,path))))
+		       (keyword `(unless (eq ,required-kind ,kind)
+				   (if ,kind
+				       (error "~A is ~A, not ~A."
+					      ,path ,kind ,required-kind)
+				       (error "~A ~S does not exist."
+					      ,required-kind ,path))))
+		       ((eql t) `(unless ,kind
+				   (error "~A does not exist." ,path))))
 		   ,@forms))
 	       forms)))))
+
+(defun relative-pathname-p (pathspec)
+  (not (eq :absolute (car (pathname-directory pathspec)))))
+
+(defun merge-directories 
+    (pathspec &optional (other *default-pathname-defaults*))
+  (let ((tmp (merge-pathnames pathspec
+			      (make-pathname :name nil :type nil :version nil
+					     :defaults other))))
+    (if (relative-pathname-p tmp)
+	(merge-pathnames tmp (current-directory))
+	tmp)))
+
+(defun normpath (pathspec &optional merge)
+  (flet ((fixedname (path)
+	   (let ((name (pathname-name path)))
+	     (cond ((equal ".." name) :up)
+		   ((equal "." name) nil)
+		   ((stringp name) name))))
+	 (fixedtype (path)
+	   (let ((type (pathname-type path)))
+	     (and (stringp type) type)))
+	 (fixeddir (path)
+	   (let ((dir (pathname-directory path)))
+	     (if (member (car dir) '(:absolute :relative))
+		 dir
+		 (cons :relative dir)))))
+    (let ((path (if (and merge (relative-pathname-p pathspec))
+		    (merge-directories pathspec)
+		    pathspec)))
+      (when (wild-pathname-p path)
+	(error "Pathname is wild: ~S." path))
+      (with-cstring (cfile (namestring path))
+	(if (eq :directory (c-file-kind cfile t))
+	    (make-pathname :name nil :type nil
+			   :directory 
+			   (append (fixeddir path)
+				   (remove-if 
+				    #'null
+				    (list (fixedname path)
+					  (fixedtype path))))
+			   :defaults path)
+	    path)))))
+
+;;;; FILE-KIND
 
 (defun file-kind (pathspec)
   "function FILE-KIND pathspec => file-kind
@@ -80,63 +124,56 @@ Possible file-kinds in addition to NIL are: :regular-file,
 :block-device.
 
 Signals an error if pathspec is wild."
-  ;; KLUDGE: OAOOM: We scurry to avoid an extra lstat here. 
-  (let ((path (pathname pathspec)))
+  (let ((path (merge-pathnames pathspec)))
     (when (wild-pathname-p path)
       (error "Pathname is wild: ~S." path))
     (with-cstring (cfile (namestring path))
       (c-file-kind cfile nil))))
 
+;;;; DIRECTORY ACCESS
+
 (defmacro with-directory-iterator ((iterator pathspec) &body body)
   "macro WITH-DIRECTORY-ITERATOR (iterator pathspec) &body forms => value
 
-Within the lexical scope of the body, iterator is defined via flet
+If pathspec is relative, it is resolved against *default-pathname-defaults*. 
+If the resulting pathname is still relative, it is further resolved against
+current directory. The resulting pathname is then bound to 
+*default-pathname-defaults* for the dynamic scope of the body.
+
+Within the lexical scope of the body, iterator is defined via macrolet
 such that successive invocations of (iterator) return the directory
 entries, one by one. Both files and directories are returned, except
-'.' and '..'. The order of entries is not guaranteed. 
-
-Once all entries have been returned, further invocations of (iterator)
-will all return NIL.
+'.' and '..'. The order of entries is not guaranteed. The entries are
+returned as relative pathnames against the directory. Entries that are
+symbolic links are not resolved. Once all entries have been returned, 
+further invocations of (iterator) will all return NIL.
 
 The value returned is the value of the last form evaluated in
-body.
-
-If pathspec designates a symbolic link, it is implicitly resolved.
-
-Signal an error if pathspec is wild or does not designate a directory."  
-  (with-unique-names (dp dir cdir err default)
-    `(let ((,dir (merge-pathnames ,pathspec)))
+body. Signals an error if pathspec is wild or does not designate a directory."
+  (with-unique-names (dp dir cdir)
+    `(let ((,dir (normpath ,pathspec t)))
        (with-c-file (,cdir ,dir :directory t)
-	 (let ((,dp nil)
-	       (,default 
-		   (make-pathname :name nil :type nil
-				  :directory 
-				  (append ;KLUDGE: deal with missing /'s
-				   (pathname-directory ,dir)
-				   (remove-if (lambda (o)
-						(or (null o)
-						    (keywordp o)
-						    (equal "." o)))
-					      (list (pathname-name ,dir)
-						    (pathname-type ,dir))))
-				  :defaults ,dir)))
+	 (let (,dp)
 	   (unwind-protect
-		(labels ((,iterator ()
-			   (let ((entry (readdir ,dp)))
-			     (if (null-pointer-p entry)
-				 nil
-				 (let ((namestring 
-					(convert-from-cstring
-					 (osicat-dirent-name entry))))
-				   (if (member namestring '("." "..") 
-					       :test #'equal)
-				       (,iterator)
-				       (merge-pathnames namestring 
-							,default)))))))
+		(macrolet ((,iterator () 
+			     `(block nil
+				(tagbody :retry
+				   (let ((entry (readdir ,',dp)))
+				     (if (null-pointer-p entry)
+					 nil
+					 (let ((name 
+						(convert-from-cstring
+						 (osicat-dirent-name 
+						  entry))))
+					   (if (member name '("." "..") 
+						       :test #'string=)
+					       (go :retry)
+					       (return (normpath name))))))))))
 		  (setf ,dp (opendir ,cdir))
 		  (when (null-pointer-p ,dp)
 		    (error "Error opening directory ~S." ,dir))
-		  ,@body)
+		  (let ((*default-pathname-defaults* ,dir))
+		    ,@body))
 	     (when ,dp
 	       (if (zerop (closedir ,dp))
 		   nil
@@ -164,18 +201,10 @@ directory must be empty. Symbolic links are not followed.
 
 Signals an error if pathspec is wild, doesn't designate a directory,
 or if the directory could not be deleted."
-  (with-c-file (path pathspec :directory)
+  (with-c-file (path (normpath pathspec t) :directory)
     (if (zerop (rmdir path))
 	pathspec
 	(error "Could not delete directory ~S." pathspec))))
-
-(defmacro with-c-name ((cname name) &body forms)
-  (with-unique-names (n-name)
-    `(let ((,n-name ,name))
-       (with-cstring (,cname (etypecase ,n-name
-			       (string ,n-name)
-			       (symbol (symbol-name ,n-name))))
-	 ,@forms))))
 
 (defun environment-variable (name)
   "function ENVIRONMENT-VARIABLE name => string
@@ -210,12 +239,27 @@ string designated by name. Signals an error on failure."
 	(error "Could not remove environment variable ~S." name))))
 
 (defun get-environ ()
-  (loop for i from 0 by 1
-	for string = (convert-from-cstring
-		      (deref-array environ cstring-array i))
-	for split = (position #\= string)
-	while string
-	collecting (cons (subseq string 0 split) (subseq string (1+ split)))))
+  (handler-case
+      (loop for i from 0 by 1
+	    for string = (convert-from-cstring
+			  (deref-array environ cstring-array i))
+	    for split = (position #\= string)
+	    while string
+	    collecting (cons (subseq string 0 split) 
+			     (subseq string (1+ split))))
+    (error (e)
+      (error "Could not access environment (~S)." e))))
+
+(defun (setf get-environ) (alist)
+  (let ((oldenv (get-environ)))
+    (loop for (var . val) in alist
+	  do (setf (environment-variable var) (string val)
+		   oldenv (delete var oldenv 
+				  :key (lambda (x) (string (car x)))
+				  :test #'string=)))
+    (loop for (var . val) in oldenv
+	  do (makunbound-environment-variable var)))
+  alist)
 
 (define-symbol-macro environment (get-environ))
 
@@ -235,18 +279,17 @@ relative to the link, not *default-pathname-defaults*.
 
 Signals an error if pathspec is wild, or does not designate a symbolic
 link."
-  ;; KLUDGE: Silence a compiler-note
   (handler-bind
       (#+sbcl (sb-ext:compiler-note #'muffle-warning))
-  (with-c-file (path pathspec :symbolic-link)
-    (do* ((size 64 (* size 2))
-	  (buffer #1=(allocate-foreign-string size) #1#)
-	  (got (readlink path buffer size)))
-	 ((< got size)
-	  (let ((str (convert-from-foreign-string buffer :length got)))
-	    (free-foreign-object buffer)
-	    (pathname str)))
-      (free-foreign-object buffer)))))
+    (with-c-file (path (normpath pathspec t) :symbolic-link)
+      (do* ((size 64 (* size 2))
+	    (buffer #1=(allocate-foreign-string size) #1#)
+	    (got (readlink path buffer size)))
+	   ((< got size)
+	    (let ((str (convert-from-foreign-string buffer :length got)))
+	      (free-foreign-object buffer)
+	      (pathname str)))
+	(free-foreign-object buffer)))))
 
 (defun make-link (target link &key hard)
   "function MAKE-LINK target link &key hard => pathname
@@ -257,12 +300,17 @@ link. Returns the pathname of the link.
 
 Signals an error if either target or link is wild, target does not
 exist, or link exists already."
-  (with-c-file (old target)
-    (with-c-file (new link)
-      (if (zerop (funcall (if hard #'link #'symlink) old new))
-	  (pathname link)
-	  (error "Could not create ~A link ~S -> ~S." 
-		 (if hard "hard" "symbolic") link target)))))
+  (let ((old (current-directory)))
+    (unwind-protect
+	 (with-c-file (old target)
+	   (with-c-file (new link)
+	     (setf (current-directory) 
+		   (normpath *default-pathname-defaults* t))
+	     (if (zerop (funcall (if hard #'link #'symlink) old new))
+		 (pathname link)
+		 (error "Could not create ~A link ~S -> ~S." 
+			(if hard "hard" "symbolic") link target))))
+      (setf (current-directory) old))))
 
 (define-symbol-macro +permissions+
     (load-time-value (mapcar (lambda (x)
@@ -307,3 +355,27 @@ exiting file."
 				   :initial-value 0)))
 	perms
 	(error "Could not set file permissions of ~S to ~S." pathspec perms))))
+
+(defun current-directory ()
+  "function CURRENT-DIRECTORY => pathname
+function (SETF CURRENT-DIRECTORY) pathspec => pathspec
+
+CURRENT-DIRECTORY returns the operating system's current directory, which
+may or may not correspond to *DEFAULT-PATHNAME-DEFAULTS*.
+
+SETF CURRENT-DIRECTORY changes the operating system's current directory to
+the pathspec. An error is signalled if the pathspec is wild or does not 
+designate a directory."
+  (let* ((cwd (c-getcwd))
+	 (str (convert-from-foreign-string cwd :null-terminated-p t)))
+    (if str
+	(prog1
+	    (pathname (concatenate 'string str "/"))
+	  (free-foreign-object cwd))
+	(error "Could not get current directory."))))
+
+(defun (setf current-directory) (pathspec)
+  (with-c-file (dir pathspec :directory)
+    (if (minusp (chdir dir))
+	(error "Could not change current directory.")
+	pathspec)))
