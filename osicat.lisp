@@ -148,9 +148,7 @@ Signals an error if pathspec is wild."
 (defmacro with-directory-iterator ((iterator pathspec) &body body)
   "macro WITH-DIRECTORY-ITERATOR (iterator pathspec) &body forms => value
 
-If pathspec is relative, it is resolved against *default-pathname-defaults*. 
-If the resulting pathname is still relative, it is further resolved against
-current directory. The resulting pathname is then bound to 
+The directory designated by pathspec is then bound to 
 *default-pathname-defaults* for the dynamic scope of the body.
 
 Within the lexical scope of the body, iterator is defined via macrolet
@@ -195,7 +193,9 @@ body. Signals an error if pathspec is wild or does not designate a directory."
   "function MAPDIR function pathspec => list
 
 Applies function to each entry in directory designated by pathspec in
-turn and returns a list of the results.
+turn and returns a list of the results. Binds 
+*default-pathname-defaults* to the directory designated by pathspec
+round to function call.
 
 If pathspec designates a symbolic link, it is implicitly resolved.
 
@@ -354,9 +354,9 @@ by the symbols in list.
 If pathspec designates a symbolic link, that link is implicitly
 resolved.
 
-Permission symbols consist of :USER-READ, :USER-WRITE, :USER-EXEC,
-:GROUP-READ, :GROUP-WRITE, :GROUP-EXEC, :OTHER-READ, :OTHER-WRITE,
-:OTHER-EXEC, :SET-USER-ID, :SET-GROUP-ID, and :STICKY.
+Permission symbols consist of :user-read, :user-write, :user-exec,
+:group-read, :group-write, :group-exec, :other-read, :other-write,
+:other-exec, :set-user-id, :set-group-id, and :sticky.
 
 Both signal an error is pathspec is wild, or doesn't designate an
 exiting file."

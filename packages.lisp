@@ -33,7 +33,7 @@ Concepts:
  Designated directory
 
   When a relative pathname designator is used as a directory designator
-  it is first resolved agains *default-pathname-default*, and the
+  it is first resolved agains *default-pathname-default*, and then
   against the current directory. (With MERGE-PATHNAMES in both cases.)")
   (:export
    ;;; Evironment
