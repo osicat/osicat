@@ -73,3 +73,14 @@
      (:file "osicat" :depends-on
 	    ("osicat-glue" "foreign-types" "macros" "grovel-constants"))))
 
+(defsystem :osicat-test
+    :depends-on (:osicat :rt)
+    :components ((:file "osicat-test")))
+
+(defmethod perform ((o test-op) (c (eql (find-system :osicat))))
+  (operate 'load-op :osicat-test)
+  (operate 'test-op :osicat-test))
+
+(defmethod perform ((o test-op) (c (eql (find-system :osicat-test))))
+  (or (funcall (intern "DO-TESTS" :rt))
+      (error "test-op failed")))
