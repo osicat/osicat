@@ -150,30 +150,29 @@ further invocations of (iterator) will all return NIL.
 
 The value returned is the value of the last form evaluated in
 body. Signals an error if pathspec is wild or does not designate a directory."
-  (with-unique-names (dp dir cdir)
+  (with-unique-names (dp dir cdir one-iter)
     `(let ((,dir (normpath ,pathspec t)))
        (with-c-file (,cdir ,dir :directory t)
 	 (let (,dp)
 	   (unwind-protect
-		(macrolet ((,iterator () 
-			     `(block nil
-				(tagbody :retry
-				   (let ((entry (readdir ,',dp)))
-				     (if (null-pointer-p entry)
-					 nil
-					 (let ((name 
-						(convert-from-cstring
-						 (osicat-dirent-name 
-						  entry))))
-					   (if (member name '("." "..") 
-						       :test #'string=)
-					       (go :retry)
-					       (return (normpath name))))))))))
-		  (setf ,dp (opendir ,cdir))
-		  (when (null-pointer-p ,dp)
-		    (error "Error opening directory ~S." ,dir))
-		  (let ((*default-pathname-defaults* ,dir))
-		    ,@body))
+		(labels ((,one-iter ()
+			   (let ((entry (readdir ,dp)))
+			     (if (null-pointer-p entry)
+				 nil
+				 (let ((name 
+					(convert-from-cstring
+					 (osicat-dirent-name entry))))
+				   (if (member name '("." "..") 
+					       :test #'string=)
+				       (,one-iter)
+				       (normpath name)))))))
+		  (macrolet ((,iterator () 
+			       `(,',one-iter)))
+		    (setf ,dp (opendir ,cdir))
+		    (when (null-pointer-p ,dp)
+		      (error "Error opening directory ~S." ,dir))
+		    (let ((*default-pathname-defaults* ,dir))
+		      ,@body)))
 	     (when ,dp
 	       (if (zerop (closedir ,dp))
 		   nil
@@ -291,25 +290,33 @@ link."
 	      (pathname str)))
 	(free-foreign-object buffer)))))
 
-(defun make-link (target link &key hard)
-  "function MAKE-LINK target link &key hard => pathname
+(defun make-link (link &key target hard)
+  "function MAKE-LINK link &key target hard => pathname
 
 Creates link that points to target. Defaults to a symbolic link, but
 giving a non-NIL value to the keyword argument :HARD creates a hard
 link. Returns the pathname of the link. 
 
+Relative targets are resolved against the link. Relative links are 
+resolved against *default-pathname-defaults*.
+
 Signals an error if either target or link is wild, target does not
 exist, or link exists already."
+  (unless target
+    (error "No target given to MAKE-LINK."))
   (let ((old (current-directory)))
     (unwind-protect
-	 (with-c-file (old target)
+	 ;; KLUDGE: We merge against link for hard links only,
+	 ;; since symlink does the right thing once we are in
+	 ;; the correct directory.
+	 (with-c-file (old (if hard (merge-pathnames target link) target))
 	   (with-c-file (new link)
 	     (setf (current-directory) 
 		   (normpath *default-pathname-defaults* t))
 	     (if (zerop (funcall (if hard #'link #'symlink) old new))
 		 (pathname link)
-		 (error "Could not create ~A link ~S -> ~S." 
-			(if hard "hard" "symbolic") link target))))
+		 (error "MAKE-LINK: Could not create ~A link ~S -> ~S." 
+			(if hard "hard" "symbolic") new old))))
       (setf (current-directory) old))))
 
 (define-symbol-macro +permissions+
