@@ -28,3 +28,10 @@
                        `(,var (gensym ,(string prefix)))))
                  bindings)
      ,@body))
+
+(define-condition bug (error) 
+  ((message :reader message :initarg :message))
+  (:report (lambda (condition stream)
+	     (format stream "~A. This seems to be a bug in Osicat.~
+                             Please report on osicat-devel@common-lisp.net."
+		     (message condition)))))
