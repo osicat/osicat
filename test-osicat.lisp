@@ -50,14 +50,16 @@
   t)
 
 (deftest environment.1
-    (cdr (assoc "HOME" (environment) :test #'equal))
+    (namestring (osicat::normpath (cdr (assoc "HOME" (environment)
+					      :test #'equal))
+				  t))
   #.(namestring (user-homedir-pathname)))
 
 (deftest environment.2
     (unwind-protect
 	 (progn
 	   (setf (environment-variable 'test-variable) "TEST-VALUE")
-	   (assoc "TEST-VARIABLE" environment :test 'equal))
+	   (assoc "TEST-VARIABLE" (environment) :test #'equal))
       (makunbound-environment-variable 'test-variable))
   ("TEST-VARIABLE" . "TEST-VALUE"))
 
@@ -202,3 +204,17 @@
 	(delete-file file)
 	(delete-directory dir)))
   (#.(pathname-directory (merge-pathnames "mapdir-test/" *test-dir*))))
+
+(deftest mapdir.4
+    ;; Test that directories of form foo.bar/ don't become foo/bar/.
+    (let* ((dir (ensure-directories-exist 
+		 (merge-pathnames "mapdir-test.type/" *test-dir*)))
+	   (file (ensure-file "foo.bar" dir)))
+      (unwind-protect
+	   (let ((*default-directory-defaults* (truename "/tmp/")))
+	     (mapdir (lambda (x) 
+		       (pathname-directory (merge-pathnames x))) 
+		     dir))
+	(delete-file file)
+	(delete-directory dir)))
+  (#.(pathname-directory (merge-pathnames "mapdir-test.type/" *test-dir*))))

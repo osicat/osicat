@@ -110,7 +110,9 @@
 	   (let ((type (pathname-type path)))
 	     (and (stringp type) type)))
 	 (fixeddir (path)
-	   (let ((dir (pathname-directory path)))
+	   (let ((dir (pathname-directory (concatenate 'string
+						       (namestring path)
+						       "/"))))
 	     (if (member (car dir) '(:absolute :relative))
 		 dir
 		 (cons :relative dir)))))
@@ -118,12 +120,7 @@
       (with-cstring (cfile (namestring path))
 	(let ((abspath (if (eq :directory (c-file-kind cfile t))
 			   (make-pathname :name nil :type nil
-					  :directory 
-					  (append (fixeddir path)
-						  (remove-if 
-						   #'null
-						   (list (fixedname path)
-							 (fixedtype path))))
+					  :directory (fixeddir path)
 					  :defaults path)
 			   path)))
 	  (if absolute
