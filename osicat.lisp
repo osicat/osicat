@@ -141,14 +141,15 @@ Within the lexical scope of the body, iterator is defined via macrolet
 such that successive invocations of (iterator) return the directory
 entries, one by one. Both files and directories are returned, except
 '.' and '..'. The order of entries is not guaranteed. The entries are
-returned as relative pathnames against the designated
-directory. Entries that are symbolic links are not resolved, but links
-that point to directories are interpreted as directory
-designators. Once all entries have been returned, further invocations
-of (iterator) will all return NIL.
+returned as relative pathnames against the designated directory.
+Entries that are symbolic links are not resolved, but links that point
+to directories are interpreted as directory designators. Once all
+entries have been returned, further invocations of (iterator) will all
+return NIL.
 
 The value returned is the value of the last form evaluated in
-body. Signals an error if pathspec is wild or does not designate a directory."
+body. Signals an error if pathspec is wild or does not designate a
+directory."
   (with-unique-names (one-iter)
     `(call-with-directory-iterator ,pathspec
       (lambda (,one-iter)
@@ -298,6 +299,7 @@ relative to the link, not *default-pathname-defaults*.
 Signals an error if pathspec is wild, or does not designate a symbolic
 link."
   (handler-bind
+      ;; FIXME: Declare types properly to get rid of this.
       (#+sbcl (sb-ext:compiler-note #'muffle-warning))
     (with-c-file (path (normpath pathspec t) :symbolic-link)
       (do* ((size 64 (* size 2))
