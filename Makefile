@@ -72,6 +72,7 @@ release:
 	ln -s $(NAME).tar.gz.asc $(LINK).asc
 	ln -s $(NAME).tar.gz $(LINK)
 	mv $(NAME).tar.gz $(NAME).tar.gz.asc $(LINK) $(LINK).asc $(HTML)/files/
+	cp README $(HTML)/files/
 #	$(RSYNC_FTP) && $(FTP_PERMS)
 
 public_html:

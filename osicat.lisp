@@ -219,7 +219,7 @@ strings. Signals an error on failure."
   (with-c-name (cname name)
     (with-c-name (cvalue value)
       (if (zerop (setenv cname cvalue 1))
-	  value
+	  (convert-from-cstring cvalue)
 	  (error "Could not set environment variable ~S to ~S." name value)))))
 
 (defun makunbound-environment-variable (name)
