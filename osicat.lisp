@@ -21,7 +21,11 @@
 
 (in-package :osicat)
 
-(defparameter *osicat-version* '(0 4 0))
+(defparameter *osicat-version* '(0 4 0)
+  "variable *OSICAT-VERSION*
+
+Osicat version number represented as a list of three integers. The
+three integers represent major, minor, and revision versions.")
 
 ;;;; Common subroutines
 
@@ -345,7 +349,7 @@ exist, or link exists already."
 ;;; File permissions
 
 (defconstant +permissions+ (if (boundp '+permissions+)
-			       +permissions+
+			       (symbol-value '+permissions+)
 			       (mapcar (lambda (x)
 					 (cons (intern (symbol-name x) :keyword)
 					       (eval x)))

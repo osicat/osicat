@@ -33,7 +33,7 @@
 		    when doc
 		    collect (cons (symbol-name sym) doc))))
     (setf syms (sort syms #'string< :key #'car))
-    (format t "OSICAT ~A~%~%" osicat:*osicat-version*)
+    (format t "OSICAT ~{~A~^.~}~%~%" osicat:*osicat-version*)
     (format t "~A~%~%---~%~%" (documentation (find-package :osicat) t))
     (format t "Dictionary:~%~%")
     (dolist (cons syms)
