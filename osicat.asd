@@ -83,7 +83,7 @@
 ;;;; TESTING
 
 (defsystem :osicat-test
-    :depends-on (:osicat :rt)
+    :depends-on (:osicat :rt #+sbcl :sb-posix)
     :components ((:file "test-tools")
 		 (:file "test-osicat" :depends-on ("test-tools"))))
 

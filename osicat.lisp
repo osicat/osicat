@@ -91,24 +91,6 @@
 		  `(:relative ,@(subseq dir mismatch)))
      :defaults pathspec)))
 
-(defun normpath (pathspec &optional absolute)
-  (flet ((fixeddir (path)
-	   (let ((dir (pathname-directory
-		       (concatenate 'string (namestring path) "/"))))
-	     (if (member (car dir) '(:absolute :relative))
-		 dir
-		 (cons :relative dir)))))
-    (let ((path (absolute-pathname pathspec)))
-      (with-cstring (cfile (namestring path))
-	(let ((abspath (if (eq :directory (c-file-kind cfile t))
-			   (make-pathname :name nil :type nil
-					  :directory (fixeddir path)
-					  :defaults path)
-			   path)))
-	  (if absolute
-	      abspath
-	      (unmerge-pathnames abspath)))))))
-
 ;;;; FILE-KIND
 
 (defun file-kind (pathspec)
@@ -153,12 +135,13 @@ directory."
   (with-unique-names (one-iter)
     `(call-with-directory-iterator ,pathspec
       (lambda (,one-iter)
+	(declare (type function ,one-iter))
 	(macrolet ((,iterator () 
 		     `(funcall ,',one-iter)))
 	  ,@body)))))
 
 (defun call-with-directory-iterator (pathspec fun)
-  (let ((dir (normpath pathspec t))
+  (let ((dir (absolute-pathname pathspec))
 	(old-dir (current-directory)))
     (with-c-file (cdir dir :directory t)
       (let (dp)
@@ -220,7 +203,7 @@ directory must be empty. Symbolic links are not followed.
 
 Signals an error if pathspec is wild, doesn't designate a directory,
 or if the directory could not be deleted."
-  (with-c-file (path (normpath pathspec t) :directory)
+  (with-c-file (path (absolute-pathname pathspec) :directory)
     (if (zerop (rmdir path))
 	pathspec
 	(error "Could not delete directory ~S." pathspec))))
@@ -301,7 +284,7 @@ link."
   (handler-bind
       ;; FIXME: Declare types properly to get rid of this.
       (#+sbcl (sb-ext:compiler-note #'muffle-warning))
-    (with-c-file (path (normpath pathspec t) :symbolic-link)
+    (with-c-file (path (absolute-pathname pathspec) :symbolic-link)
       (do* ((size 64 (* size 2))
 	    (buffer #1=(allocate-foreign-string size) #1#)
 	    (got (readlink path buffer size)))
@@ -333,7 +316,7 @@ exist, or link exists already."
 	 (with-c-file (old (if hard (merge-pathnames target link) target))
 	   (with-c-file (new link)
 	     (setf (current-directory) 
-		   (normpath *default-pathname-defaults* t))
+		   (absolute-pathname *default-pathname-defaults*))
 	     (if (zerop (funcall (if hard #'link #'symlink) old new))
 		 (pathname link)
 		 (error "MAKE-LINK: Could not create ~A link ~S -> ~S." 
