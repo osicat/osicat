@@ -21,10 +21,7 @@
 
 (in-package :osicat)
 
-(defparameter *osicat-version* 
-  #.(with-open-file (f (merge-pathnames "version.txt"
-					*compile-file-truename*))
-      (symbol-name (read f))))
+(defparameter *osicat-version* '(0 4 0))
 
 ;;;; Common subroutines
 
