@@ -31,10 +31,14 @@ osicat_mode (char * name, int follow_p)
     struct stat buf;
     int err;
 
-    if (follow_p)
+    if (follow_p) {
+	printf ("stat\n");
 	err = stat (name, &buf);
-    else
+    }
+    else {
+	printf ("lstat\n");
 	err = lstat (name, &buf);
+    }
 
     if (! err)
 	return buf.st_mode;
