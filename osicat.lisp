@@ -71,16 +71,28 @@
 (defun relative-pathname-p (pathspec)
   (not (eq :absolute (car (pathname-directory pathspec)))))
 
-(defun merge-directories 
-    (pathspec &optional (other *default-pathname-defaults*))
-  (let ((tmp (merge-pathnames pathspec
-			      (make-pathname :name nil :type nil :version nil
-					     :defaults other))))
-    (if (relative-pathname-p tmp)
-	(merge-pathnames tmp (current-directory))
-	tmp)))
+(defun absolute-pathname 
+    (pathspec &optional (default *default-pathname-defaults*))
+    (if (relative-pathname-p pathspec)
+	(let ((tmp (merge-pathnames 
+		    pathspec
+		    (make-pathname :name nil :type nil :version nil
+				   :defaults default))))
+	  (if (relative-pathname-p tmp)
+	      (merge-pathnames tmp (current-directory))
+	      tmp))
+	pathspec))
 
-(defun normpath (pathspec &optional merge)
+(defun unmerge-pathnames
+    (pathspec &optional (known *default-pathname-defaults*))
+  (let* ((dir (pathname-directory pathspec))
+	 (mismatch (mismatch dir (pathname-directory known) :test #'equal)))
+    (make-pathname 
+     :directory (when mismatch
+		  `(:relative ,@(subseq dir mismatch)))
+     :defaults pathspec)))
+
+(defun normpath (pathspec &optional absolute)
   (flet ((fixedname (path)
 	   (let ((name (pathname-name path)))
 	     (cond ((equal ".." name) :up)
@@ -94,22 +106,23 @@
 	     (if (member (car dir) '(:absolute :relative))
 		 dir
 		 (cons :relative dir)))))
-    (let ((path (if (and merge (relative-pathname-p pathspec))
-		    (merge-directories pathspec)
-		    pathspec)))
+    (let ((path (absolute-pathname pathspec)))
       (when (wild-pathname-p path)
 	(error "Pathname is wild: ~S." path))
       (with-cstring (cfile (namestring path))
-	(if (eq :directory (c-file-kind cfile t))
-	    (make-pathname :name nil :type nil
-			   :directory 
-			   (append (fixeddir path)
-				   (remove-if 
-				    #'null
-				    (list (fixedname path)
-					  (fixedtype path))))
-			   :defaults path)
-	    path)))))
+	(let ((abspath (if (eq :directory (c-file-kind cfile t))
+			   (make-pathname :name nil :type nil
+					  :directory 
+					  (append (fixeddir path)
+						  (remove-if 
+						   #'null
+						   (list (fixedname path)
+							 (fixedtype path))))
+					  :defaults path)
+			   path)))
+	  (if absolute
+	      abspath
+	      (unmerge-pathnames abspath)))))))
 
 ;;;; FILE-KIND
 
@@ -191,7 +204,7 @@ Signals an error if pathspec is wild or doesn't designate a directory."
     (loop for entry = (next)
 	  while entry
 	  collect (funcall function entry))))
-  
+
 (defun delete-directory (pathspec)
   "function DELETE-DIRECTORY pathspec => T
 

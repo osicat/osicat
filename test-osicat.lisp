@@ -165,3 +165,46 @@
 		t)
 	(setf (environment-variable :path) old)))
   t)
+
+(deftest mapdir.1
+    (let* ((dir (ensure-directories-exist 
+		 (merge-pathnames "mapdir-test/" *test-dir*)))
+	   (file1 (ensure-file "file1" dir))
+	   (file2 (ensure-file "file2.txt" dir))
+	   (subdir (ensure-directories-exist
+		    (merge-pathnames "subdir/" dir))))
+      (unwind-protect
+	   (remove-if #'null (mapdir #'pathname-name dir))
+	(delete-file file1)
+	(delete-file file2)
+	(delete-directory subdir)
+	(delete-directory dir)))
+  ("file1" "file2"))
+
+(deftest mapdir.2
+    (let* ((dir (ensure-directories-exist 
+		 (merge-pathnames "mapdir-test/" *test-dir*)))
+	   (file1 (ensure-file "file1" dir))
+	   (file2 (ensure-file "file2.txt" dir))
+	   (subdir (ensure-directories-exist
+		    (merge-pathnames "subdir/" dir))))
+      (unwind-protect
+	   (mapdir #'namestring dir)
+	(delete-file file1)
+	(delete-file file2)
+	(delete-directory subdir)
+	(delete-directory dir)))
+  ("file1" "file2.txt" "subdir/"))
+
+(deftest mapdir.3
+    (let* ((dir (ensure-directories-exist 
+		 (merge-pathnames "mapdir-test/" *test-dir*)))
+	   (file (ensure-file "foo" dir)))
+      (unwind-protect
+	   (let ((*default-directory-defaults* (truename "/tmp/")))
+	     (mapdir (lambda (x) 
+		       (pathname-directory (merge-pathnames x))) 
+		     dir))
+	(delete-file file)
+	(delete-directory dir)))
+  (#.(pathname-directory (merge-pathnames "mapdir-test/" *test-dir*))))

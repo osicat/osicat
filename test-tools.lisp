@@ -35,8 +35,8 @@
    (make-pathname :directory 
 		  (pathname-directory #.*compile-file-truename*))))
 
-(defun ensure-file (file)
-  (let ((file (merge-pathnames file *test-dir*)))
+(defun ensure-file (file &optional (dir *test-dir*))
+  (let ((file (merge-pathnames file dir)))
     (or (probe-file file)
 	(with-open-file (f file :direction :output)
 	  (probe-file f)))))
