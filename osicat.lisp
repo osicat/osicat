@@ -270,6 +270,9 @@ relative to the link, not *default-pathname-defaults*.
 
 Signals an error if pathspec is wild, or does not designate a symbolic
 link."
+  ;; KLUDGE: Silence a compiler-note
+  (handler-bind
+      (#+sbcl (sb-ext:compiler-note #'muffle-warning))
   (with-c-file (path pathspec :symbolic-link)
     (do* ((size 64 (* size 2))
 	  (buffer #1=(allocate-foreign-string size) #1#)
@@ -278,7 +281,7 @@ link."
 	  (let ((str (convert-from-foreign-string buffer :length got)))
 	    (free-foreign-object buffer)
 	    (pathname str)))
-      (free-foreign-object buffer))))
+      (free-foreign-object buffer)))))
 
 (def-function "symlink" ((old :cstring) (new :cstring))
   :module "osicat"
