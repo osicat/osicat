@@ -101,15 +101,9 @@
      :defaults pathspec)))
 
 (defun normpath (pathspec &optional absolute)
-  (flet ((fixedname (path)
-	   (let ((name (pathname-name path)))
-	     (cond ((equal ".." name) :up)
-		   ((equal "." name) nil)
-		   ((stringp name) name))))
-	 (fixeddir (path)
-	   (let ((dir (pathname-directory (concatenate 'string
-						       (namestring path)
-						       "/"))))
+  (flet ((fixeddir (path)
+	   (let ((dir (pathname-directory
+		       (concatenate 'string (namestring path) "/"))))
 	     (if (member (car dir) '(:absolute :relative))
 		 dir
 		 (cons :relative dir)))))
@@ -407,7 +401,7 @@ designate a directory."
 function USER-INFO user-id => alist
 
 USER-INFO returns the password entry for the given name or numerical
-user ID, as an alist."
+user ID, as an assoc-list."
   (let ((pwent (typecase id
 		 (string (with-cstring (name id) (getpwnam name)))
 		 (integer (getpwuid id))
@@ -416,6 +410,6 @@ user ID, as an alist."
       (list (cons :name (osicat-pwent-name pwent))
 	    (cons :user-id (osicat-pwent-uid pwent))
 	    (cons :group-id (osicat-pwent-gid pwent))
-	    (cons :gecos (osicat-pwent-gid pwent))
+	    (cons :gecos (osicat-pwent-gecos pwent))
 	    (cons :home (osicat-pwent-home pwent))
 	    (cons :shell (osicat-pwent-shell pwent))))))

@@ -63,10 +63,12 @@
       (makunbound-environment-variable 'test-variable))
   ("TEST-VARIABLE" . "TEST-VALUE"))
 
+;; No-op test to ensure setf environment actually works.
 (deftest environment.3
-    ;; No-op test to ensure setf environment actually works.
-    (setf (environment) (environment))
-  #.(environment))
+    (let ((old-env (environment)))
+      (prog1 (setf (environment) nil)
+	(setf (environment) old-env)))
+  nil)
 
 (deftest environment-variable.1
     (environment-variable 'test-variable)
