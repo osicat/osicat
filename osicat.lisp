@@ -51,23 +51,23 @@
 
 (defmacro with-c-file ((c-file pathname &optional required-kind follow-p) &body forms)
   ;; FIXME: This assumes that OS has the same idea of current dir as Lisp
-  (with-unique-names (path)
+  (with-unique-names (path kind)
     `(let ((,path ,pathname))
        (when (wild-pathname-p ,path)
 	 (error "Pathname is wild: ~S." ,path))
        (with-cstring (,c-file (namestring ,path))
-	 ,(etypecase required-kind
-	     (keyword `(let ((real-kind (c-file-kind ,c-file ,follow-p)))
-			 (unless (eq ,required-kind real-kind)
-			   (if real-kind
+	 (let ((,kind (c-file-kind ,c-file ,follow-p)))
+	   ,(etypecase required-kind
+	       (keyword `(unless (eq ,required-kind ,kind)
+			   (if ,kind
 			       (error "~A is ~A, not ~A."
-				      ,path real-kind ,required-kind)
+				      ,path ,kind ,required-kind)
 			       (error "~A ~S does not exist."
-				      ,required-kind ,path)))))
-	     ((eql t) `(unless (c-file-kind ,c-file ,follow-p)
-			 (error "~A does not exist." ,path)))
-	     (null nil))
-	 ,@forms))))
+				      ,required-kind ,path))))
+	       ((eql t) `(unless ,kind
+			   (error "~A does not exist." ,path)))
+	       (null nil))
+	   ,@forms)))))
 
 (defun file-kind (pathspec)
   "function FILE-KIND pathspec => file-kind
@@ -125,8 +125,14 @@ Signal an error if pathspec is wild or does not designate a directory."
        (with-c-file (,cdir ,dir :directory t)
 	 (let ((,dp nil)
 	       (,default (make-pathname :name nil
-					:version nil
 					:type nil
+					:directory (append ;KLUDGE: deal with missing /'s
+						    (pathname-directory ,dir)
+						    (remove-if (lambda (o)
+								 (or (null o)
+								     (keywordp o)))
+							       (list (pathname-name ,dir)
+								     (pathname-type ,dir))))
 					:defaults ,dir)))
 	   (unwind-protect
 		(labels ((,iterator ()
