@@ -237,7 +237,16 @@ string designated by name. Signals an error on failure."
 	nil
 	(error "Could not remove environment variable ~S." name))))
 
-(defun get-environ ()
+(defun environment ()
+  "function ENVIRONMENT => alist
+function (SETF ENVIRONMENT) alist => alist
+
+ENVIRONMENT return the current environment as an assoc-list. 
+SETF ENVIRONMENT modifies the environment its argument. 
+
+Often it is preferable to use SETF ENVIRONMENT-VARIABLE and
+MAKUNBOUND-ENVIRONMENT-VARIABLE to modify the environment instead
+of SETF ENVIRONMENT."
   (handler-case
       (loop for i from 0 by 1
 	    for string = (convert-from-cstring
@@ -249,7 +258,7 @@ string designated by name. Signals an error on failure."
     (error (e)
       (error "Could not access environment (~S)." e))))
 
-(defun (setf get-environ) (alist)
+(defun (setf environment) (alist)
   (let ((oldenv (get-environ)))
     (loop for (var . val) in alist
 	  do (setf (environment-variable var) (string val)
@@ -260,15 +269,6 @@ string designated by name. Signals an error on failure."
 	  do (makunbound-environment-variable var)))
   alist)
 
-(define-symbol-macro environment (get-environ))
-
-(setf (documentation 'environment 'variable)
-      "symbol-macro ENVIRONMENT
-
-The current environment as a read-only assoc-list. To modify
-the environment use (SETF ENVIRONMENT-VARIABLE) and
-MAKUNBOUND-ENVIRONMENT-VARIABLE.")
-  
 (defun read-link (pathspec)
   "function READ-LINK pathspec => pathname
 

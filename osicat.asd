@@ -83,12 +83,15 @@
 
 (defsystem :osicat-test
     :depends-on (:osicat :rt)
-    :components ((:file "test-setup")
-		 (:file "test-osicat" :depends-on ("test-setup"))))
+    :components ((:file "test-tools")
+		 (:file "test-osicat" :depends-on ("test-tools"))))
 
 (defmethod perform ((o test-op) (c (eql (find-system :osicat))))
   (operate 'load-op :osicat-test)
-  (operate 'test-op :osicat-test :force t))
+  (funcall (intern "SETUP" :osicat-test))
+  (unwind-protect
+       (operate 'test-op :osicat-test :force t)
+    (funcall (intern "TEARDOWN" :osicat-test))))
 
 (defmethod perform ((o test-op) (c (eql (find-system :osicat-test))))
   (or (funcall (intern "DO-TESTS" :rt))

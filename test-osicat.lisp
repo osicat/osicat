@@ -85,29 +85,40 @@
   nil)
 
 (deftest file-kind.3
-    (file-kind *test-symlink*)
+    (let* ((file (ensure-file "tmp-file"))
+	   (link (ensure-link "tmp-link" :target file)))
+      (unwind-protect
+	   (file-kind link)
+	(delete-file link)
+	(delete-file file)))
   :symbolic-link)
 
 (deftest file-kind.4
-    (file-kind *test-file*)
+    (let ((file (ensure-file "tmp-file")))
+      (unwind-protect
+	   (file-kind file)
+	(delete-file file)))
   :regular-file)
 
 (deftest make-link.1
-    (let ((link (merge-pathnames "make-link-test-link" *test-dir*)))
+    (let ((link (merge-pathnames "make-link-test-link" *test-dir*))
+	  (file (ensure-file "tmp-file")))
       (unwind-protect
 	   (progn
-	     (make-link *test-file* link)
+	     (make-link link :target file)
 	     (namestring (read-link link)))
-	(delete-file link)))
-  #.(namestring *test-file*))
+	(delete-file link)
+	(delete-file file)))
+  #.(namestring (merge-pathnames "tmp-file" *test-dir*)))
 
 (deftest make-link.2
-    (let ((link (merge-pathnames "make-link-test-link" *test-dir*)))
+    (let ((link (merge-pathnames "make-link-test-link" *test-dir*))
+	  (file (ensure-file "tmp-file")))
       (unwind-protect
 	   (progn
-	     (make-link *test-file* link)
+	     (make-link link :target file)
 	     (file-kind link))
+	(delete-file file)
 	(delete-file link)))
   :symbolic-link)
-
 	  
