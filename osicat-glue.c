@@ -32,11 +32,9 @@ osicat_mode (char * name, int follow_p)
     int err;
 
     if (follow_p) {
-	printf ("stat\n");
 	err = stat (name, &buf);
     }
     else {
-	printf ("lstat\n");
 	err = lstat (name, &buf);
     }
 

@@ -84,9 +84,7 @@ Signals an error if pathspec is wild."
   (let ((path (pathname pathspec)))
     (when (wild-pathname-p path)
       (error "Pathname is wild: ~S." path))
-    (print (list 'namestring (namestring path)))
     (with-cstring (cfile (namestring path))
-      (print (list 'cfile cfile))
       (c-file-kind cfile nil))))
 
 (def-function "opendir" ((name :cstring))
