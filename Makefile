@@ -64,6 +64,7 @@ snapshot:
 #	$(RSYNC_FTP) && $(FTP_PERMS)
 
 release:
+	sbcl --noinform --userinit /dev/null --load make-readme.lisp --eval '(quit)'
 	mkdir -p $(NAME)
 	cp $(FILES) $(NAME)/
 	tar -czvf $(NAME).tar.gz $(NAME)
