@@ -82,15 +82,6 @@
 	    tmp))
       pathspec))
 
-(defun escape-wild-name (name)
-  (declare (simple-string name))
-  (let (stack)
-    (loop for char across name
-	  when (member char '(#\* #\[))
-	  do (push #\\ stack)
-	  do (push char stack))
-    (coerce (nreverse stack) 'simple-string)))
-
 (defun unmerge-pathnames
     (pathspec &optional (known *default-pathname-defaults*))
   (let* ((dir (pathname-directory pathspec))
@@ -142,21 +133,24 @@ Signals an error if pathspec is wild."
 (defmacro with-directory-iterator ((iterator pathspec) &body body)
   "macro WITH-DIRECTORY-ITERATOR (iterator pathspec) &body forms => value
 
-The directory designated by pathspec is then bound to 
-*default-pathname-defaults* for the dynamic scope of the body.
+Pathspec must be a valid directory designator:
+*default-pathname-defaults* is bound, and (current-directory) is set
+to the designated directory for the dynamic scope of the body.
 
 Within the lexical scope of the body, iterator is defined via macrolet
 such that successive invocations of (iterator) return the directory
 entries, one by one. Both files and directories are returned, except
 '.' and '..'. The order of entries is not guaranteed. The entries are
-returned as relative pathnames against the directory. Entries that are
-symbolic links are not resolved. Once all entries have been returned, 
-further invocations of (iterator) will all return NIL.
+returned as relative pathnames against the designated
+directory. Entries that are symbolic links are not resolved. Once all
+entries have been returned, further invocations of (iterator) will all
+return NIL.
 
 The value returned is the value of the last form evaluated in
 body. Signals an error if pathspec is wild or does not designate a directory."
-  (with-unique-names (dp dir cdir one-iter)
-    `(let ((,dir (normpath ,pathspec t)))
+  (with-unique-names (dp dir cdir old-dir one-iter)
+    `(let ((,dir (normpath ,pathspec t))
+	   (,old-dir (current-directory)))
        (with-c-file (,cdir ,dir :directory t)
 	 (let (,dp)
 	   (unwind-protect
@@ -164,24 +158,36 @@ body. Signals an error if pathspec is wild or does not designate a directory."
 			   (let ((entry (readdir ,dp)))
 			     (if (null-pointer-p entry)
 				 nil
-				 (let ((string
-					(convert-from-cstring
-					 (osicat-dirent-name entry))))
-				   (if (member string '("." "..") 
-					       :test #'string=)
-				       (,one-iter)
-				       (normpath (escape-wild-name string))))))))
+				 (let* ((cname (osicat-dirent-name entry))
+					(name (convert-from-cstring cname)))
+				   (declare (type simple-string name))
+				   (cond 
+				     ((member name '("." "..") :test #'string=)
+				      (,one-iter))
+				     ((eq :directory (c-file-kind cname t))
+				      (make-pathname
+				       :directory `(:relative ,name)))
+				     (t
+				      (let ((dotpos (position #\. name)))
+					(if (and dotpos (plusp dotpos))
+					    (make-pathname
+					     :name (subseq name 0 dotpos)
+					     :type (subseq name (1+ dotpos)))
+					    (make-pathname
+					     :name name))))))))))
 		  (macrolet ((,iterator () 
 			       `(,',one-iter)))
 		    (setf ,dp (opendir ,cdir))
 		    (when (null-pointer-p ,dp)
 		      (error "Error opening directory ~S." ,dir))
 		    (let ((*default-pathname-defaults* ,dir))
+		      (setf (current-directory) ,dir)
 		      ,@body)))
 	     (when ,dp
 	       (if (zerop (closedir ,dp))
 		   nil
-		   (error "Error closing directory ~S." ,dir)))))))))
+		   (error "Error closing directory ~S." ,dir)))
+	     (setf (current-directory) ,old-dir)))))))
 
 (defun mapdir (function pathspec)
   "function MAPDIR function pathspec => list
