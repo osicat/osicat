@@ -26,7 +26,7 @@
 					*compile-file-truename*))
       (symbol-name (read f))))
 
-;;;; COMMON SUBROUTINES
+;;;; Common subroutines
 
 (declaim (inline c-file-kind))
 (macrolet ((def ()
@@ -68,10 +68,25 @@
 		   ,@forms))
 	       forms)))))
 
+;;;; Hopefully portable pathname manipulations
+
+(defun absolute-pathname-p (pathspec)
+  "function ABSOLUTE-PATHNAME-P pathspec => boolean
+
+Returns T if the pathspec designates an absolute pathname, NIL otherwise."
+  (eq :absolute (car (pathname-directory pathspec))))
+
 (defun relative-pathname-p (pathspec)
-  (not (eq :absolute (car (pathname-directory pathspec)))))
+  "function RELATIVE-PATHNAME-p pathspec => boolean
+
+Returns T if the pathspec designates a relative pathname, NIL otherwise."
+  (not (absolute-pathname-p pathspec)))
 
 (defun absolute-pathname (pathspec &optional (default *default-pathname-defaults*))
+  "function ABSOLUTE-PATHNAME pathspec &optional default => pathname
+
+Returns an absolute pathname corresponding to pathspec by merging it with default,
+and (current-directory) if necessary."
   (if (relative-pathname-p pathspec)
       (let ((tmp (merge-pathnames 
 		  pathspec
@@ -82,10 +97,13 @@
 	    tmp))
       pathspec))
 
-(defun unmerge-pathnames
-    (pathspec &optional (known *default-pathname-defaults*))
+(defun unmerge-pathnames (pathspec &optional (default *default-pathname-defaults*))
+  "function UNMERGE-PATHNAMES pathspec &optional default => pathname
+
+Removes those leading directory components from pathspec that are
+shared with default."
   (let* ((dir (pathname-directory pathspec))
-	 (mismatch (mismatch dir (pathname-directory known) :test #'equal)))
+	 (mismatch (mismatch dir (pathname-directory default) :test #'equal)))
     (make-pathname 
      :directory (when mismatch
 		  `(:relative ,@(subseq dir mismatch)))
@@ -110,7 +128,7 @@ Signals an error if pathspec is wild."
     (with-cstring (cfile (namestring path))
       (c-file-kind cfile nil))))
 
-;;;; DIRECTORY ACCESS
+;;;; Directory access
 
 (defmacro with-directory-iterator ((iterator pathspec) &body body)
   "macro WITH-DIRECTORY-ITERATOR (iterator pathspec) &body forms => value
@@ -208,6 +226,8 @@ or if the directory could not be deleted."
 	pathspec
 	(error "Could not delete directory ~S." pathspec))))
 
+;;;; Environment access
+
 (defun environment-variable (name)
   "function ENVIRONMENT-VARIABLE name => string
 function (SETF (ENVIRONMENT-VARIABLE name) value) => value
@@ -272,6 +292,8 @@ of SETF ENVIRONMENT."
 	  do (makunbound-environment-variable var)))
   alist)
 
+;;;; Symbolic and hard links
+
 (defun read-link (pathspec)
   "function READ-LINK pathspec => pathname
 
@@ -323,14 +345,17 @@ exist, or link exists already."
 			(if hard "hard" "symbolic") new old))))
       (setf (current-directory) old))))
 
-(define-symbol-macro +permissions+
-    (load-time-value (mapcar (lambda (x)
-			       (cons (intern (symbol-name x) :keyword)
-				     (eval x)))
-			     '(user-read user-write user-exec
-			       group-read group-write group-exec
-			       other-read other-write other-exec
-			       set-user-id set-group-id sticky))))
+;;; File permissions
+
+(defconstant +permissions+ (if (boundp '+permissions+)
+			       +permissions+
+			       (mapcar (lambda (x)
+					 (cons (intern (symbol-name x) :keyword)
+					       (eval x)))
+				       '(user-read user-write user-exec
+					 group-read group-write group-exec
+					 other-read other-write other-exec
+					 set-user-id set-group-id sticky))))
 
 (defun file-permissions (pathspec)
   "function FILE-PERMISSIONS pathspec => list
@@ -366,6 +391,8 @@ exiting file."
 				   :initial-value 0)))
 	perms
 	(error "Could not set file permissions of ~S to ~S." pathspec perms))))
+
+;;;; Current directory
 
 (defun current-directory ()
   "function CURRENT-DIRECTORY => pathname

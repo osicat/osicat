@@ -59,5 +59,9 @@ Concepts:
    #:user-info
    ;; Version info
    #:*osicat-version*
+   ;; Pathname utilities
+   #:absolute-pathname
+   #:absolute-pathname-p
+   #:relative-pathname-p
+   #:unmerge-pathnames
    ))
-
