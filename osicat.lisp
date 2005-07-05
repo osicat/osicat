@@ -150,7 +150,8 @@ On failure, a FILE-ERROR may be signalled."
   ;; fds, also relatively safe from race conditions through obscurity?
   ;; XXX Another bug with this: the file doesn't get unlinked.
   #-(or cmu sbcl)
-  (open (tmpnam nil) :direction :io :element-type element-type))
+  (open (convert-from-cstring (tmpnam (make-null-pointer 'cstring)))
+	:direction :io :element-type element-type))
 
 
 (defmacro with-temporary-file ((stream &key element-type) &body body)
@@ -465,9 +466,9 @@ user ID, as an assoc-list."
 		 (integer (getpwuid id))
 		 (t (make-null-pointer :pointer-void)))))
     (when (not (null-pointer-p pwent))
-      (list (cons :name (osicat-pwent-name pwent))
+      (list (cons :name (convert-from-cstring (osicat-pwent-name pwent)))
 	    (cons :user-id (osicat-pwent-uid pwent))
 	    (cons :group-id (osicat-pwent-gid pwent))
-	    (cons :gecos (osicat-pwent-gecos pwent))
-	    (cons :home (osicat-pwent-home pwent))
-	    (cons :shell (osicat-pwent-shell pwent))))))
+	    (cons :gecos (convert-from-cstring (osicat-pwent-gecos pwent)))
+	    (cons :home (convert-from-cstring (osicat-pwent-home pwent)))
+	    (cons :shell (convert-from-cstring (osicat-pwent-shell pwent)))))))
