@@ -45,7 +45,7 @@ three integers represent major, minor, and revision versions.")
 			     regular-file symbolic-link pipe socket))
 			(t (error
 			    'bug :message
-			    (format nil "Unknown file mode: ~H." mode)))))))))
+			    (format nil "Unknown file mode: ~A." mode)))))))))
   (def))
 
 (defmacro with-c-file 
@@ -128,6 +128,39 @@ Signals an error if pathspec is wild."
       (error "Pathname is wild: ~S." path))
     (with-cstring (cfile (namestring path))
       (c-file-kind cfile nil))))
+
+;;;; Temporary files
+
+(defun make-temporary-file (&key (element-type 'character))
+  "function MAKE-TEMPORARY-FILE (&key element-type) => stream
+
+Makes a temporary file setup for input and output, and returns a
+stream connected to that file.  ELEMENT-TYPE specifies the unit of
+transaction of the stream.
+
+On failure, a FILE-ERROR may be signalled."
+  #+(or cmu sbcl)
+  (let ((fd (osicat-tmpfile)))
+    (unless (>= fd 0) (signal 'file-error))
+    #+cmu(sys:make-fd-stream fd :input t :output t
+			     :element-type element-type)
+    #+sbcl(sb-sys:make-fd-stream fd :input t :output t
+				 :element-type element-type))
+  ;; XXX Warn about insecurity?  Or is any platform too dumb to have
+  ;; fds, also relatively safe from race conditions through obscurity?
+  ;; XXX Another bug with this: the file doesn't get unlinked.
+  #-(or cmu sbcl)
+  (open (tmpnam nil) :direction :io :element-type element-type))
+
+
+(defmacro with-temporary-file ((stream &key element-type) &body body)
+  "macro WITH-TEMPORARY-FILE (stream &key element-type) &body body => stream"
+  `(let ((,stream (make-temporary-file
+		   ,@(when element-type
+			   `(:element-type ,element-type)))))
+    (unwind-protect
+	 (progn ,@body)
+      (close ,stream :abort t))))
 
 ;;;; Directory access
 
@@ -346,7 +379,7 @@ exist, or link exists already."
 			(if hard "hard" "symbolic") new old))))
       (setf (current-directory) old))))
 
-;;; File permissions
+;;;; File permissions
 
 (defconstant +permissions+ (if (boundp '+permissions+)
 			       (symbol-value '+permissions+)

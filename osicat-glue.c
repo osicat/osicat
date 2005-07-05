@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #include <errno.h>
+#include <unistd.h>
 
 extern int
 osicat_mode (char * name, int follow_p)
@@ -116,3 +117,16 @@ osicat_pwent_shell (struct passwd * pwent)
     return pwent->pw_shell;
 }
 
+
+#include <stdio.h>
+#include <stdlib.h>
+
+extern int
+osicat_tmpfile (void)
+{
+    FILE *fp;
+
+    fp = tmpfile ();
+    if (fp == NULL) return -1;
+    return fileno (fp);
+}

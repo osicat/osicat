@@ -57,6 +57,9 @@ Concepts:
    #:make-link
    ;; Permissions
    #:file-permissions
+   ;; Temporary files
+   #:make-temporary-file
+   #:with-temporary-file
    ;; Password entries
    #:user-info
    ;; Version info

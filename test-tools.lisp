@@ -49,6 +49,11 @@
 	  ((null kind) (make-link link :target target))
 	  (t (error "File exists and is not a link.")))))
 
+(defun our-getuid ()
+  #+sbcl (sb-posix:getuid)
+  #+cmu (unix:unix-getuid)
+  #-(or sbcl cmu) 0)			; A sane enough default for testing?
+
 ;;; Test environment
 
 (defun teardown ()

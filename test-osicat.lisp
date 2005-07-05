@@ -49,6 +49,8 @@
 			(error () :error)))))
   t)
 
+;;; XXX: (user-homedir-pathname) is "home:" under CMUCL, so this test
+;;; will fail.
 (deftest environment.1
     (namestring (probe-file (cdr (assoc "HOME" (environment)
 					:test #'equal))))
@@ -312,20 +314,20 @@
 
 ;; Does this test still work in the case of su/sudo?  It should, I
 ;; think.
-#+sbcl
 (deftest user-info.2
-    (let ((user-id (cdr (assoc :user-id (user-info (sb-posix:getuid))))))
-      (equal user-id (sb-posix:getuid)))
+    (let* ((uid (our-getuid))
+	   (user-info (user-info uid)))
+      (equal (cdr (assoc :user-id user-info)) uid))
   t)
 
 ;; Just get our home directory, and see if it exists.  I don't
 ;; think this will work 100% of the time, but it should for most
 ;; people testing the package; given that, would it be even better
 ;; to compare the value to (user-homedir-pathname)?
-#+sbcl
 (deftest user-info.3
-    (let ((home (cdr (assoc :home (user-info (sb-posix:getuid))))))
-      (file-kind home))
+    (let* ((uid (our-getuid))
+	   (user-info (user-info uid)))
+      (file-kind (cdr (assoc :home user-info))))
   :directory)
 
 ;; We'll go out on a limb and assume that not only does the root
@@ -336,3 +338,11 @@
       (file-kind home))
   :directory)
 
+
+(deftest temporary-file.1
+    (with-temporary-file (stream)
+      (let ((pos (file-position stream)))
+	(print 'foo stream)
+	(file-position stream pos)
+	(eql (read stream) 'foo)))
+  t)

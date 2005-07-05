@@ -69,6 +69,10 @@
   :module "osicat"
   :returning :cstring)
 
+(def-function "osicat_tmpfile" ()
+  :module "osicat"
+  :returning :int)
+
 ;;;; PLAIN POSIX
 
 (def-function "opendir" ((name :cstring))
@@ -130,3 +134,7 @@
 (def-function "chdir" ((name :cstring))
   :module "osicat"
   :returning :int)
+
+(def-function "tmpnam" ((template :cstring))
+  :module "osicat"
+  :returning :cstring)
