@@ -148,10 +148,14 @@ On failure, a FILE-ERROR may be signalled."
 				 :element-type element-type))
   ;; XXX Warn about insecurity?  Or is any platform too dumb to have
   ;; fds, also relatively safe from race conditions through obscurity?
-  ;; XXX Another bug with this: the file doesn't get unlinked.
+  ;; XXX Will unlinking the file after opening the stream work the way
+  ;; we expect?
   #-(or cmu sbcl)
-  (open (convert-from-cstring (tmpnam (make-null-pointer 'cstring)))
-	:direction :io :element-type element-type))
+  (let* ((name (tmpnam (make-null-pointer 'cstring)))
+	 (stream (open (convert-from-cstring name) :direction :io
+		       :element-type element-type)))
+    (unlink name)
+    stream))
 
 
 (defmacro with-temporary-file ((stream &key element-type) &body body)

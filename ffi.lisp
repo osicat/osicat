@@ -138,3 +138,7 @@
 (def-function "tmpnam" ((template :cstring))
   :module "osicat"
   :returning :cstring)
+
+(def-function "unlink" ((pathname :cstring))
+  :module "osicat"
+  :returning :int)
