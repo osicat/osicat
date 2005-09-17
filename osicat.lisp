@@ -312,7 +312,7 @@ of SETF ENVIRONMENT."
   (handler-case
       (loop for i from 0 by 1
 	    for string = (convert-from-cstring
-			  (deref-array environ cstring-array i))
+			  (deref-array environ 'cstring-array i))
 	    for split = (position #\= string)
 	    while string
 	    collecting (cons (subseq string 0 split) 
