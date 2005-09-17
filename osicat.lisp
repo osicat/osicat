@@ -86,8 +86,8 @@ Returns T if the pathspec designates a relative pathname, NIL otherwise."
 (defun absolute-pathname (pathspec &optional (default *default-pathname-defaults*))
   "function ABSOLUTE-PATHNAME pathspec &optional default => pathname
 
-Returns an absolute pathname corresponding to pathspec by merging it with default,
-and (current-directory) if necessary."
+Returns an absolute pathname corresponding to pathspec by merging it
+with default, and (current-directory) if necessary."
   (if (relative-pathname-p pathspec)
       (let ((tmp (merge-pathnames 
 		  pathspec
@@ -136,7 +136,8 @@ Signals an error if pathspec is wild."
 
 Makes a temporary file setup for input and output, and returns a
 stream connected to that file.  ELEMENT-TYPE specifies the unit of
-transaction of the stream.
+transaction of the stream.  Consider using WITH-TEMPORARY-FILE instead
+of this function.
 
 On failure, a FILE-ERROR may be signalled."
   #+(or cmu sbcl)
@@ -149,7 +150,7 @@ On failure, a FILE-ERROR may be signalled."
   ;; XXX Warn about insecurity?  Or is any platform too dumb to have
   ;; fds, also relatively safe from race conditions through obscurity?
   ;; XXX Will unlinking the file after opening the stream work the way
-  ;; we expect?
+  ;; we expect? (it seems to, from testing.)
   #-(or cmu sbcl)
   (let* ((name (tmpnam (make-null-pointer 'cstring)))
 	 (stream (open (convert-from-cstring name) :direction :io
@@ -159,10 +160,13 @@ On failure, a FILE-ERROR may be signalled."
 
 
 (defmacro with-temporary-file ((stream &key element-type) &body body)
-  "macro WITH-TEMPORARY-FILE (stream &key element-type) &body body => stream"
+  "macro WITH-TEMPORARY-FILE (stream &key element-type) &body body => stream
+
+Within the lexical scope of the body, stream is connected to a
+temporary file as created by MAKE-TEMPORARY-FILE.  The file is closed
+automatically once BODY exits."  
   `(let ((,stream (make-temporary-file
-		   ,@(when element-type
-			   `(:element-type ,element-type)))))
+		   ,@(when element-type `(:element-type ,element-type)))))
     (unwind-protect
 	 (progn ,@body)
       (close ,stream :abort t))))
