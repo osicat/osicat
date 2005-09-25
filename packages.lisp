@@ -58,7 +58,7 @@ Concepts:
    ;; Permissions
    #:file-permissions
    ;; Temporary files
-   #:make-temporary-file
+   #:open-temporary-file
    #:with-temporary-file
    ;; Password entries
    #:user-info
@@ -69,4 +69,6 @@ Concepts:
    #:absolute-pathname-p
    #:relative-pathname-p
    #:unmerge-pathnames
+   ;; FD-streams symbol
+   #:fd-streams
    ))

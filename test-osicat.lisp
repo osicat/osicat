@@ -49,8 +49,9 @@
 			(error () :error)))))
   t)
 
-;;; XXX: (user-homedir-pathname) is "home:" under CMUCL, so this test
-;;; will fail.
+;;; FIXME: (user-homedir-pathname) is "home:" under CMUCL, so this
+;;; test will fail.
+#-cmu
 (deftest environment.1
     (namestring (probe-file (cdr (assoc "HOME" (environment)
 					:test #'equal))))
@@ -171,7 +172,7 @@
   #.(namestring *test-dir*))
 
 ;; Test the case of reading a link with a very long name.
-(deftest read-link.1
+(deftest read-link.2
     (let ((link (merge-pathnames "make-link-test-link" *test-dir*))
 	  (file (ensure-file "a-very-long-tmp-file-name-explicitly-for-the-purpose-of-testing-a-certain-condition-in-read-link-please-ignore-thanks")))
       (unwind-protect

@@ -21,7 +21,7 @@
 
 (in-package :osicat)
 
-(defparameter *osicat-version* '(0 4 1)
+(defparameter *osicat-version* '(0 5 0)
   "variable *OSICAT-VERSION*
 
 Osicat version number represented as a list of three integers. The
@@ -131,45 +131,51 @@ Signals an error if pathspec is wild."
 
 ;;;; Temporary files
 
-(defun make-temporary-file (&key (element-type 'character))
-  "function MAKE-TEMPORARY-FILE (&key element-type) => stream
+(defun open-temporary-file (&key (element-type 'character)
+			    (external-format :default))
+  "function OPEN-TEMPORARY-FILE (&key element-type) => stream
 
-Makes a temporary file setup for input and output, and returns a
-stream connected to that file.  ELEMENT-TYPE specifies the unit of
-transaction of the stream.  Consider using WITH-TEMPORARY-FILE instead
-of this function.
+Creates a temporary file setup for input and output, and returns a
+stream connected to that file.  The file itself is unlinked once it
+has been opened.  ELEMENT-TYPE specifies the unit of transaction of
+the stream.  Consider using WITH-TEMPORARY-FILE instead of this
+function.
 
 On failure, a FILE-ERROR may be signalled."
-  #+(or cmu sbcl)
+  #+osicat:fd-streams
   (let ((fd (osicat-tmpfile)))
-    (unless (>= fd 0) (signal 'file-error))
-    #+cmu(sys:make-fd-stream fd :input t :output t
-			     :element-type element-type)
-    #+sbcl(sb-sys:make-fd-stream fd :input t :output t
-				 :element-type element-type))
-  ;; XXX Warn about insecurity?  Or is any platform too dumb to have
-  ;; fds, also relatively safe from race conditions through obscurity?
-  ;; XXX Will unlinking the file after opening the stream work the way
-  ;; we expect? (it seems to, from testing.)
-  #-(or cmu sbcl)
-  (let* ((name (tmpnam (make-null-pointer 'cstring)))
-	 (stream (open (convert-from-cstring name) :direction :io
-		       :element-type element-type)))
-    (unlink name)
-    stream))
+    (unless (>= fd 0) (error 'file-error))
+    (make-fd-stream fd :direction :io :element-type element-type
+		    :external-format external-format))
+  #-osicat:fd-streams
+  ;; 100 is an arbitrary number of iterations to try before failing.
+  (do ((counter 100 (1- counter)))
+      ((zerop counter) (error 'file-error))
+    (let* ((name (tmpnam (make-null-pointer 'cstring)))
+	   (stream (open (convert-from-cstring name) :direction :io
+			 :element-type element-type
+			 :external-format external-format
+			 :if-exists nil)))
+      (when stream
+	(unlink name)
+	(return stream)))))
 
 
 (defmacro with-temporary-file ((stream &key element-type) &body body)
   "macro WITH-TEMPORARY-FILE (stream &key element-type) &body body => stream
 
 Within the lexical scope of the body, stream is connected to a
-temporary file as created by MAKE-TEMPORARY-FILE.  The file is closed
+temporary file as created by OPEN-TEMPORARY-FILE.  The file is closed
 automatically once BODY exits."  
-  `(let ((,stream (make-temporary-file
-		   ,@(when element-type `(:element-type ,element-type)))))
+  `(let ((,stream))
     (unwind-protect
-	 (progn ,@body)
-      (close ,stream :abort t))))
+	 (progn 
+	   (setf ,stream
+		 (open-temporary-file
+		  ,@(when element-type `(:element-type ,element-type))))
+	   ,@body)
+      (when ,stream
+	(close ,stream :abort t)))))
 
 ;;;; Directory access
 

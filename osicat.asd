@@ -69,7 +69,7 @@
 ;;;; SYSTEM
 
 (defsystem :osicat
-    :version "0.4.1"
+    :version "0.5.0"
     :depends-on (:uffi)
     :components
     ((:c-source-file "osicat-glue")
@@ -77,8 +77,9 @@
      (:grovel-file "grovel-constants" :depends-on ("packages"))
      (:file "early-util" :depends-on ("packages"))
      (:file "ffi" :depends-on ("early-util"))
+     (:file "ports" :depends-on ("packages"))
      (:file "osicat" :depends-on
-	    ("osicat-glue" "ffi" "grovel-constants"))))
+	    ("osicat-glue" "ports" "ffi" "grovel-constants"))))
 
 ;;;; TESTING
 
