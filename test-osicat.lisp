@@ -342,8 +342,23 @@
 
 (deftest temporary-file.1
     (with-temporary-file (stream)
+      (print 'foo stream)
       (let ((pos (file-position stream)))
-	(print 'foo stream)
+	(print 'bar stream)
+	(print 'baz stream)
 	(file-position stream pos)
-	(eql (read stream) 'foo)))
+	(eql (read stream) 'bar)))
+  t)
+
+;; Test failure condition of OPEN-TEMPORARY-FILE.  So far, opening too
+;; many fds is all I can determine as a way to do this.
+(deftest temporary-file.2
+    (let ((fds))
+      (handler-case
+	  (unwind-protect
+	       (do ((ctr 1024 (1- ctr)))	; 1024 fds is usually too many.
+		   ((zerop ctr))
+		 (push (open-temporary-file) fds))
+	    (mapcar #'close fds))
+	(file-error () t)))
   t)

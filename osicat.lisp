@@ -144,13 +144,15 @@ function.
 On failure, a FILE-ERROR may be signalled."
   #+osicat:fd-streams
   (let ((fd (osicat-tmpfile)))
-    (unless (>= fd 0) (error 'file-error))
+    (unless (>= fd 0) 
+      (error 'file-error :pathname nil))
     (make-fd-stream fd :direction :io :element-type element-type
 		    :external-format external-format))
   #-osicat:fd-streams
   ;; 100 is an arbitrary number of iterations to try before failing.
   (do ((counter 100 (1- counter)))
-      ((zerop counter) (error 'file-error))
+      ((zerop counter)
+       (error 'file-error :pathname nil))
     (let* ((name (tmpnam (make-null-pointer 'cstring)))
 	   (stream (open (convert-from-cstring name) :direction :io
 			 :element-type element-type
@@ -322,7 +324,7 @@ of SETF ENVIRONMENT."
   (handler-case
       (loop for i from 0 by 1
 	    for string = (convert-from-cstring
-			  (deref-array environ 'cstring-array i))
+			  (deref-array environ 'cstring-ptr i))
 	    for split = (position #\= string)
 	    while string
 	    collecting (cons (subseq string 0 split) 

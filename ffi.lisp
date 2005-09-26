@@ -103,8 +103,8 @@
   :module "osicat"
   :returning :int)
 
-(def-array-pointer cstring-array :cstring)
-(def-foreign-var "environ" 'cstring-array "osicat")
+(def-foreign-type cstring-ptr (* :cstring))
+(def-foreign-var "environ" 'cstring-ptr "osicat")
 
 (def-function "getpwnam" ((name :cstring))
   :module "osicat"

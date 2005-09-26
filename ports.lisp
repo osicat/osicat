@@ -41,17 +41,14 @@
 			  :external-format external-format)))
   (pushnew 'fd-streams *features*))
 
-;; FIXME: This code would work for OpenMCL, except that the FD-STREAM
-;; returned by ccl::make-fd-stream is apparently not a stream (as per
-;; STREAMP etc).  I'm sure there's something we can do to correct
-;; this, but until then, I'm leaving it out.
-#+nil ;; openmcl
+#+openmcl
 (progn
   ;; KLUDGE: This is kind of evil, because MAKE-FD-STREAM isn't
   ;; exported from CCL in OpenMCL.  However, it seems to have been
-  ;; around for a while, and I'm going to ask the OpenMCL developers
-  ;; if they'll add it to the exported interface.
+  ;; around for a while, and the developers have said that they don't
+  ;; have any plans to change it any time soon.
   (defun make-fd-stream (fd &key direction element-type external-format)
     (declare (ignore external-format))
-    (ccl::make-fd-stream fd :direction direction :element-type element-type))
+    (ccl::make-fd-stream fd :direction direction :element-type element-type
+			 :class 'file-stream))
   (pushnew 'fd-streams *features*))
