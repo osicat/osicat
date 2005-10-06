@@ -34,11 +34,11 @@
 #+cmu
 (progn
   (defun make-fd-stream (fd &key direction element-type external-format)
+    (declare (ignore external-format))
     (let ((in-p (member direction '(:io :input)))
 	  (out-p (member direction '(:io :output))))
       (sys:make-fd-stream fd :input in-p :output out-p
-			  :element-type element-type
-			  :external-format external-format)))
+			  :element-type element-type)))
   (pushnew 'fd-streams *features*))
 
 #+openmcl
