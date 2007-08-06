@@ -548,11 +548,11 @@ than C's printf) with format string FORMAT and arguments ARGS."
 
 (defun statvfs (path)
   "Retrieve file system information."
-  (funcall #'%statvfs path))
+  (funcall-statvfs #'%statvfs path))
 
 (defun fstatvfs (fd)
   "Retrieve file system information."
-  (funcall #'%fstatvfs fd))
+  (funcall-statvfs #'%fstatvfs fd))
 
 ;;;; sys/poll.h
 
