@@ -101,6 +101,9 @@
    #:lockf
    #:lseek
    #:lstat
+   #:memcpy
+   #:memset
+   #:memmove
    #:mkdir
    #:mkdtemp
    #:mkfifo
