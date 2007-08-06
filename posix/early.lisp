@@ -1,0 +1,184 @@
+;;;; -*- Mode: Lisp; indent-tabs-mode: nil -*-
+;;;
+;;; early.lisp --- Early definitions used throughout OSICAT-POSIX.
+;;;
+;;; Copyright (C) 2005-2006, Matthew Backes  <lucca@accela.net>
+;;; Copyright (C) 2005-2006, Dan Knapp  <dankna@accela.net>
+;;; Copyright (C) 2006-2007, Stelian Ionescu  <stelian.ionescu-zeus@poste.it>
+;;; Copyright (C) 2007, Luis Oliveira  <loliveira@common-lisp.net>
+;;;
+;;; Permission is hereby granted, free of charge, to any person
+;;; obtaining a copy of this software and associated documentation
+;;; files (the "Software"), to deal in the Software without
+;;; restriction, including without limitation the rights to use, copy,
+;;; modify, merge, publish, distribute, sublicense, and/or sell copies
+;;; of the Software, and to permit persons to whom the Software is
+;;; furnished to do so, subject to the following conditions:
+;;;
+;;; The above copyright notice and this permission notice shall be
+;;; included in all copies or substantial portions of the Software.
+;;;
+;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+;;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+;;; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+;;; NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+;;; HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+;;; WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+;;; DEALINGS IN THE SOFTWARE.
+
+(in-package #:osicat-posix)
+
+;;; Subtypes of POSIX-ERROR correspond to errors detected through the
+;;; ERRNO mechanism.  These are defined below.
+;;;
+;;; There is a PRINT-OBJECT method specialized on POSIX-ERROR defined
+;;; in basic-unix.lisp because it needs %STRERROR-R defined later in
+;;; wrappers.lisp.
+(define-condition posix-error (system-error)
+  ()
+  (:documentation
+   "POSIX-ERRORs are signalled whenever ERRNO is set by a POSIX call."))
+
+;;; ALIST mapping keywords (such as :EAGAIN) to lisp symbols denoting
+;;; subtypes of POSIX-ERROR.
+;;;
+;;; FIXME: a hashtable might be better here?
+(defparameter *error-symbols* nil)
+
+;;; Define an error condition for each ERRNO value defined in the
+;;; ERRNO-VALUES enum type and populate *ERROR-SYMBOLS*.
+(macrolet
+    ((define-posix-errors (keywords)
+       `(progn
+          ,@(loop for kw in keywords collect
+                  (let ((cond-name (intern (symbol-name kw)))
+                        (code (foreign-enum-value 'errno-values kw)))
+                    `(progn
+                       (define-condition ,cond-name (posix-error) ()
+                         (:default-initargs :code ,code :identifier ,kw))
+                       (push (cons ',kw ',cond-name) *error-symbols*)))))))
+  (define-posix-errors
+      #.(foreign-enum-keyword-list 'errno-values)))
+
+;;; Instantiates a subclass of POSIX-ERROR matching ERR or a plain
+;;; POSIX-ERROR if no matching subclass is found.  ERR can be either a
+;;; keyword or an integer both denoting an ERRNO value.
+(defun make-posix-error (err)
+  (let* ((error-keyword
+          (etypecase err
+            (keyword err)
+            (integer (or (foreign-enum-keyword 'errno-values err :errorp nil)
+                         :unknown))))
+         (error-code
+          (etypecase err
+            (keyword (foreign-enum-value 'errno-values error-keyword
+                                         :errorp nil))
+            (integer err))))
+    (let ((condition-class (cdr (assoc error-keyword *error-symbols*))))
+      (if condition-class
+          (make-condition condition-class)
+          (make-condition 'posix-error
+                          :code error-code
+                          :identifier error-keyword)))))
+
+;;; This might be a silly question but, who resets ERRNO?  Should we?
+;;; I ask because we have some function bindings with DEFSYSCALL that
+;;; have no documented ERRNO behaviour and we're checking ERRNO when
+;;; they fail anyway.  --luis
+
+(defun posix-error (&optional (errno (get-errno)))
+  (error (make-posix-error errno)))
+
+;;; Default ERROR-GENERATOR for ERRNO-WRAPPER.
+(defun syscall-signal-posix-error (return-value)
+  (declare (ignore return-value))
+  (error (make-posix-error (get-errno))))
+
+;;; Error predicate that always returns NIL.  Not actually used
+;;; because the ERRNO-WRAPPER optimizes this call away.
+(defun never-fails (errcode)
+  (declare (ignore errcode))
+  nil)
+
+;;; NOTE: This is a pretty neat type that probably deserves to be
+;;; included in CFFI. --luis
+;;;
+;;; This type is used by DEFSYSCALL to automatically check for errors
+;;; using the ERROR-PREDICATE function which is passed the foreign
+;;; function's return value (after going through RETURN-FILTER).  If
+;;; ERROR-PREDICATE returns true, ERROR-GENERATOR is invoked.  See the
+;;; ERRNO-WRAPPER parse method and type translation.
+(define-foreign-type errno-wrapper ()
+  ((error-predicate :initarg :error-predicate :reader error-predicate)
+   (return-filter :initarg :return-filter :reader return-filter)
+   (error-generator :initarg :error-generator :reader error-generator)
+   (base-type :initarg :base-type :reader base-type)))
+
+;;; FIXME: undocumented in cffi-grovel.
+(defun make-from-pointer-function-name (type-name)
+  (format-symbol t "MAKE-~a-FROM-POINTER" type-name))
+
+(define-parse-method errno-wrapper
+    (base-type &key error-predicate (return-filter 'identity)
+               (error-generator 'syscall-signal-posix-error))
+  ;; pick a default error-predicate
+  (unless error-predicate
+    (case base-type
+      (:pointer
+       (setf error-predicate 'null-pointer-p))
+      (:string
+       (setf error-predicate '(lambda (s) (not (stringp s)))))
+      ((:int :long time ssize pid off)
+       (setf error-predicate 'minusp))
+      ;; FIXME: go here if the canonical type is unsigned.
+      ((:void :unsigned-int mode uid gid)
+       (setf error-predicate 'never-fails))
+      (t
+       (if (eq (cffi::canonicalize-foreign-type base-type) :pointer)
+           ;; MAKE-FROM-POINTER-FUNCTION-NAME is used in cffi-grovel's
+           ;; CSTRUCT-AND-CLASS but we don't actually use it anywhere
+           ;; that I know of so this fallback RETURN-FILTER is
+           ;; probably bogus.
+           (setf error-predicate 'null-pointer-p
+                 return-filter (make-from-pointer-function-name base-type))
+           (error "Could not choose a error-predicate function.")))))
+  (make-instance 'errno-wrapper
+                 :actual-type base-type
+                 :base-type base-type
+                 :error-predicate error-predicate
+                 :return-filter return-filter
+                 :error-generator error-generator))
+
+;;; This type translator sets up the appropriate calls to
+;;; RETURN-FILTER, ERROR-PREDICATE and ERROR-GENERATOR around the
+;;; foreign function call.
+(defmethod expand-from-foreign (value (type errno-wrapper))
+  (if (and (eq (return-filter type) 'identity)
+           (eq (error-predicate type) 'never-fails))
+      value
+      `(let ((r (convert-from-foreign ,value ',(base-type type))))
+         ,(let ((return-exp (if (eq (return-filter type) 'identity)
+                               'r
+                               `(,(return-filter type) r))))
+            (if (eq (error-predicate type) 'never-fails)
+                return-exp
+                `(if (,(error-predicate type) r)
+                     (,(error-generator type) r)
+                     ,return-exp))))))
+
+(defmacro defsyscall (name-and-opts return-type &body args)
+  "Simple wrapper around DEFCFUN that changes the RETURN-TYPE
+to (ERRNO-WRAPPER RETURN-TYPE).  On windows, prepends #\_ to
+the C function name."
+  (multiple-value-bind (lisp-name c-name options)
+      (cffi::parse-name-and-options name-and-opts)
+    #+windows (setf c-name (concatenate 'string "_" c-name))
+    `(defcfun (,c-name ,lisp-name ,@options) (errno-wrapper ,return-type)
+       ,@args)))
+
+;;; This workaround for windows sucks. --luis
+(defmacro defcsyscall (name-and-opts return-type &body args)
+  "Like DEFSYSCALL but doesn't prepend #\_ to the C function name on
+windows (or any other platform)."
+  `(defcfun ,name-and-opts (errno-wrapper ,return-type) ,@args))
