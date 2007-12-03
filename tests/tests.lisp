@@ -57,6 +57,8 @@
           (t (error "File exists and is not a link.")))))
 
 (defun our-getuid ()
-  #+sbcl (sb-posix:getuid)
+  #+sbcl (sb-unix:unix-getuid)
   #+cmu (unix:unix-getuid)
-  #-(or sbcl cmu) 0) ; A sane enough default for testing?
+  #+clisp (posix:getuid)
+  #+allegro (excl.osi:getuid)
+  #-(or sbcl cmu clisp allegro) 0) ; A sane enough default for testing?
