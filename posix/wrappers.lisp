@@ -27,7 +27,6 @@
 (in-package #:osicat-posix)
 
 (c "#if defined(__linux__)")
-(define "_GNU_SOURCE")
 (define "_XOPEN_SOURCE" 600)
 (define "_LARGEFILE_SOURCE")
 (define "_LARGEFILE64_SOURCE")
