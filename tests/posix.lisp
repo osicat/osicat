@@ -422,8 +422,9 @@
 ;;; for some reason.  Hopefully TEST-DIR doesn't contain any.
 (define-posix-test readdir.dirent-name
     (let ((test-dir (pathname-directory-pathname
-                     (asdf:system-definition-pathname
-                      (asdf:find-system 'osicat)))))
+                     (truename
+                      (asdf:system-definition-pathname
+                       (asdf:find-system 'osicat))))))
       (flet ((list-current-dir ()
                (mapcar (lambda (p)
                          (let ((string (enough-namestring p test-dir)))

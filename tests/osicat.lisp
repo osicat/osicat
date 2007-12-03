@@ -192,7 +192,7 @@
         (delete-file file)))
   t)
 
-(deftest maunbound-environment-variable.1
+(deftest makunbound-environment-variable.1
     (let ((old (environment-variable :path)))
       (unwind-protect
            (and old
@@ -225,7 +225,7 @@
            (subdir (ensure-directories-exist
                     (merge-pathnames "subdir/" dir))))
       (unwind-protect
-           (mapdir #'namestring dir)
+           (sort (mapdir #'namestring dir) #'string<)
         (delete-file file1)
         (delete-file file2)
         (delete-directory subdir)
