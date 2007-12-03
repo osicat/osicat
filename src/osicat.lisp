@@ -348,6 +348,13 @@ DIRNAME does not exist."
 
 ;;;; Environment access
 
+;;; FIXME: This is a *very* big kludge, waiting for babel to be fixed
+(defun to-simple-string (thing)
+  (let ((s (string thing)))
+    (make-array (length s)
+                :element-type 'character
+                :initial-contents s)))
+
 (defun environment-variable (name)
   "ENVIRONMENT-VARIABLE returns the environment variable
 identified by NAME, or NIL if one does not exist.  NAME can
@@ -356,17 +363,17 @@ either be a symbol or a string.
 SETF ENVIRONMENT-VARIABLE sets the environment variable
 identified by NAME to VALUE.  Both NAME and VALUE can be either a
 symbols or strings. Signals an error on failure."
-  (nix:getenv (string name)))
+  (nix:getenv (to-simple-string name)))
 
 (defun (setf environment-variable) (value name)
-  (nix:setenv (string name) (string value)))
+  (nix:setenv (to-simple-string name) (to-simple-string value)))
 
 (defun makunbound-environment-variable (name)
   "Removes the environment variable identified by NAME from the
 current environment.  NAME can be either a string or a symbol.
 Returns the string designated by NAME.  Signals an error on
 failure."
-  (nix:unsetenv (string name)))
+  (nix:unsetenv (to-simple-string name)))
 
 (defun environment ()
   "ENVIRONMENT returns the current environment as an assoc-list.
