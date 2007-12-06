@@ -152,7 +152,7 @@ Follows symbolic links."
       (values (truename pathspec)
               kind))))
 
-(defun directory-exists-p (pathspec &key follow-symlinks)
+(defun directory-exists-p (pathspec)
   "Checks whether the file named by the pathname designator
 PATHSPEC exists and if it is a directory.  Returns its truename
 if this is the case, NIL otherwise.  Follows symbolic links."
