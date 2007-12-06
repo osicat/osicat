@@ -35,17 +35,16 @@
                    (if follow-p
                        (nix:stat (native-namestring file))
                        (nix:lstat (native-namestring file))))))
-        (case (logand nix:s-ifmt mode)
-          (#.nix:s-ifdir :directory)
-          (#.nix:s-ifchr :character-device)
-          (#.nix:s-ifblk :block-device)
-          (#.nix:s-ifreg :regular-file)
-          (#.nix:s-iflnk :symbolic-link)
-          (#.nix:s-ifsock :socket)
-          (#.nix:s-ififo :pipe)
+        (switch ((logand nix:s-ifmt mode) :test #'=)
+          (nix:s-ifdir  :directory)
+          (nix:s-ifchr  :character-device)
+          (nix:s-ifblk  :block-device)
+          (nix:s-ifreg  :regular-file)
+          (nix:s-iflnk  :symbolic-link)
+          (nix:s-ifsock :socket)
+          (nix:s-ififo  :pipe)
           (t (bug "Unknown file mode: ~A." mode))))
-    (nix:enoent ()
-      nil)))
+    (nix:enoent ())))
 
 ;;;; Hopefully portable pathname manipulations
 
