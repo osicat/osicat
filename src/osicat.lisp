@@ -144,11 +144,13 @@ Signals an error if PATHSPEC is wild."
 
 (defun file-exists-p (pathspec)
   "Checks whether the file named by the pathname designator
-PATHSPEC exists and returns its truename if this is the case, NIL
-otherwise.  Follows symbolic links."
-  (if (null (file-kind pathspec :follow-symlinks t))
-      nil
-      (truename pathspec)))
+PATHSPEC exists and if this is the case, return two values:
+its truename and the file kind, NIL otherwise.
+Follows symbolic links."
+  (let ((kind (file-kind pathspec :follow-symlinks t)))
+    (when kind
+      (values (truename pathspec)
+              kind))))
 
 (defun directory-exists-p (pathspec &key follow-symlinks)
   "Checks whether the file named by the pathname designator
