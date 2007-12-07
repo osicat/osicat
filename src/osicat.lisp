@@ -142,23 +142,30 @@ Possible file-kinds in addition to NIL are: :REGULAR-FILE,
 Signals an error if PATHSPEC is wild."
   (get-file-kind (merge-pathnames pathspec) follow-symlinks))
 
-(defun file-exists-p (pathspec)
+(defun file-exists-p (pathspec &optional file-kind)
   "Checks whether the file named by the pathname designator
-PATHSPEC exists and if this is the case, return two values:
-its truename and the file kind, NIL otherwise.
+PATHSPEC exists, if this is the case and FILE-KIND is specified
+it also checks the file kind. If the tests succeed, return two values:
+truename and file kind of PATHSPEC, NIL otherwise.
 Follows symbolic links."
-  (let ((kind (file-kind pathspec :follow-symlinks t)))
-    (when kind
+  (let* ((follow (unless (eq file-kind :symbolic-link) t))
+         (actual-kind (file-kind pathspec :follow-symlinks follow)))
+    (when (and actual-kind
+               (if file-kind (eq file-kind actual-kind) t))
       (values (truename pathspec)
-              kind))))
+              actual-kind))))
+
+(defun regular-file-exists-p (pathspec)
+  "Checks whether the file named by the pathname designator
+PATHSPEC exists and is a regular file. Returns its truename
+if this is the case, NIL otherwise. Follows symbolic links."
+  (nth-value 0 (file-exists-p pathspec :regular-file)))
 
 (defun directory-exists-p (pathspec)
   "Checks whether the file named by the pathname designator
-PATHSPEC exists and if it is a directory.  Returns its truename
+PATHSPEC exists and is a directory.  Returns its truename
 if this is the case, NIL otherwise.  Follows symbolic links."
-  (if (eq :directory (file-kind pathspec :follow-symlinks t))
-      (truename pathspec)
-      nil))
+  (nth-value 0 (file-exists-p pathspec :directory)))
 
 ;;;; Temporary files
 

@@ -69,6 +69,7 @@ Designated directory
 
    ;; Files
    #:file-exists-p
+   #:regular-file-exists-p
    #:file-kind
 
    ;; Symlinks

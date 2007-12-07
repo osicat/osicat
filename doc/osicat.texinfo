@@ -92,6 +92,7 @@
 @section Files and Symbolic Links
 
 @include include/fun-osicat-file-exists-p.texinfo
+@include include/fun-osicat-regular-file-exists-p.texinfo
 @include include/fun-osicat-file-kind.texinfo
 @include include/fun-osicat-file-permissions.texinfo
 @include include/fun-osicat-open-temporary-file.texinfo
