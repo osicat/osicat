@@ -29,6 +29,10 @@
 
 ;;;; Common subroutines
 
+;;; FIXME: make sure that GET-FILE-KIND be able to signal
+;;;        only conditions of type FILE-ERROR, either by
+;;;        wrapping POSIX-ERRORs or making sure that some
+;;;        POSIX-ERRORS subclass FILE-ERROR
 (defun get-file-kind (file follow-p)
   (handler-case
       (let ((mode (nix:stat-mode
