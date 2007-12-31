@@ -312,16 +312,45 @@
    #:st-rdonly #:st-nosuid #:st-nodev #:st-noexec #:st-synchronous #:st-mandlock
    #:st-write #:st-append #:st-immutable #:st-noatime #:st-nodiratime
 
+   #:fd-setsize
+
    #:pollin #:pollrdnorm #:pollrdband #:pollpri #:pollout #:pollwrnorm
    #:pollwrband #:pollerr #:pollrdhup #:pollhup #:pollnval
 
-   #:epollin #:epollrdnorm #:epollrdband #:epollpri #:epollout #:epollwrnorm
-   #:epollwrband #:epollerr #:epollhup #:epollmsg #:epolloneshot #:epollet
-   #:epoll-ctl-add #:epoll-ctl-del #:epoll-ctl-mod
+   #+linux #:epollin
+   #+linux #:epollrdnorm
+   #+linux #:epollrdband
+   #+linux #:epollpri
+   #+linux #:epollout
+   #+linux #:epollwrnorm
+   #+linux #:epollwrband
+   #+linux #:epollerr
+   #+linux #:epollhup
+   #+linux #:epollmsg
+   #+linux #:epolloneshot
+   #+linux #:epollet
+   #+linux #:epoll-ctl-add
+   #+linux #:epoll-ctl-del
+   #+linux #:epoll-ctl-mod
 
-   #:ev-add #:ev-enable #:ev-disable #:ev-delete #:ev-oneshot #:ev-clear
-   #:ev-eof #:ev-error #:evfilt-read #:evfilt-write #:evfilt-aio #:evfilt-vnode
-   #:evfilt-proc #:evfilt-signal #:evfilt-timer #:evfilt-netdev #:note-delete
+   #+bsd #:ev-add
+   #+bsd #:ev-enable
+   #+bsd #:ev-disable
+   #+bsd #:ev-delete
+   #+bsd #:ev-oneshot
+   #+bsd #:ev-clear
+   #+bsd #:ev-eof
+   #+bsd #:ev-error
+   #+bsd #:evfilt-read
+   #+bsd #:evfilt-write
+   #+bsd #:evfilt-aio
+   #+bsd #:evfilt-vnode
+   #+bsd #:evfilt-proc
+   #+bsd #:evfilt-signal
+   #+bsd #:evfilt-timer
+   #+bsd #:evfilt-netdev
+   #+bsd #:note-delete
+
    #:note-write #:note-extend #:note-attrib #:note-link #:note-rename
    #:note-revoke #:note-exit #:note-fork #:note-exec #:note-track
    #:note-trackerr #:note-linkup #:note-linkdown #:note-linkinv
