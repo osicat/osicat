@@ -39,10 +39,13 @@
 
 ;;; TODO: accept keywords too?
 #-windows
-(defun strerror (&optional (errno (get-errno)))
+(defun strerror (&optional (err (get-errno)))
   "Look up the error message string for ERRNO. (reentrant)"
-  (with-foreign-pointer-as-string ((buf bufsiz) 1024)
-    (strerror-r errno buf bufsiz)))
+  (let ((errno (if (keywordp err)
+                   (foreign-enum-value 'errno-values err)
+                   err)))
+    (with-foreign-pointer-as-string ((buf bufsiz) 1024)
+      (strerror-r errno buf bufsiz))))
 
 (defmethod print-object ((posix-error posix-error) stream)
   (print-unreadable-object (posix-error stream :type t :identity nil)
