@@ -74,7 +74,6 @@
    #:fstatvfs
    #:fsync
    #:ftruncate
-   #:gai-strerror
    #:getcwd
    #:getdomainname
    #:getegid
