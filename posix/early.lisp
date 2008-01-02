@@ -44,6 +44,9 @@
 ;;; subtypes of POSIX-ERROR.
 (defparameter *posix-error-map* (make-hash-table :test #'eq))
 
+(defun get-posix-error-condition (keyword)
+  (gethash keyword *posix-error-map*))
+
 ;;; Define an error condition for each ERRNO value defined in the
 ;;; ERRNO-VALUES enum type and populate *POSIX-ERROR-MAP*.
 (macrolet
@@ -70,7 +73,7 @@
       (integer (setf error-keyword (or (foreign-enum-keyword 'errno-values err :errorp nil)
                                        :unknown))
                (setf error-code err)))
-    (if-let ((condition-class (gethash error-keyword *posix-error-map*)))
+    (if-let ((condition-class (get-posix-error-condition error-keyword)))
             (make-condition condition-class)
             (make-condition 'posix-error
                             :code error-code
