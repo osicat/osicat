@@ -67,8 +67,8 @@
     (etypecase err
       (keyword (setf error-keyword err)
                (setf error-code (foreign-enum-value 'errno-values err :errorp nil)))
-      (integer (setf keyword (or (foreign-enum-keyword 'errno-values err :errorp nil)
-                                 :unknown))
+      (integer (setf error-keyword (or (foreign-enum-keyword 'errno-values err :errorp nil)
+                                       :unknown))
                (setf error-code err)))
     (if-let ((condition-class (gethash error-keyword *posix-error-map*)))
             (make-condition condition-class)
