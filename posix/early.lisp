@@ -40,14 +40,12 @@
   (:documentation
    "POSIX-ERRORs are signalled whenever ERRNO is set by a POSIX call."))
 
-;;; ALIST mapping keywords (such as :EAGAIN) to lisp symbols denoting
+;;; HASH TABLE mapping keywords (such as :EAGAIN) to symbols denoting
 ;;; subtypes of POSIX-ERROR.
-;;;
-;;; FIXME: a hashtable might be better here?
-(defparameter *error-symbols* nil)
+(defparameter *posix-error-map* (make-hash-table :test #'eq))
 
 ;;; Define an error condition for each ERRNO value defined in the
-;;; ERRNO-VALUES enum type and populate *ERROR-SYMBOLS*.
+;;; ERRNO-VALUES enum type and populate *POSIX-ERROR-MAP*.
 (macrolet
     ((define-posix-errors (keywords)
        `(progn
@@ -57,7 +55,7 @@
                     `(progn
                        (define-condition ,cond-name (posix-error) ()
                          (:default-initargs :code ,code :identifier ,kw))
-                       (push (cons ',kw ',cond-name) *error-symbols*)))))))
+                       (setf (gethash ,kw *posix-error-map*) ',cond-name)))))))
   (define-posix-errors
       #.(foreign-enum-keyword-list 'errno-values)))
 
@@ -65,22 +63,18 @@
 ;;; POSIX-ERROR if no matching subclass is found.  ERR can be either a
 ;;; keyword or an integer both denoting an ERRNO value.
 (defun make-posix-error (err)
-  (let* ((error-keyword
-          (etypecase err
-            (keyword err)
-            (integer (or (foreign-enum-keyword 'errno-values err :errorp nil)
-                         :unknown))))
-         (error-code
-          (etypecase err
-            (keyword (foreign-enum-value 'errno-values error-keyword
-                                         :errorp nil))
-            (integer err))))
-    (let ((condition-class (cdr (assoc error-keyword *error-symbols*))))
-      (if condition-class
-          (make-condition condition-class)
-          (make-condition 'posix-error
-                          :code error-code
-                          :identifier error-keyword)))))
+  (let (error-keyword error-code)
+    (etypecase err
+      (keyword (setf error-keyword err)
+               (setf error-code (foreign-enum-value 'errno-values err :errorp nil)))
+      (integer (setf keyword (or (foreign-enum-keyword 'errno-values err :errorp nil)
+                                 :unknown))
+               (setf error-code err)))
+    (if-let ((condition-class (gethash error-keyword *posix-error-map*)))
+            (make-condition condition-class)
+            (make-condition 'posix-error
+                            :code error-code
+                            :identifier error-keyword))))
 
 ;;; This might be a silly question but, who resets ERRNO?  Should we?
 ;;; I ask because we have some function bindings with DEFSYSCALL that
@@ -93,7 +87,7 @@
 ;;; Default ERROR-GENERATOR for ERRNO-WRAPPER.
 (defun syscall-signal-posix-error (return-value)
   (declare (ignore return-value))
-  (error (make-posix-error (get-errno))))
+  (posix-error))
 
 ;;; Error predicate that always returns NIL.  Not actually used
 ;;; because the ERRNO-WRAPPER optimizes this call away.

@@ -81,6 +81,8 @@
                :type symbol :documentation "Keyword identifier, or NIL.")
    (message :reader system-error-message :initarg :message
             :documentation "Error description."))
+  (:default-initargs :code nil
+                     :identifier :unknown-error)
   (:documentation "Base class for errors signalled by Osicat."))
 
 (defun system-error (control-string &rest args)
