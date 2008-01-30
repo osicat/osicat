@@ -361,68 +361,6 @@
   (path filename-designator)
   (mode mode))
 
-;;;; sys/select.h
-
-;;; FIXME: too low level?
-(defsyscall "select" :int
-  "Scan for I/O activity on multiple file descriptors."
-  (nfds      :int)
-  (readfds   :pointer)
-  (writefds  :pointer)
-  (exceptfds :pointer)
-  (timeout   :pointer))
-
-;;; FIXME: document these.
-(declaim (inline fd-zero fd-clr fd-set fd-isset))
-
-(defun fd-zero (fd-set)
-  #-(and)
-  (declare (optimize (speed 3) (safety 0) (space 0) (debug 0))
-           (type foreign-pointer fd-set))
-  (bzero fd-set size-of-fd-set)
-  (values fd-set))
-
-(defun copy-fd-set (from to)
-  #-(and)
-  (declare (optimize (speed 3) (safety 0) (space 0) (debug 0))
-           (type foreign-pointer from to))
-  (memcpy to from size-of-fd-set)
-  (values to))
-
-(deftype select-file-descriptor ()
-  `(mod #.fd-setsize))
-
-(defun fd-isset (fd fd-set)
-  #-(and)
-  (declare (optimize (speed 3) (safety 0) (space 0) (debug 0))
-           (type select-file-descriptor fd)
-           (type foreign-pointer fd-set))
-  (multiple-value-bind (byte-off bit-off) (floor fd 8)
-    (let ((oldval (mem-aref fd-set :uint8 byte-off)))
-      (logbitp bit-off oldval))))
-
-(defun fd-clr (fd fd-set)
-  #-(and)
-  (declare (optimize (speed 3) (safety 0) (space 0) (debug 0))
-           (type select-file-descriptor fd)
-           (type foreign-pointer fd-set))
-  (multiple-value-bind (byte-off bit-off) (floor fd 8)
-    (let ((oldval (mem-aref fd-set :uint8 byte-off)))
-      (setf (mem-aref fd-set :uint8 byte-off)
-            (logandc2 oldval (ash 1 bit-off)))))
-  (values fd-set))
-
-(defun fd-set (fd fd-set)
-  #-(and)
-  (declare (optimize (speed 3) (safety 0) (space 0) (debug 0))
-           (type select-file-descriptor fd)
-           (type foreign-pointer fd-set))
-  (multiple-value-bind (byte-off bit-off) (floor fd 8)
-    (let ((oldval (mem-aref fd-set :uint8 byte-off)))
-      (setf (mem-aref fd-set :uint8 byte-off)
-            (logior oldval (ash 1 bit-off)))))
-  (values fd-set))
-
 ;;;; syslog.h
 
 (defvar *syslog-identity* nil)
@@ -553,14 +491,6 @@ than C's printf) with format string FORMAT and arguments ARGS."
 (defun fstatvfs (fd)
   "Retrieve file system information."
   (funcall-statvfs #'%fstatvfs fd))
-
-;;;; sys/poll.h
-
-(defsyscall "poll" :int
-  "Scan for I/O activity on multiple file descriptors."
-  (fds     :pointer)
-  (nfds    nfds)
-  (timeout :int))
 
 ;;;; pwd.h
 

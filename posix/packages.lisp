@@ -121,7 +121,6 @@
    #:opendir
    #:openlog
    #:pipe
-   #:poll
    #:pread
    #:pwrite
    #:read
@@ -132,7 +131,6 @@
    #:rewinddir
    #:rmdir
    #:seekdir
-   #:select
    #:setegid
    #:setenv
    #:seteuid
@@ -178,14 +176,6 @@
    #:s-issock
    ;; #:fileno
 
-   ;; Select Helpers
-   #:copy-fd-set
-   #:fd-clr
-   #:fd-isset
-   #:fd-set
-   #:fd-zero
-   #:select-file-descriptor             ; type
-
    ;; Special Variables
    #:*environ*
 
@@ -213,13 +203,6 @@
    ;; Platform-specific Functions
 
    #+linux #:fdatasync
-   #+linux #:epoll-create
-   #+linux #:epoll-ctl
-   #+linux #:epoll-wait
-
-   #+bsd #:kqueue
-   #+bsd #:kevent
-   #+bsd #:ev-set
 
    ;; Constants
 
@@ -310,45 +293,6 @@
 
    #:st-rdonly #:st-nosuid #:st-nodev #:st-noexec #:st-synchronous #:st-mandlock
    #:st-write #:st-append #:st-immutable #:st-noatime #:st-nodiratime
-
-   #:fd-setsize
-
-   #:pollin #:pollrdnorm #:pollrdband #:pollpri #:pollout #:pollwrnorm
-   #:pollwrband #:pollerr #:pollrdhup #:pollhup #:pollnval
-
-   #+linux #:epollin
-   #+linux #:epollrdnorm
-   #+linux #:epollrdband
-   #+linux #:epollpri
-   #+linux #:epollout
-   #+linux #:epollwrnorm
-   #+linux #:epollwrband
-   #+linux #:epollerr
-   #+linux #:epollhup
-   #+linux #:epollmsg
-   #+linux #:epolloneshot
-   #+linux #:epollet
-   #+linux #:epoll-ctl-add
-   #+linux #:epoll-ctl-del
-   #+linux #:epoll-ctl-mod
-
-   #+bsd #:ev-add
-   #+bsd #:ev-enable
-   #+bsd #:ev-disable
-   #+bsd #:ev-delete
-   #+bsd #:ev-oneshot
-   #+bsd #:ev-clear
-   #+bsd #:ev-eof
-   #+bsd #:ev-error
-   #+bsd #:evfilt-read
-   #+bsd #:evfilt-write
-   #+bsd #:evfilt-aio
-   #+bsd #:evfilt-vnode
-   #+bsd #:evfilt-proc
-   #+bsd #:evfilt-signal
-   #+bsd #:evfilt-timer
-   #+bsd #:evfilt-netdev
-   #+bsd #:note-delete
 
    #:note-write #:note-extend #:note-attrib #:note-link #:note-rename
    #:note-revoke #:note-exit #:note-fork #:note-exec #:note-track

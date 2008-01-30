@@ -31,23 +31,3 @@
 
 (defsyscall "fdatasync" :int
   (fd file-descriptor-designator))
-
-;;;; sys/epoll.h
-
-(defsyscall "epoll_create" :int
-  "Open an epoll file descriptor."
-  (size :int))
-
-(defsyscall "epoll_ctl" :int
-  "Control interface for an epoll descriptor."
-  (epfd  :int)
-  (op    :int)
-  (fd    file-descriptor-designator)
-  (event :pointer))
-
-(defsyscall "epoll_wait" :int
-  "Wait for an I/O event on an epoll file descriptor."
-  (epfd      :int)
-  (events    :pointer)
-  (maxevents :int)
-  (timeout   :int))
