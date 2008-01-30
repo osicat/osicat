@@ -53,7 +53,6 @@
      (:file "basic-unix")
      #-windows (:file "unix")
      #+linux (:file "linux")
-     #+bsd (:file "bsd")
      #+windows (:file "windows")
      (:file "misc")))
    #+windows
