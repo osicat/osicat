@@ -216,10 +216,13 @@ On failure, a FILE-ERROR may be signalled."
     (handler-case
         (multiple-value-bind (fd path)
             (nix:mkstemp (native-namestring filename))
-          (nix:unlink path)
-          (make-fd-stream fd :direction :io
-                          :element-type element-type
-                          :external-format external-format))
+          (unwind-protect
+               (progn
+                 (nix:unlink path)
+                 (make-fd-stream fd :direction :io
+                                 :element-type element-type
+                                 :external-format external-format))
+            (nix:close fd)))
       (nix:posix-error ()
         (error 'file-error :pathname pathspec))))
   #-osicat::fd-streams
