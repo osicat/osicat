@@ -108,6 +108,7 @@
    #:mkfifo
    #:mknod
    #:mkstemp
+   #:mktemp
    #:mlock
    #:mlockall
    #:mmap
@@ -154,7 +155,6 @@
    #:syslog
    #:telldir
    #:time
-   #:tmpnam
    #:truncate
    #:umask
    #:uname

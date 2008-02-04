@@ -55,15 +55,6 @@
               (or code "[No code]") identifier
               (or (strerror code) "[Can't get error string.]")))))
 
-;;;; stdio.h
-
-(defsyscall ("tmpnam" %tmpnam) :pointer
-  (str :pointer))
-
-(defun tmpnam ()
-  (with-foreign-pointer-as-string (name path-max)
-    (%tmpnam name)))
-
 ;;;; string.h
 
 (defcfun "memset" :pointer
