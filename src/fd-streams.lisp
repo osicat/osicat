@@ -33,7 +33,7 @@
 ;;; Also, this is unused for now.
 
 #+(or sbcl cmu openmcl)
-(pushnew 'fd-streams *features*)
+(pushnew :osicat-fd-streams *features*)
 
 #+sbcl
 (defun make-fd-stream (fd &key direction element-type external-format)

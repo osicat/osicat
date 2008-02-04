@@ -190,11 +190,40 @@ if this is the case, NIL otherwise.  Follows symbolic links."
 
 (defvar *temporary-directory* #p"/tmp/")
 
-;; On Lisps where we cannot create FD streams, we should use mktemp(3)
-;; to create a unique filename, then open that filename using O_EXCL|O_CREAT
-;; but CL:OPEN does not support those semantics, so instead of exposing the
-;; user to a well-known attack I prefer to signal an error
-;; SIONESCU 2008.02.04
+(defmacro %close-on-error (close-clause &body body)
+  (with-gensyms (errorp)
+    `(let ((,errorp t))
+       (unwind-protect
+            (multiple-value-prog1 (locally ,@body) (setf ,errorp nil))
+         (when ,errorp ,close-clause)))))
+
+(defun %open-temporary-file/fd-streams (filename element-type external-format)
+  (handler-case
+      (multiple-value-bind (fd path)
+          (nix:mkstemp filename)
+        (%close-on-error
+            (nix:close fd)
+          (nix:unlink path))
+        (make-fd-stream fd :direction :io
+                        :element-type element-type
+                        :external-format external-format))
+    (nix:posix-error ()
+      (error 'file-error :pathname filename))))
+
+(defun %open-temporary-file/no-fd-streams (filename element-type external-format)
+  (do ((counter 100 (1- counter)))
+      ((zerop counter) (error 'file-error :pathname filename))
+    (let* ((path (nix:mktemp filename))
+           (stream (open path :direction :io
+                         :element-type element-type
+                         :external-format external-format
+                         :if-exists :error
+                         :if-does-not-exist :create)))
+      (%close-on-error
+          (close stream :abort t)
+        (nix:unlink path))
+      (return stream))))
+
 (defun open-temporary-file (&key (pathspec *temporary-directory*)
                             (element-type 'character)
                             (external-format :default))
@@ -210,23 +239,13 @@ ELEMENT-TYPE specifies the unit of transaction of the stream.
 Consider using WITH-TEMPORARY-FILE instead of this function.
 
 On failure, a FILE-ERROR may be signalled."
-  #+osicat::fd-streams
   (let ((filename
-         (merge-pathnames (pathname pathspec) *temporary-directory*)))
-    (handler-case
-        (multiple-value-bind (fd path)
-            (nix:mkstemp (native-namestring filename))
-          (unwind-protect
-               (progn
-                 (nix:unlink path)
-                 (make-fd-stream fd :direction :io
-                                 :element-type element-type
-                                 :external-format external-format))
-            (nix:close fd)))
-      (nix:posix-error ()
-        (error 'file-error :pathname pathspec))))
-  #-osicat::fd-streams
-  (error "Function unsupported on your CL implementation."))
+         (native-namestring
+          (merge-pathnames (pathname pathspec) *temporary-directory*))))
+    #+osicat-fd-streams
+    (%open-temporary-file/fd-streams filename element-type external-format)
+    #-osicat-fd-streams
+    (%open-temporary-file/no-fd-streams filename element-type external-format)))
 
 (defmacro with-temporary-file ((stream &key (pathspec *temporary-directory*)
                                        (element-type 'character)
