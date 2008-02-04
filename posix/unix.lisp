@@ -36,9 +36,10 @@
 (defsyscall ("mkstemp" %mkstemp) :int
   (template :pointer))
 
-(defun mkstemp (template)
-  (with-foreign-string (ptr (filename template))
-    (values (%mkstemp ptr) (foreign-string-to-lisp ptr))))
+(defun mkstemp (&optional (template ""))
+  (let ((template (concatenate 'string template "XXXXXX")))
+    (with-foreign-string (ptr (filename template))
+      (values (%mkstemp ptr) (foreign-string-to-lisp ptr)))))
 
 (defsyscall "mkdtemp" :string
   (template filename-designator))
