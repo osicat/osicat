@@ -71,6 +71,6 @@
     :depends-on (osicat-sys posix #+windows windows #+darwin mach)
     :components
     ((:file "packages")
-     ;; (:file "fd-streams" :depends-on ("packages"))
-     (:file "osicat" :depends-on ("packages" #-(and) "fd-streams"))
+     (:file "fd-streams" :depends-on ("packages"))
+     (:file "osicat" :depends-on ("packages" "fd-streams"))
      (:file "time" :depends-on ("packages"))))))
