@@ -225,30 +225,17 @@ On failure, a FILE-ERROR may be signalled."
   #-osicat::fd-streams
   (error "Function unsupported on your CL implementation."))
 
-(defmacro with-temporary-file ((stream &key element-type) &body body)
-  "Within the lexical scope of the body, STREAM is connected to a
-temporary file as created by OPEN-TEMPORARY-FILE.  The file is
-closed automatically once BODY exits."
-  `(let ((,stream))
-     (unwind-protect
-          (progn
-            (setf ,stream
-                  (open-temporary-file
-                   ,@(when element-type
-                       `(:element-type ,element-type))))
-            ,@body)
-       (when ,stream
-         (close ,stream :abort t)))))
-
-(defmacro with-temporary-file ((stream &key element-type) &body body)
+(defmacro with-temporary-file ((stream &key (pathspec *temporary-directory*)
+                                       (element-type 'character)
+                                       (external-format :default))
+                               &body body)
   "Within the lexical scope of the body, STREAM is connected to a
 temporary file as created by OPEN-TEMPORARY-FILE.  The file is
 closed automatically once BODY exits."
   `(with-open-stream
-       (,stream
-        (open-temporary-file
-         ,@(when element-type
-                 `(:element-type ,element-type))))
+       (,stream (open-temporary-file :pathspec ,pathspec
+                                     :element-type ,element-type
+                                     :external-format ,external-format))
      ,@body))
 
 ;;;; Directory access
