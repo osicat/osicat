@@ -39,7 +39,7 @@
 (defun mktemp (&optional (template ""))
   (let ((template (concatenate 'string template "XXXXXX")))
     (with-foreign-string (ptr (filename template))
-      (%mkstemp ptr))))
+      (%mktemp ptr))))
 
 (defsyscall ("mkstemp" %mkstemp) :int
   (template :pointer))
