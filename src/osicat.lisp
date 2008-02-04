@@ -34,21 +34,34 @@
 ;;;        wrapping POSIX-ERRORs or making sure that some
 ;;;        POSIX-ERRORS subclass FILE-ERROR
 (defun get-file-kind (file follow-p)
-  (handler-case
-      (let ((mode (nix:stat-mode
-                   (if follow-p
-                       (nix:stat (native-namestring file))
-                       (nix:lstat (native-namestring file))))))
-        (switch ((logand nix:s-ifmt mode) :test #'=)
-          (nix:s-ifdir  :directory)
-          (nix:s-ifchr  :character-device)
-          (nix:s-ifblk  :block-device)
-          (nix:s-ifreg  :regular-file)
-          (nix:s-iflnk  :symbolic-link)
-          (nix:s-ifsock :socket)
-          (nix:s-ififo  :pipe)
-          (t (bug "Unknown file mode: ~A." mode))))
-    (nix:enoent ())))
+  (let ((namestring (native-namestring file)))
+    (handler-case
+        (let ((mode (nix:stat-mode
+                     (if follow-p
+                         (nix:stat namestring)
+                         (nix:lstat namestring)))))
+          (switch ((logand nix:s-ifmt mode) :test #'=)
+            (nix:s-ifdir  :directory)
+            (nix:s-ifchr  :character-device)
+            (nix:s-ifblk  :block-device)
+            (nix:s-ifreg  :regular-file)
+            (nix:s-iflnk  :symbolic-link)
+            (nix:s-ifsock :socket)
+            (nix:s-ififo  :pipe)
+            (t (bug "Unknown file mode: ~A." mode))))
+      (nix:enoent ()
+        (cond
+          ;; stat() returned ENOENT: either FILE does not exist
+          ;; or the end of the symlink chain is a broken symlink
+          (follow-p
+           (handler-case
+               (nix:lstat namestring)
+             (nix:enoent ())
+             (:no-error (stat)
+               (declare (ignore stat))
+               (values :symbolic-link :broken))))
+          ;; lstat() returned ENOENT: FILE does not exist
+          (t nil))))))
 
 ;;;; Hopefully portable pathname manipulations
 
@@ -142,6 +155,8 @@ links by default.
 Possible file-kinds in addition to NIL are: :REGULAR-FILE,
 :SYMBOLIC-LINK, :DIRECTORY, :PIPE, :SOCKET, :CHARACTER-DEVICE, and
 :BLOCK-DEVICE.
+If FOLLOW-SYMLINKS is non-NIL and PATHSPEC designates a broken symlink
+returns :BROKEN as second value.
 
 Signals an error if PATHSPEC is wild."
   (get-file-kind (merge-pathnames pathspec) follow-symlinks))
