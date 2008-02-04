@@ -188,34 +188,42 @@ if this is the case, NIL otherwise.  Follows symbolic links."
 
 ;;;; Temporary files
 
-(defun open-temporary-file (&key (element-type 'character)
+(defvar *temporary-directory* #p"/tmp/")
+
+;; On Lisps where we cannot create FD streams, we should use mktemp(3)
+;; to create a unique filename, then open that filename using O_EXCL|O_CREAT
+;; but CL:OPEN does not support those semantics, so instead of exposing the
+;; user to a well-known attack I prefer to signal an error
+;; SIONESCU 2008.02.04
+(defun open-temporary-file (&key (pathspec *temporary-directory*)
+                            (element-type 'character)
                             (external-format :default))
   "Creates a temporary file setup for input and output, and returns a
-stream connected to that file.  The file itself is unlinked once it
-has been opened.  ELEMENT-TYPE specifies the unit of transaction of
-the stream.  Consider using WITH-TEMPORARY-FILE instead of this
-function.
+stream connected to that file.
+
+PATHSPEC serves as template for the file to be created: a certain number
+of random characters will be concatenated to the file component of PATHSPEC.
+If PATHSPEC has no directory component, the file will be created inside
+*TEMPORARY-DIRECTORY*. The file itself is unlinked once it has been opened.
+
+ELEMENT-TYPE specifies the unit of transaction of the stream.
+Consider using WITH-TEMPORARY-FILE instead of this function.
 
 On failure, a FILE-ERROR may be signalled."
-  ;; FIXME: leaks FILE structures doesn't it?
-  ;; #+osicat::fd-streams
-  ;; (let ((fd (nix:tmp) (osicat-tmpfile)))
-  ;;   (unless (>= fd 0)
-  ;;     (error 'file-error :pathname nil))
-  ;;   (make-fd-stream fd :direction :io :element-type element-type
-  ;;                   :external-format external-format))
-  ;; #-osicat::fd-streams
-  ;; 100 is an arbitrary number of iterations to try before failing.
-  (do ((counter 100 (1- counter)))
-      ((zerop counter) (error 'file-error :pathname nil))
-    (let* ((name (nix:tmpnam))
-           (stream (open name :direction :io
-                         :element-type element-type
-                         :external-format external-format
-                         :if-exists nil)))
-      (when stream
-        ;; (nix:unlink name)
-        (return stream)))))
+  #+osicat::fd-streams
+  (let ((filename
+         (merge-pathnames (pathname pathspec) *temporary-directory*)))
+    (handler-case
+        (multiple-value-bind (fd path)
+            (nix:mkstemp (native-namestring filename))
+          (nix:unlink path)
+          (make-fd-stream fd :direction :io
+                          :element-type element-type
+                          :external-format external-format))
+      (nix:posix-error ()
+        (error 'file-error :pathname pathspec))))
+  #-osicat::fd-streams
+  (error "Function unsupported on your CL implementation."))
 
 (defmacro with-temporary-file ((stream &key element-type) &body body)
   "Within the lexical scope of the body, STREAM is connected to a
@@ -231,6 +239,17 @@ closed automatically once BODY exits."
             ,@body)
        (when ,stream
          (close ,stream :abort t)))))
+
+(defmacro with-temporary-file ((stream &key element-type) &body body)
+  "Within the lexical scope of the body, STREAM is connected to a
+temporary file as created by OPEN-TEMPORARY-FILE.  The file is
+closed automatically once BODY exits."
+  `(with-open-stream
+       (,stream
+        (open-temporary-file
+         ,@(when element-type
+                 `(:element-type ,element-type))))
+     ,@body))
 
 ;;;; Directory access
 

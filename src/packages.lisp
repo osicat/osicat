@@ -99,4 +99,7 @@ Designated directory
 
    ;; Time
    #:get-monotonic-time
+
+   ;; Specials
+   #:*temporary-directory*
    ))
