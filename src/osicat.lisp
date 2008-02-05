@@ -256,7 +256,9 @@ temporary file as created by OPEN-TEMPORARY-FILE.  The file is
 closed automatically once BODY exits."
   `(with-open-stream
        (,stream (open-temporary-file :pathspec ,pathspec
-                                     :element-type ,element-type
+                                     :element-type ,(if (eq element-type 'character)
+                                                        (quote 'character)
+                                                        element-type)
                                      :external-format ,external-format))
      ,@body))
 
