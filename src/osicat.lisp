@@ -186,6 +186,11 @@ PATHSPEC exists and is a directory.  Returns its truename
 if this is the case, NIL otherwise.  Follows symbolic links."
   (nth-value 0 (file-exists-p pathspec :directory)))
 
+(defun good-symlink-exists-p (pathspec)
+  "Checks whether the file named by the pathname designator
+PATHSPEC exists and is a symlink pointing to an existent file."
+  (eq :broken (nth-value 1 (file-kind pathspec :follow-symlinks t))))
+
 ;;;; Temporary files
 
 (defvar *temporary-directory* #p"/tmp/")
