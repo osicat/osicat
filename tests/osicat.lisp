@@ -31,7 +31,8 @@
       (unwind-protect
            (progn
              (setf (current-directory) "/tmp/")
-             (equal (current-directory) (truename "/tmp/")))
+             (equal (native-namestring (current-directory))
+                    (native-namestring (truename "/tmp/"))))
         (setf (current-directory) old)))
   t)
 
@@ -58,7 +59,8 @@
 
 ;;; FIXME: (user-homedir-pathname) is "home:" under CMUCL, so this
 ;;; test will fail.
-#-cmu
+;;;        CLISP's probe-file doesn't work with directories
+#-(or cmu clisp)
 (deftest environment.1
     (namestring (probe-file (cdr (assoc "HOME" (environment)
                                         :test #'equal))))
