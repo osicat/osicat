@@ -73,7 +73,7 @@
       (integer (setf error-keyword (or (foreign-enum-keyword 'errno-values err :errorp nil)
                                        :unknown))
                (setf error-code err)))
-    (if-let ((condition-class (get-posix-error-condition error-keyword)))
+    (if-let (condition-class (get-posix-error-condition error-keyword))
             (make-condition condition-class)
             (make-condition 'posix-error
                             :code error-code
