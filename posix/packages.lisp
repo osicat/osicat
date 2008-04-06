@@ -328,4 +328,7 @@
    #:repeat-upon-eintr
    #:repeat-upon-condition
    #:repeat-upon-condition-decreasing-timeout
+
+   ;; Specials
+   #:*default-open-mode*
    ))
