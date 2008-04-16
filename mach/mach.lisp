@@ -51,7 +51,7 @@
 
 (defun host-get-clock-service (id &optional (host (mach-host-self)))
   (with-foreign-object (clock 'clock-serv)
-    (host-get-clock-service host id clock)
+    (%host-get-clock-service host id clock)
     (mem-ref clock :int)))
 
 (defcfun ("clock_get_time" %clock-get-time) kern-return
@@ -60,6 +60,6 @@
 
 (defun clock-get-time (clock-service)
   (with-foreign-object (time 'timespec)
-    (clock-get-time clock-service time)
+    (%clock-get-time clock-service time)
     (with-foreign-slots ((tv-sec tv-nsec) time timespec)
       (values tv-sec tv-nsec))))
