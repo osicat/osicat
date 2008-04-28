@@ -54,7 +54,7 @@
                 (eq :directory (file-kind dir))
                 (eq :error (handler-case (delete-directory dir)
                              (error () :error))))
-        (delete-file file)))
+        (osicat-posix:unlink file)))
   t)
 
 ;;; FIXME: (user-homedir-pathname) is "home:" under CMUCL, so this
@@ -123,15 +123,15 @@
            (link (ensure-link "tmp-link" :target file)))
       (unwind-protect
            (file-kind link)
-        (delete-file link)
-        (delete-file file)))
+        (osicat-posix:unlink link)
+        (osicat-posix:unlink file)))
   :symbolic-link)
 
 (deftest file-kind.4
     (let ((file (ensure-file "tmp-file")))
       (unwind-protect
            (file-kind file)
-        (delete-file file)))
+        (osicat-posix:unlink file)))
   :regular-file)
 
 (deftest file-permissions.1
@@ -146,7 +146,7 @@
                 (push :user-exec (file-permissions file))
                 (member :user-exec (file-permissions file))
                 t)
-        (delete-file file)))
+        (osicat-posix:unlink file)))
   t)
 
 (deftest make-link.1
@@ -156,8 +156,8 @@
            (progn
              (make-link link :target file)
              (namestring (read-link link)))
-        (delete-file link)
-        (delete-file file)))
+        (osicat-posix:unlink link)
+        (osicat-posix:unlink file)))
   #.(namestring (merge-pathnames "tmp-file" *test-directory*)))
 
 (deftest make-link.2
@@ -167,8 +167,8 @@
            (progn
              (make-link link :target file)
              (file-kind link))
-        (delete-file file)
-        (delete-file link)))
+        (osicat-posix:unlink file)
+        (osicat-posix:unlink link)))
   :symbolic-link)
 
 ;;; Test the case of reading a link to a directory.
@@ -178,7 +178,7 @@
            (progn
              (make-link link :target *test-directory*)
              (namestring (read-link link)))
-        (delete-file link)))
+        (osicat-posix:unlink link)))
   #.(namestring *test-directory*))
 
 ;;; Test the case of reading a link with a very long name.
@@ -190,8 +190,8 @@
              (make-link link :target file)
              (equal (namestring (merge-pathnames file *test-directory*))
                     (namestring (read-link link))))
-        (delete-file link)
-        (delete-file file)))
+        (osicat-posix:unlink link)
+        (osicat-posix:unlink file)))
   t)
 
 (deftest makunbound-environment-variable.1
@@ -213,8 +213,8 @@
                     (merge-pathnames "subdir/" dir))))
       (unwind-protect
            (remove-if #'null (mapdir #'pathname-name dir))
-        (delete-file file1)
-        (delete-file file2)
+        (osicat-posix:unlink file1)
+        (osicat-posix:unlink file2)
         (delete-directory subdir)
         (delete-directory dir)))
   ("file1" "file2"))
@@ -228,8 +228,8 @@
                     (merge-pathnames "subdir/" dir))))
       (unwind-protect
            (sort (mapdir #'namestring dir) #'string<)
-        (delete-file file1)
-        (delete-file file2)
+        (osicat-posix:unlink file1)
+        (osicat-posix:unlink file2)
         (delete-directory subdir)
         (delete-directory dir)))
   ("file1" "file2.txt" "subdir/"))
@@ -243,7 +243,7 @@
              (mapdir (lambda (x)
                        (pathname-directory (merge-pathnames x)))
                      dir))
-        (delete-file file)
+        (osicat-posix:unlink file)
         (delete-directory dir)))
   (#.(pathname-directory (merge-pathnames "mapdir-test/" *test-directory*))))
 
