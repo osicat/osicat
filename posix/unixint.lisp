@@ -136,7 +136,6 @@
   (constant (map-growsdown "MAP_GROWSDOWN"))
   (constant (map-anon "MAP_ANON"))
   (constant (map-anonymous "MAP_ANONYMOUS"))
-  (constant (map-32bit "MAP_32BIT"))
   (constant (map-populate "MAP_POPULATE"))
   (constant (map-nonblock "MAP_NONBLOCK")))
 
@@ -284,7 +283,6 @@
 (constant (sc-xopen-realtime "_SC_XOPEN_REALTIME"))
 (constant (sc-xopen-realtime-threads "_SC_XOPEN_REALTIME_THREADS"))
 (constant (sc-xopen-shm "_SC_XOPEN_SHM"))
-(constant (sc-xopen-streams "_SC_XOPEN_STREAMS"))
 (constant (sc-xopen-unix "_SC_XOPEN_UNIX"))
 (constant (sc-xopen-version "_SC_XOPEN_VERSION"))
 (constant (sc-xopen-xcu-version "_SC_XOPEN_XCU_VERSION"))
