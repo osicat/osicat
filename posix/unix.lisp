@@ -29,7 +29,7 @@
 (in-package #:osicat-posix)
 
 ;;; Needed for clock_gettime() and friends.
-#+linux (load-foreign-library "librt.so.1")
+#+linux (load-foreign-library "librt.so")
 
 ;;;; stdlib.h
 
