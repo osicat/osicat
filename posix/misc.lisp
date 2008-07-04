@@ -35,51 +35,34 @@
 
 (defmacro repeat-upon-condition ((&rest conditions) &body body)
   (with-unique-names (block-name)
-    `(block ,block-name
-       (loop (handler-case
-                 (return-from ,block-name (progn ,@body))
-               ,@(mapcar (lambda (c) `(,c ())) conditions))))))
+    `(loop :named ,block-name :do
+       (ignore-some-conditions ,conditions
+         (return-from ,block-name (progn ,@body))))))
 
 (defmacro repeat-upon-eintr (&body body)
   `(repeat-upon-condition (eintr) ,@body))
 
-(defmacro repeat-upon-condition-decreasing-timeout
-    (((&rest conditions) timeout-var timeout) &body body)
-  (with-unique-names (block-name deadline temp-timeout)
-    `(block ,block-name
-       (let* ((,timeout-var ,timeout)
-              (,deadline (when ,timeout-var
-                           (+ ,timeout-var (get-monotonic-time)))))
-         (flet ((recalculate-timeout ()
-                  (when ,deadline
-                    (let ((,temp-timeout (- ,deadline
-                                            (osicat-sys:get-monotonic-time))))
-                      (setf ,timeout-var
-                            (if (plusp ,temp-timeout)
-                                ,temp-timeout
-                                0))))))
-           (loop (handler-case
-                     (return-from ,block-name (progn ,@body))
-                   ,@(mapcar (lambda (c) `(,c () (recalculate-timeout)))
-                             conditions))))))))
+(defmacro repeat-decreasing-timeout
+    ((timeout-var timeout &optional (block-name nil blockp)) &body body)
+  (unless blockp (setf block-name (gensym "BLOCK")))
+  (with-unique-names (deadline temp-timeout)
+    `(let* ((,timeout-var ,timeout)
+            (,deadline (when ,timeout-var
+                         (+ ,timeout-var
+                            (osicat-sys:get-monotonic-time)))))
+       (loop :named ,block-name :do
+         ,@body
+           (when ,deadline
+             (let ((,temp-timeout (- ,deadline
+                                     (osicat-sys:get-monotonic-time))))
+               (setf ,timeout-var
+                     (if (plusp ,temp-timeout)
+                         ,temp-timeout
+                         0))))))))
 
-(defmacro repeat-decreasing-timeout ((timeout-var timeout &optional block-var)
-                                     &body body)
-  (with-unique-names (block-name deadline temp-timeout)
-    `(block ,block-name
-       (let* ,(remove-if
-               #'null
-               `(,(when block-var `(,block-var ,block-name))
-                  (,timeout-var ,timeout)
-                  (,deadline (when ,timeout-var
-                               (+ ,timeout-var
-                                  (osicat-sys:get-monotonic-time))))))
-         (loop
-          ,@body
-          (when ,deadline
-            (let ((,temp-timeout (- ,deadline
-                                    (osicat-sys:get-monotonic-time))))
-              (setf ,timeout-var
-                    (if (plusp ,temp-timeout)
-                        ,temp-timeout
-                        0)))))))))
+(defmacro repeat-upon-condition-decreasing-timeout
+    (((&rest conditions) timeout-var timeout &optional (block-name nil blockp)) &body body)
+  (unless blockp (setf block-name (gensym "BLOCK")))
+  `(repeat-decreasing-timeout (,timeout-var ,timeout ,block-name)
+     (ignore-some-conditions ,conditions
+       (return-from ,block-name (progn ,@body)))))
