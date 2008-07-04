@@ -326,8 +326,8 @@
    ;; Misc
    #:repeat-upon-condition
    #:repeat-upon-eintr
-   #:repeat-upon-condition
    #:repeat-upon-condition-decreasing-timeout
+   #:repeat-decreasing-timeout
 
    ;; Specials
    #:*default-open-mode*
