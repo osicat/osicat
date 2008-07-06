@@ -45,8 +45,7 @@
 (defmacro repeat-decreasing-timeout
     ((timeout-var timeout &optional (block-name nil blockp)) &body body)
   (unless (find timeout-var (flatten body))
-    (simple-style-warning "You probably want to use ~S inside the body ~A"
-                          timeout-var body))
+    (warn "You probably want to use ~S inside the body ~A" timeout-var body))
   (unless blockp (setf block-name (gensym "BLOCK")))
   (with-unique-names (deadline temp-timeout)
     `(let* ((,timeout-var ,timeout)
