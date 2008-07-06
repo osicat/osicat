@@ -44,17 +44,18 @@
 
 (defmacro repeat-decreasing-timeout
     ((timeout-var timeout &optional (block-name nil blockp)) &body body)
+  (unless (find timeout-var (flatten body))
+    (simple-style-warning "You probably want to use ~S inside the body ~A"
+                          timeout-var body))
   (unless blockp (setf block-name (gensym "BLOCK")))
   (with-unique-names (deadline temp-timeout)
     `(let* ((,timeout-var ,timeout)
             (,deadline (when ,timeout-var
-                         (+ ,timeout-var
-                            (osicat-sys:get-monotonic-time)))))
+                         (+ ,timeout-var (get-monotonic-time)))))
        (loop :named ,block-name :do
          ,@body
            (when ,deadline
-             (let ((,temp-timeout (- ,deadline
-                                     (osicat-sys:get-monotonic-time))))
+             (let ((,temp-timeout (- ,deadline (get-monotonic-time))))
                (setf ,timeout-var
                      (if (plusp ,temp-timeout)
                          ,temp-timeout
