@@ -27,6 +27,64 @@
 
 (in-package #:osicat)
 
+;;;; Environment access
+
+;;; FIXME: This is a *very* big kludge, waiting for babel to be fixed
+(defun to-simple-string (thing)
+  (let ((s (string thing)))
+    (make-array (length s)
+                :element-type 'character
+                :initial-contents s)))
+
+(defun environment-variable (name)
+  "ENVIRONMENT-VARIABLE returns the environment variable
+identified by NAME, or NIL if one does not exist.  NAME can
+either be a symbol or a string.
+
+SETF ENVIRONMENT-VARIABLE sets the environment variable
+identified by NAME to VALUE.  Both NAME and VALUE can be either a
+symbols or strings. Signals an error on failure."
+  (nix:getenv (to-simple-string name)))
+
+(defun (setf environment-variable) (value name)
+  (nix:setenv (to-simple-string name) (to-simple-string value)))
+
+(defun makunbound-environment-variable (name)
+  "Removes the environment variable identified by NAME from the
+current environment.  NAME can be either a string or a symbol.
+Returns the string designated by NAME.  Signals an error on
+failure."
+  (nix:unsetenv (to-simple-string name)))
+
+(defun environment ()
+  "ENVIRONMENT returns the current environment as an assoc-list.
+SETF ENVIRONMENT modifies the environment its argument.
+
+Often it is preferable to use SETF ENVIRONMENT-VARIABLE and
+MAKUNBOUND-ENVIRONMENT-VARIABLE to modify the environment instead
+of SETF ENVIRONMENT."
+  (handler-case
+      (loop for i from 0 by 1
+            for string = (mem-aref nix:*environ* :string i)
+            for split = (position #\= string)
+            while string
+            collecting (cons (subseq string 0 split)
+                             (subseq string (1+ split))))
+    #-(and)
+    (error (e)
+      (error "Could not access environment (~S)." e))))
+
+(defun (setf environment) (alist)
+  (let ((oldenv (environment)))
+    (loop for (var . val) in alist
+          do (setf (environment-variable var) (string val)
+                   oldenv (delete var oldenv
+                                  :key (lambda (x) (string (car x)))
+                                  :test #'string=)))
+    (loop for (var . val) in oldenv
+          do (makunbound-environment-variable var)))
+  alist)
+
 ;;;; Common subroutines
 
 ;;; FIXME: make sure that GET-FILE-KIND be able to signal
@@ -411,64 +469,6 @@ DIRNAME does not exist."
                           (t (delete-file file))))
                   :directories t
                   :if-does-not-exist if-does-not-exist))
-
-;;;; Environment access
-
-;;; FIXME: This is a *very* big kludge, waiting for babel to be fixed
-(defun to-simple-string (thing)
-  (let ((s (string thing)))
-    (make-array (length s)
-                :element-type 'character
-                :initial-contents s)))
-
-(defun environment-variable (name)
-  "ENVIRONMENT-VARIABLE returns the environment variable
-identified by NAME, or NIL if one does not exist.  NAME can
-either be a symbol or a string.
-
-SETF ENVIRONMENT-VARIABLE sets the environment variable
-identified by NAME to VALUE.  Both NAME and VALUE can be either a
-symbols or strings. Signals an error on failure."
-  (nix:getenv (to-simple-string name)))
-
-(defun (setf environment-variable) (value name)
-  (nix:setenv (to-simple-string name) (to-simple-string value)))
-
-(defun makunbound-environment-variable (name)
-  "Removes the environment variable identified by NAME from the
-current environment.  NAME can be either a string or a symbol.
-Returns the string designated by NAME.  Signals an error on
-failure."
-  (nix:unsetenv (to-simple-string name)))
-
-(defun environment ()
-  "ENVIRONMENT returns the current environment as an assoc-list.
-SETF ENVIRONMENT modifies the environment its argument.
-
-Often it is preferable to use SETF ENVIRONMENT-VARIABLE and
-MAKUNBOUND-ENVIRONMENT-VARIABLE to modify the environment instead
-of SETF ENVIRONMENT."
-  (handler-case
-      (loop for i from 0 by 1
-            for string = (mem-aref nix:*environ* :string i)
-            for split = (position #\= string)
-            while string
-            collecting (cons (subseq string 0 split)
-                             (subseq string (1+ split))))
-    #-(and)
-    (error (e)
-      (error "Could not access environment (~S)." e))))
-
-(defun (setf environment) (alist)
-  (let ((oldenv (environment)))
-    (loop for (var . val) in alist
-          do (setf (environment-variable var) (string val)
-                   oldenv (delete var oldenv
-                                  :key (lambda (x) (string (car x)))
-                                  :test #'string=)))
-    (loop for (var . val) in oldenv
-          do (makunbound-environment-variable var)))
-  alist)
 
 ;;;; Symbolic and hard links
 
