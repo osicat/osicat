@@ -193,7 +193,11 @@ PATHSPEC exists and is a symlink pointing to an existent file."
 
 ;;;; Temporary files
 
-(defvar *temporary-directory* #p"/tmp/")
+(defvar *temporary-directory*
+  (let ((system-tmpdir (coerce (environment-variable "TMPDIR") 'string)))
+    (if (string= "" system-tmpdir) ; null or empty
+        (make-pathname :directory '(:absolute "tmp"))
+        (pathname (concatenate 'string system-tmpdir "/")))))
 
 (defmacro %close-on-error (close-clause &body body)
   (with-gensyms (errorp)
