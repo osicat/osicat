@@ -397,12 +397,18 @@ Signals an error if PATHSPEC is wild or doesn't designate a directory."
           while entry
           collect (funcall function entry))))
 
-(defun list-directory (pathspec)
+(defun list-directory (pathspec &key bare-pathnames)
   "Returns a fresh list of pathnames corresponding to all files
 within the directory named by the non-wild pathname designator
-PATHSPEC."
-  (with-directory-iterator (next pathspec)
-    (loop for entry = (next) while entry collect entry)))
+PATHSPEC.
+If BARE-PATHNAMES is non-NIL only the files's bare pathnames are returned
+\(with an empty directory component), otherwise the files' pathnames are
+merged with PATHSPEC."
+  (let ((pathspec (pathname-as-directory pathspec)))
+    (with-directory-iterator (next pathspec)
+      (loop for entry = (next)
+         while entry collect (if bare-pathnames entry
+                                 (merge-pathnames entry pathspec))))))
 
 (defun delete-directory (pathspec)
   "Deletes the directory designated by PATHSPEC.  Returns T.  The
