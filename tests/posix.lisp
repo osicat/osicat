@@ -366,7 +366,7 @@
       ;; if this test fails, it will probably be with
       ;; "System call error 2 (No such file or directory)"
       (let ((*default-pathname-defaults* *test-directory*))
-        (handler-case (nix:unlink (car (directory "*.txt")))
+        (handler-case (nix:unlink (car (directory (merge-pathnames "*.txt"))))
           #+windows (nix:eacces () 0))))
   0)
 

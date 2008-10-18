@@ -69,7 +69,7 @@
 (deftest environment.2
     (unwind-protect
          (progn
-           (setf (environment-variable 'test-variable) "TEST-VALUE")
+           (setf (environment-variable "TEST-VARIABLE") "TEST-VALUE")
            (assoc "TEST-VARIABLE" (environment) :test #'equal))
       (makunbound-environment-variable 'test-variable))
   ("TEST-VARIABLE" . "TEST-VALUE"))
@@ -88,16 +88,16 @@
 (deftest environment-variable.2
     (unwind-protect
          (progn
-           (setf (environment-variable 'test-variable) 'test-value)
-           (environment-variable 'test-variable))
-      (makunbound-environment-variable 'test-variable))
+           (setf (environment-variable "TEST-VARIABLE") "TEST-VALUE")
+           (environment-variable "TEST-VARIABLE"))
+      (makunbound-environment-variable "TEST-VARIABLE"))
   "TEST-VALUE")
 
 (deftest environment-variable.3
     (unwind-protect
          (progn
            (setf (environment-variable "test-variable") "test-value")
-           (environment-variable 'test-variable))
+           (environment-variable "TEST-VARIABLE"))
       (makunbound-environment-variable "test-variable"))
   nil)
 
@@ -188,8 +188,8 @@
       (unwind-protect
            (progn
              (make-link link :target file)
-             (equal (namestring (merge-pathnames file *test-directory*))
-                    (namestring (read-link link))))
+             (equal (native-namestring (merge-pathnames file *test-directory*))
+                    (native-namestring (read-link link))))
         (osicat-posix:unlink link)
         (osicat-posix:unlink file)))
   t)

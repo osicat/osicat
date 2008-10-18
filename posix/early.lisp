@@ -114,7 +114,7 @@
 
 ;;; FIXME: undocumented in cffi-grovel.
 (defun make-from-pointer-function-name (type-name)
-  (format-symbol t "MAKE-~a-FROM-POINTER" type-name))
+  (format-symbol t "~A-~A-~A-~A" '#:make type-name '#:from '#:pointer))
 
 (define-parse-method errno-wrapper
     (base-type &key error-predicate (return-filter 'identity)

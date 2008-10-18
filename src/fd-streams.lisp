@@ -32,11 +32,13 @@
 ;;;
 ;;; Also, this is unused for now.
 
-#+(or sbcl cmu openmcl)
+#+(or sbcl cmu openmcl scl)
 (pushnew :osicat-fd-streams *features*)
 
 #+sbcl
-(defun make-fd-stream (fd &key direction element-type external-format)
+(defun make-fd-stream (fd &key direction element-type external-format
+                       pathname file)
+  (declare (ignore pathname file))
   (let ((in-p (member direction '(:io :input)))
         (out-p (member direction '(:io :output))))
     (sb-sys:make-fd-stream fd :input in-p :output out-p
@@ -44,12 +46,23 @@
                            :external-format external-format)))
 
 #+cmu
-(defun make-fd-stream (fd &key direction element-type external-format)
-  (declare (ignore external-format))
+(defun make-fd-stream (fd &key direction element-type external-format
+                       pathname file)
+  (declare (ignore external-format pathname file))
   (let ((in-p (member direction '(:io :input)))
         (out-p (member direction '(:io :output))))
     (sys:make-fd-stream fd :input in-p :output out-p
                         :element-type element-type)))
+
+#+scl
+(defun make-fd-stream (fd &key direction element-type external-format
+                       pathname file)
+  (let ((in-p (member direction '(:io :input)))
+        (out-p (member direction '(:io :output))))
+    (sys:make-fd-stream fd :input in-p :output out-p
+                        :element-type element-type
+                        :external-format external-format
+                        :pathname pathname :file file)))
 
 ;;; KLUDGE: This is kind of evil, because MAKE-FD-STREAM isn't
 ;;; exported from CCL in OpenMCL.  However, it seems to have been

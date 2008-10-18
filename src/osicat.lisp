@@ -273,7 +273,9 @@ PATHSPEC exists and is a symlink pointing to an existent file."
           (nix:unlink path))
         (make-fd-stream fd :direction :io
                         :element-type element-type
-                        :external-format external-format))
+                        :external-format external-format
+                        :pathname (pathname path)
+                        :file path))
     (nix:posix-error ()
       (error 'file-error :pathname filename))))
 
