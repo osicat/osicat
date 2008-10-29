@@ -271,6 +271,13 @@
     ((pointerp arg) (%ioctl-with-arg fd request arg))
     (t (error "Wrong argument to ioctl: ~S" arg))))
 
+;;;; signal.h
+
+(defsyscall "kill" :int
+  "Send signal to a process."
+  (pid pid)
+  (sig :int))
+
 ;;;; sys/mman.h
 
 (defsyscall "mlock" :int

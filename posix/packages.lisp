@@ -96,6 +96,7 @@
    #:gettimeofday
    #:getuid
    #:ioctl
+   #:kill
    #:link
    #:lockf
    #:lseek
