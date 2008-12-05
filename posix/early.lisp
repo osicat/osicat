@@ -36,7 +36,7 @@
 ;;; in basic-unix.lisp because it needs %STRERROR-R defined later in
 ;;; wrappers.lisp.
 (define-condition posix-error (system-error)
-  ()
+  ((object :initform nil :initarg :object :reader posix-error-object))
   (:documentation
    "POSIX-ERRORs are signalled whenever ERRNO is set by a POSIX call."))
 
@@ -65,7 +65,7 @@
 ;;; Instantiates a subclass of POSIX-ERROR matching ERR or a plain
 ;;; POSIX-ERROR if no matching subclass is found.  ERR can be either a
 ;;; keyword or an integer both denoting an ERRNO value.
-(defun make-posix-error (err)
+(defun make-posix-error (err object)
   (let (error-keyword error-code)
     (etypecase err
       (keyword (setf error-keyword err)
@@ -74,8 +74,9 @@
                                        :unknown))
                (setf error-code err)))
     (if-let (condition-class (get-posix-error-condition error-keyword))
-            (make-condition condition-class)
+            (make-condition condition-class :object object)
             (make-condition 'posix-error
+                            :object object
                             :code error-code
                             :identifier error-keyword))))
 
@@ -84,18 +85,18 @@
 ;;; have no documented ERRNO behaviour and we're checking ERRNO when
 ;;; they fail anyway.  --luis
 
-(defun posix-error (&optional (errno (get-errno)))
-  (error (make-posix-error errno)))
+(defun posix-error (&optional (errno (get-errno)) object)
+  (error (make-posix-error errno object)))
 
 ;;; Default ERROR-GENERATOR for ERRNO-WRAPPER.
-(defun syscall-signal-posix-error (return-value)
+(defun syscall-signal-posix-error (return-value object)
   (declare (ignore return-value))
-  (posix-error))
+  (posix-error (get-errno) object))
 
 ;;; Error predicate that always returns NIL.  Not actually used
 ;;; because the ERRNO-WRAPPER optimizes this call away.
-(defun never-fails (errcode)
-  (declare (ignore errcode))
+(defun never-fails (&rest args)
+  (declare (ignore args))
   nil)
 
 ;;; NOTE: This is a pretty neat type that probably deserves to be
@@ -110,14 +111,15 @@
   ((error-predicate :initarg :error-predicate :reader error-predicate)
    (return-filter :initarg :return-filter :reader return-filter)
    (error-generator :initarg :error-generator :reader error-generator)
-   (base-type :initarg :base-type :reader base-type)))
+   (base-type :initarg :base-type :reader base-type)
+   (object :initarg :object :reader errno-object)))
 
 ;;; FIXME: undocumented in cffi-grovel.
 (defun make-from-pointer-function-name (type-name)
   (format-symbol t "~A-~A-~A-~A" '#:make type-name '#:from '#:pointer))
 
 (define-parse-method errno-wrapper
-    (base-type &key error-predicate (return-filter 'identity)
+    (base-type &key object error-predicate (return-filter 'identity)
                (error-generator 'syscall-signal-posix-error))
   ;; pick a default error-predicate
   (unless error-predicate
@@ -141,6 +143,7 @@
                  return-filter (make-from-pointer-function-name base-type))
            (error "Could not choose a error-predicate function.")))))
   (make-instance 'errno-wrapper
+                 :object object
                  :actual-type base-type
                  :base-type base-type
                  :error-predicate error-predicate
@@ -161,7 +164,7 @@
             (if (eq (error-predicate type) 'never-fails)
                 return-exp
                 `(if (,(error-predicate type) r)
-                     (,(error-generator type) r)
+                     (,(error-generator type) r ,(errno-object type))
                      ,return-exp))))))
 
 (defmacro defsyscall (name-and-opts return-type &body args)

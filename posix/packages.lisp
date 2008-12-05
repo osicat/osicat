@@ -36,6 +36,7 @@
   (:export
    ;; Conditions
    #:posix-error
+   #:posix-error-object
 
    #:eperm #:enoent #:esrch #:eintr #:eio #:enxio #:e2big #:enoexec #:ebadf
    #:echild #:eagain #:enomem #:eacces #:efault #:enotblk #:ebusy #:eexist
