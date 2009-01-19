@@ -68,8 +68,9 @@
 ;;; exported from CCL in OpenMCL.  However, it seems to have been
 ;;; around for a while, and the developers have said that they don't
 ;;; have any plans to change it any time soon.
-#+openmcl
-(defun make-fd-stream (fd &key direction element-type external-format)
-  (declare (ignore external-format))
+#+(or ccl openmcl)
+(defun make-fd-stream (fd &key direction element-type external-format
+                       pathname file)
+  (declare (ignore external-format pathname file))
   (ccl::make-fd-stream fd :direction direction :element-type element-type
                        :class 'file-stream))
