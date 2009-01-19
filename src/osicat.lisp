@@ -81,7 +81,7 @@ of SETF ENVIRONMENT."
                    oldenv (delete var oldenv
                                   :key (lambda (x) (string (car x)))
                                   :test #'string=)))
-    (loop for (var . val) in oldenv
+    (loop for (var . nil) in oldenv
           do (makunbound-environment-variable var)))
   alist)
 
