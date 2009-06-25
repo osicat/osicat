@@ -34,7 +34,6 @@
 ;;; that might be useful.  --luis
 
 (defsystem osicat
-  :version "0.6.0-pre1"
   :depends-on (cffi cffi-grovel alexandria trivial-features)
   :components
   ((:module osicat-sys
