@@ -30,7 +30,7 @@
 
 ;;; Needed for clock_gettime() and friends.
 (define-foreign-library librt
-  (:linux (:or "librt.so" "/usr/lib/librt.so")))
+  (:linux (:or "librt.so" "/lib/librt.so.1")))
 (use-foreign-library librt)
 
 ;;;; stdlib.h
