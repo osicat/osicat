@@ -632,3 +632,8 @@
   (constant (tiocghayesesp "TIOCGHAYESESP"))
   (constant (tiocshayesesp "TIOCSHAYESESP"))
   (constant (fioqsize "FIOQSIZE")))
+
+;;;; from wait.h
+
+(constant (wnohang "WNOHANG"))
+(constant (wuntraced "WUNTRACED"))

@@ -133,6 +133,31 @@
 (defsyscall "fork" pid
   "Create a child process.")
 
+(defsyscall "exit" :int
+  "Exit a process immediately."
+  (code :int))
+
+(defcfun ("wait" %wait) pid
+  (stat-loc :pointer))
+
+(defun wait ()
+  "Wait for any child process to terminate."
+  (with-foreign-object (stat-loc :int)
+    (let ((result (%wait stat-loc)))
+      (values result (mem-ref stat-loc :int)))))
+
+(defcfun ("waitpid" %waitpid) pid
+  (pid pid)
+  (stat-loc :pointer)
+  (options :int))
+
+(defun waitpid (pid &key (no-hang nil) (untraced nil))
+  "Wait for a specific child process to terminate"
+  (with-foreign-object (stat-loc :int)
+    (let ((result (%waitpid pid stat-loc (logior (if no-hang wnohang 0)
+                                                 (if untraced wuntraced 0)))))
+      (values result (mem-ref stat-loc :int)))))
+
 (defsyscall "getegid" gid
   "Get effective group id of the current process.")
 

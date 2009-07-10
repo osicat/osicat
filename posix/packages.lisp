@@ -67,6 +67,7 @@
    #:dirfd
    #:dup
    #:dup2
+   #:exit
    #:fchdir
    #:fchmod
    #:fcntl
@@ -163,6 +164,8 @@
    #:unlink
    #:unsetenv
    #:usleep
+   #:wait
+   #:waitpid
    #:write
    #:writev
 
