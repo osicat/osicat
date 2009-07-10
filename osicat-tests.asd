@@ -33,3 +33,6 @@
     ((:file "tests")
      (:file "posix")
      (:file "osicat")))))
+
+(defmethod perform ((o test-op) (c (eql (find-system 'osicat-tests))))
+  (funcall (intern (string '#:do-tests) '#:osicat-tests)))

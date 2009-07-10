@@ -73,3 +73,7 @@
      (:file "fd-streams" :depends-on ("packages"))
      (:file "osicat" :depends-on ("packages" "fd-streams"))
      (:file "time" :depends-on ("packages"))))))
+
+(defmethod perform ((o test-op) (c (eql (find-system 'osicat))))
+  (oos 'load-op 'osicat-tests)
+  (oos 'test-op 'osicat-tests))
