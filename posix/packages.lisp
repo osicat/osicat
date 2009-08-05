@@ -208,6 +208,7 @@
    ;; Platform-specific Functions
 
    #+linux #:fdatasync
+   #+linux #:mremap
 
    ;; Constants
 
@@ -236,6 +237,9 @@
    #:map-anon #:map-anonymous #:map-32bit #:map-populate #:map-nonblock
    #:map-anon #:map-hassemaphore #:map-inherit #:map-nocore #:map-nosync
    #:map-stack
+
+   #+linux #:mremap-maymove
+   #+linux #:mremap-fixed
 
    #:ms-async #:ms-sync #:ms-invalidate
 

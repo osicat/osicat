@@ -31,6 +31,7 @@
 (define "_LARGEFILE_SOURCE")
 (define "_LARGEFILE64_SOURCE")
 (define "_FILE_OFFSET_BITS" 64)
+(define "_GNU_SOURCE")
 (c "#endif")
 
 (include "string.h" "errno.h"  "sys/types.h" "sys/stat.h"
@@ -65,6 +66,13 @@
   (flags :int)
   (fd ("int" file-descriptor-designator))
   (offset ("off_t" off)))
+
+#+linux
+(defwrapper "mremap" ("void*" (errno-wrapper :pointer))
+  (old-address :pointer)
+  (old-size ("size_t" size))
+  (new-size ("size_t" size))
+  (flags :int))
 
 (defwrapper ("stat" %stat) ("int" (errno-wrapper :int))
   (file-name ("const char*" filename-designator))

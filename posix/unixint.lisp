@@ -148,6 +148,12 @@
   (constant (map-nosync "MAP_NOSYNC"))
   (constant (map-stack "MAP_STACK")))
 
+;;; mremap()
+#+linux
+(progn
+  (constant (mremap-maymove "MREMAP_MAYMOVE"))
+  (constant (mremap-fixed "MREMAP_FIXED")))
+
 ;;; msync()
 (constant (ms-async "MS_ASYNC") :documentation "msync: return immediately")
 (constant (ms-sync "MS_SYNC")
