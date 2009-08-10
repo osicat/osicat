@@ -48,7 +48,7 @@
      (:grovel-file "basic-unixint")
      #-windows (:grovel-file "unixint")
      (:file "early")
-     (:wrapper-file "wrappers")
+     (:wrapper-file "wrappers" :soname "libosicat")
      (:file "basic-unix")
      #-windows (:file "unix")
      #+linux (:file "linux")
