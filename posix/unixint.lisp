@@ -512,6 +512,14 @@
 (constant (dt-sock "DT_SOCK"))
 (constant (dt-wht "DT_WHT"))
 
+;;;; from ioctl.h
+
+(cstruct winsize "struct winsize"
+  (row "ws_row" :type :uint16)
+  (col "ws_col" :type :uint16)
+  (xpixel "ws_xpixel" :type :uint16)
+  (ypixel "ws_ypixel" :type :uint16))
+
 ;;;; Linux ioctls from sys/ioctl.h
 
 #+linux
