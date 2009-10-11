@@ -332,6 +332,11 @@
    #:tiocsergetlsr #:tiocsergetmulti #:tiocsersetmulti #:tiocmiwait
    #:tiocgicount #:tiocghayesesp #:tiocshayesesp #:fioqsize
 
+   #:cflag-vmin #:cflag-vlnext #:cflag-vquit #:cflag-veol #:cflag-vreprint
+   #:cflag-vtime #:cflag-vstop #:cflag-veol2 #:cflag-vwerase #:cflag-veof
+   #:cflag-vsusp #:cflag-vintr #:cflag-vkill #:cflag-vstart #:cflag-verase
+   #:cflag-vdiscard #:cflag-vswtc
+
    ;; Misc
    #:repeat-upon-condition
    #:repeat-upon-eintr

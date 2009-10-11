@@ -65,6 +65,9 @@
   (path1 filename-designator)
   (path2 filename-designator))
 
+(defsyscall "isatty" :int
+  (fd file-descriptor-designator))
+
 ;;; files
 
 (defsyscall ("readlink" %readlink) ssize
@@ -659,3 +662,14 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (fd    file-descriptor-designator)
   (iov   :pointer)
   (count size))
+
+;; termios.h
+
+(defsyscall "tcgetattr" :int
+  (fd      file-descriptor-designator)
+  (termios :pointer))
+
+(defsyscall "tcsetattr" :int
+  (fd      file-descriptor-designator)
+  (mode    :int)
+  (termios :pointer))

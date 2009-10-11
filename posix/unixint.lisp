@@ -520,6 +520,74 @@
   (xpixel "ws_xpixel" :type :uint16)
   (ypixel "ws_ypixel" :type :uint16))
 
+;;;; from termios.h
+
+(cstruct termios "struct termios"
+  (iflag "c_iflag" :type :uint32)
+  (oflag "c_oflag" :type :uint32)
+  (cflag "c_cflag" :type :uint32)
+  (lflag "c_lflag" :type :uint32)
+  (cc "c_cc" :type :uint8 :count :auto))
+
+(constant (cflag-VINTR "VINTR"))
+(constant (cflag-VQUIT "VQUIT"))
+(constant (cflag-VERASE "VERASE"))
+(constant (cflag-VKILL "VKILL"))
+(constant (cflag-VEOF "VEOF"))
+(constant (cflag-VTIME "VTIME"))
+(constant (cflag-VMIN "VMIN"))
+(constant (cflag-VSWTC "VSWTC"))
+(constant (cflag-VSTART "VSTART"))
+(constant (cflag-VSTOP "VSTOP"))
+(constant (cflag-VSUSP "VSUSP"))
+(constant (cflag-VEOL "VEOL"))
+(constant (cflag-VREPRINT "VREPRINT"))
+(constant (cflag-VDISCARD "VDISCARD"))
+(constant (cflag-VWERASE "VWERASE"))
+(constant (cflag-VLNEXT "VLNEXT"))
+(constant (cflag-VEOL2 "VEOL2"))
+
+(constant (TCSANOW "TCSAFNOW"))
+(constant (TCSADRAIN "TCSADRAIN"))
+(constant (TCSAFLUSH "TCSAFLUSH"))
+
+(constant (tty-IGNBRK "IGNBRK"))
+(constant (tty-BRKINT "BRKINT"))
+(constant (tty-IGNPAR "IGNPAR"))
+(constant (tty-PARMRK "PARMRK"))
+(constant (tty-INPCK "INPCK"))
+(constant (tty-ISTRIP "ISTRIP"))
+(constant (tty-INLCR "INLCR"))
+(constant (tty-IGNCR "IGNCR"))
+(constant (tty-ICRNL "ICRNL"))
+(constant (tty-IUCLC "IUCLC"))
+(constant (tty-IXON "IXON"))
+(constant (tty-IXANY "IXANY"))
+(constant (tty-IXOFF "IXOFF"))
+(constant (tty-IMAXBEL "IMAXBEL"))
+(constant (tty-IUTF8 "IUTF8"))
+
+(constant (tty-OPOST "OPOST"))
+(constant (tty-OLCUC "OLCUC"))
+(constant (tty-ONLCR "ONLCR"))
+(constant (tty-OCRNL "OCRNL"))
+(constant (tty-ONOCR "ONOCR"))
+(constant (tty-ONLRET "ONLRET"))
+(constant (tty-OFILL "OFILL"))
+(constant (tty-OFDEL "OFDEL"))
+
+
+(constant (tty-ISIG "ISIG"))
+(constant (tty-ICANON "ICANON"))
+(constant (tty-ECHO "ECHO"))
+(constant (tty-ECHOE "ECHOE"))
+(constant (tty-ECHOK "ECHOK"))
+(constant (tty-ECHONL "ECHONL"))
+(constant (tty-NOFLSH "NOFLSH"))
+(constant (tty-TOSTOP "TOSTOP"))
+
+
+
 ;;;; Linux ioctls from sys/ioctl.h
 
 #+linux
