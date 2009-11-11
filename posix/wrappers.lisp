@@ -60,7 +60,7 @@
 
 #-windows
 (defwrapper "mmap" ("void*" (errno-wrapper
-                             :int
+                             :long
                              :error-predicate (lambda (p) (= p map-failed))
                              :return-filter make-pointer))
   (start :pointer)
@@ -72,7 +72,7 @@
 
 #+linux
 (defwrapper "mremap" ("void*" (errno-wrapper
-                               :int
+                               :long
                                :error-predicate (lambda (p) (= p map-failed))
                                :return-filter make-pointer))
   (old-address :pointer)
