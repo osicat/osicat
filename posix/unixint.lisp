@@ -520,6 +520,11 @@
   (xpixel "ws_xpixel" :type :uint16)
   (ypixel "ws_ypixel" :type :uint16))
 
+#+(or linux bsd)
+(progn
+  (constant (tiocgwinsz "TIOCGWINSZ"))
+  (constant (tiocswinsz "TIOCSWINSZ")))
+
 ;;;; from termios.h
 
 (cstruct termios "struct termios"
@@ -670,8 +675,6 @@
   (constant (tiocspgrp "TIOCSPGRP"))
   (constant (tiocoutq "TIOCOUTQ"))
   (constant (tiocsti "TIOCSTI"))
-  (constant (tiocgwinsz "TIOCGWINSZ"))
-  (constant (tiocswinsz "TIOCSWINSZ"))
   (constant (tiocmget "TIOCMGET"))
   (constant (tiocmbis "TIOCMBIS"))
   (constant (tiocmbic "TIOCMBIC"))
