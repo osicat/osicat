@@ -522,8 +522,10 @@
 
 #+(or linux bsd)
 (progn
+  ;; FIXME: Others too probaly exist on BSD hosts as well.
   (constant (tiocgwinsz "TIOCGWINSZ"))
-  (constant (tiocswinsz "TIOCSWINSZ")))
+  (constant (tiocswinsz "TIOCSWINSZ"))
+  (constant (tiocnotty "TIOCNOTTY")))
 
 ;;;; from termios.h
 
@@ -689,7 +691,6 @@
   (constant (tiocsserial "TIOCSSERIAL"))
   (constant (tiocpkt "TIOCPKT"))
   (constant (fionbio "FIONBIO"))
-  (constant (tiocnotty "TIOCNOTTY"))
   (constant (tiocsetd "TIOCSETD"))
   (constant (tiocgetd "TIOCGETD"))
   (constant (tcsbrkp "TCSBRKP"))
