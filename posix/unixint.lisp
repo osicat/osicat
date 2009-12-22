@@ -546,6 +546,7 @@
 (constant (cflag-VSWTC "VSWTC"))
 (constant (cflag-VSTART "VSTART"))
 (constant (cflag-VSTOP "VSTOP"))
+(constant (cflag-VDSUSP "VDSUSP"))
 (constant (cflag-VSUSP "VSUSP"))
 (constant (cflag-VEOL "VEOL"))
 (constant (cflag-VREPRINT "VREPRINT"))
