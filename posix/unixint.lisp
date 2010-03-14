@@ -555,7 +555,7 @@
 (constant (cflag-VLNEXT "VLNEXT"))
 (constant (cflag-VEOL2 "VEOL2"))
 
-(constant (TCSANOW "TCSAFNOW"))
+(constant (TCSANOW "TCSANOW"))
 (constant (TCSADRAIN "TCSADRAIN"))
 (constant (TCSAFLUSH "TCSAFLUSH"))
 
