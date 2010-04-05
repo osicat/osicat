@@ -98,15 +98,16 @@ of SETF ENVIRONMENT."
                      (if follow-p
                          (nix:stat namestring)
                          (nix:lstat namestring)))))
-          (switch ((logand nix:s-ifmt mode) :test #'=)
-            (nix:s-ifdir  :directory)
-            (nix:s-ifchr  :character-device)
-            (nix:s-ifblk  :block-device)
-            (nix:s-ifreg  :regular-file)
-            (nix:s-iflnk  :symbolic-link)
-            (nix:s-ifsock :socket)
-            (nix:s-ififo  :pipe)
-            (t (bug "Unknown file mode: ~A." mode))))
+          (case (logand nix:s-ifmt mode)
+            (#.nix:s-ifdir  :directory)
+            (#.nix:s-ifchr  :character-device)
+            (#.nix:s-ifblk  :block-device)
+            (#.nix:s-ifreg  :regular-file)
+            (#.nix:s-iflnk  :symbolic-link)
+            (#.nix:s-ifsock :socket)
+            (#.nix:s-ififo  :pipe)
+            (otherwise
+             (bug "Unknown file mode: ~A." mode))))
       (nix:enoent ()
         (cond
           ;; stat() returned ENOENT: either FILE does not exist
