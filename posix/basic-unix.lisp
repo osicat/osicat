@@ -48,12 +48,14 @@
       (strerror-r errno buf bufsiz))))
 
 (defmethod print-object ((posix-error posix-error) stream)
-  (print-unreadable-object (posix-error stream :type t :identity nil)
-    (let ((code (system-error-code posix-error))
-          (identifier (system-error-identifier posix-error)))
-      (format stream "~s ~s ~s"
-              (or code "[No code]") identifier
-              (or (strerror code) "[Can't get error string.]")))))
+ (print-unreadable-object (posix-error stream :type t :identity nil)
+   (let ((code (system-error-code posix-error))
+         (identifier (system-error-identifier posix-error))
+         (syscall (posix-error-syscall posix-error)))
+     (format stream "~s ~s ~s ~s"
+             (or syscall "[No syscall name]")
+             (or code "[No code]") identifier
+             (or (strerror code) "[Can't get error string.]")))))
 
 ;;;; string.h
 

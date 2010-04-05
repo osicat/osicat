@@ -36,7 +36,8 @@
 ;;; in basic-unix.lisp because it needs %STRERROR-R defined later in
 ;;; wrappers.lisp.
 (define-condition posix-error (system-error)
-  ((object :initform nil :initarg :object :reader posix-error-object))
+  ((object :initform nil :initarg :object :reader posix-error-object)
+   (syscall :initform nil :initarg :syscall :reader posix-error-syscall))
   (:documentation
    "POSIX-ERRORs are signalled whenever ERRNO is set by a POSIX call."))
 
@@ -65,7 +66,7 @@
 ;;; Instantiates a subclass of POSIX-ERROR matching ERR or a plain
 ;;; POSIX-ERROR if no matching subclass is found.  ERR can be either a
 ;;; keyword or an integer both denoting an ERRNO value.
-(defun make-posix-error (err object)
+(defun make-posix-error (err object syscall)
   (let (error-keyword error-code)
     (etypecase err
       (keyword (setf error-keyword err)
@@ -74,24 +75,27 @@
                                        :unknown))
                (setf error-code err)))
     (if-let (condition-class (get-posix-error-condition error-keyword))
-            (make-condition condition-class :object object)
+            (make-condition condition-class
+                            :object object
+                            :syscall syscall)
             (make-condition 'posix-error
                             :object object
                             :code error-code
-                            :identifier error-keyword))))
+                            :identifier error-keyword
+                            :syscall syscall))))
 
 ;;; This might be a silly question but, who resets ERRNO?  Should we?
 ;;; I ask because we have some function bindings with DEFSYSCALL that
 ;;; have no documented ERRNO behaviour and we're checking ERRNO when
 ;;; they fail anyway.  --luis
 
-(defun posix-error (&optional (errno (get-errno)) object)
-  (error (make-posix-error errno object)))
+(defun posix-error (&optional (errno (get-errno)) object syscall)
+  (error (make-posix-error errno object syscall)))
 
 ;;; Default ERROR-GENERATOR for ERRNO-WRAPPER.
-(defun syscall-signal-posix-error (return-value object)
+(defun syscall-signal-posix-error (return-value object syscall)
   (declare (ignore return-value))
-  (posix-error (get-errno) object))
+  (posix-error (get-errno) object syscall))
 
 ;;; Error predicate that always returns NIL.  Not actually used
 ;;; because the ERRNO-WRAPPER optimizes this call away.
@@ -112,7 +116,8 @@
    (return-filter :initarg :return-filter :reader return-filter)
    (error-generator :initarg :error-generator :reader error-generator)
    (base-type :initarg :base-type :reader base-type)
-   (object :initarg :object :reader errno-object)))
+   (object :initarg :object :reader errno-object)
+   (function-name :initarg :function-name :reader function-name)))
 
 ;;; FIXME: undocumented in cffi-grovel.
 (defun make-from-pointer-function-name (type-name)
@@ -120,7 +125,8 @@
 
 (define-parse-method errno-wrapper
     (base-type &key object error-predicate (return-filter 'identity)
-               (error-generator 'syscall-signal-posix-error))
+               (error-generator 'syscall-signal-posix-error)
+               function-name)
   ;; pick a default error-predicate
   (unless error-predicate
     (case base-type
@@ -148,7 +154,8 @@
                  :base-type base-type
                  :error-predicate error-predicate
                  :return-filter return-filter
-                 :error-generator error-generator))
+                 :error-generator error-generator
+                 :function-name function-name))
 
 ;;; This type translator sets up the appropriate calls to
 ;;; RETURN-FILTER, ERROR-PREDICATE and ERROR-GENERATOR around the
@@ -164,7 +171,8 @@
             (if (eq (error-predicate type) 'never-fails)
                 return-exp
                 `(if (,(error-predicate type) r)
-                     (,(error-generator type) r ,(errno-object type))
+                     (,(error-generator type) r ,(errno-object type)
+                       ',(function-name type))
                      ,return-exp))))))
 
 (defmacro defsyscall (name-and-opts return-type &body args)
@@ -174,11 +182,15 @@ the C function name."
   (multiple-value-bind (lisp-name c-name options)
       (cffi::parse-name-and-options name-and-opts)
     #+windows (setf c-name (concatenate 'string "_" c-name))
-    `(defcfun (,c-name ,lisp-name ,@options) (errno-wrapper ,return-type)
+    `(defcfun (,c-name ,lisp-name ,@options)
+         (errno-wrapper ,return-type :function-name ,lisp-name)
        ,@args)))
 
 ;;; This workaround for windows sucks. --luis
 (defmacro defcsyscall (name-and-opts return-type &body args)
   "Like DEFSYSCALL but doesn't prepend #\_ to the C function name on
 windows (or any other platform)."
-  `(defcfun ,name-and-opts (errno-wrapper ,return-type) ,@args))
+  (let ((lisp-name (cffi::parse-name-and-options name-and-opts)))
+    `(defcfun ,name-and-opts
+         (errno-wrapper ,return-type :function-name ,lisp-name)
+       ,@args)))

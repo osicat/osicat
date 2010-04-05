@@ -626,3 +626,9 @@
           (nix:close fd)
           (nix:unlink non-link-pathname))))
   failed)
+
+(define-posix-test posix-error-syscall
+    (handler-case (nix:mkdir "/" 0)
+      (nix:posix-error (c)
+        (nix:posix-error-syscall c)))
+  nix:mkdir)
