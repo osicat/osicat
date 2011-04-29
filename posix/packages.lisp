@@ -190,7 +190,7 @@
    #:get-errno
    #:set-errno
 
-   ;; Types and Accessors
+   ;; Types and Accessors / Slots
    #:stat
    #:stat-dev
    #:stat-ino
@@ -205,6 +205,12 @@
    #:stat-atime
    #:stat-mtime
    #:stat-ctime
+
+   #:winsize
+   #:row
+   #:col
+   #:xpixel
+   #:ypixel
 
    ;; Platform-specific Functions
 
