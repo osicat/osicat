@@ -159,6 +159,11 @@
    #:syslog
    #:telldir
    #:time
+   #:timer-create
+   #:timer-delete
+   #:timer-getoverrun
+   #:timer-gettime
+   #:timer-settime
    #:truncate
    #:umask
    #:uname
@@ -224,6 +229,8 @@
    #:sigstop #:sigtstp #:sigcont #:sigchld #:sigttin #:sigttou #:sigio #:sigxcpu
    #:sigxfsz #:sigvtalrm #:sigprof #:sigwinch #:siginfo #:sigusr1 #:sigusr2
    #:sigrtmin #:sigrtmax
+
+   #:sigev-none #:sigev-signal #:sigev-thread #+linux #:sigev-thread-id
 
    #:o-rdonly #:o-wronly #:o-rdwr #:o-creat #:o-excl #:o-noctty #:o-trunc
    #:o-append #:o-nonblock #:o-ndelay #:o-sync #:o-nofollow #:o-direct
@@ -296,7 +303,8 @@
 
    #:iov-max
 
-   #:clock-monotonic #:clock-realtime
+   #:clock-monotonic #:clock-realtime #:clock-process-cputime-id
+   #:clock-thread-cputime-id #:timer-abstime
 
    #:log-cons #:log-ndelay #:log-perror #:log-pid
 

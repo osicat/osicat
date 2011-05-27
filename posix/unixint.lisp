@@ -90,6 +90,30 @@
   (constant (sigrtmax "SIGRTMAX")
             :documentation "Largest real-time signal number."))
 
+(constant (sigev-none "SIGEV_NONE")
+          :documentation "No notification when the event occurs.")
+(constant (sigev-signal "SIGEV_SIGNAL")
+          :documentation "Generate a signal when the event occurs.")
+(constant (sigev-thread "SIGEV_THREAD")
+          :documentation "Call a function when the event occurs.")
+#+linux
+(constant (sigev-thread-id "SIGEV_THREAD_ID")
+          :documentation
+          "Send a signal to a specific thread when the event occurs.")
+
+(cunion sigval "union sigval"
+  (int "sival_int" :type :int)
+  (ptr "sival_ptr" :type :pointer))
+
+(cstruct sigevent "struct sigevent"
+  (notify            "sigev_notify"            :type :int)
+  (signo             "sigev_signo"             :type :int)
+  (value             "sigev_value"             :type sigval)
+  (notify-function   "sigev_notify_function"   :type :pointer)
+  (notify-attributes "sigev_notify_attributes" :type :pointer)
+  #+linux
+  (notify-thread-id  "_sigev_un._tid"          :type pid))
+
 ;;;; fcntl()
 
 (constant (f-dupfd "F_DUPFD"))
@@ -308,13 +332,23 @@
 #-darwin
 (progn
   (ctype clockid "clockid_t")
+  (ctype timer "timer_t")
   (constant (clock-monotonic "CLOCK_MONOTONIC"))
-  (constant (clock-realtime "CLOCK_REALTIME")))
+  (constant (clock-realtime "CLOCK_REALTIME"))
+  (constant (clock-process-cputime-id "CLOCK_PROCESS_CPUTIME_ID"))
+  (constant (clock-thread-cputime-id "CLOCK_THREAD_CPUTIME_ID"))
+  (constant (timer-abstime "TIMER_ABSTIME")))
 
 (cstruct timespec "struct timespec"
   "UNIX time specification in seconds and nanoseconds."
   (sec  "tv_sec"  :type time)
   (nsec "tv_nsec" :type :long))
+
+#-darwin
+(cstruct itimerspec "struct itimerspec"
+  "UNIX timer interval and initial expiration."
+  (interval "it_interval" :type timespec)
+  (value    "it_value"    :type timespec))
 
 ;;;; from sys/select.h
 

@@ -394,7 +394,93 @@
     (with-foreign-object (ts 'timespec)
       (with-foreign-slots ((sec nsec) ts timespec)
         (%clock-settime clock-id ts)
-        (values sec nsec)))))
+        (values sec nsec))))
+
+  (defsyscall ("timer_create" %timer-create) :int
+    (clockid clockid)
+    (sigevent :pointer)
+    (timer :pointer))
+
+  (defun timer-create (clock-id notify-method
+                       &key signal notify-value function attributes
+                            #+linux thread-id)
+    "Creates a new per-process interval timer."
+    (with-foreign-object (se 'sigevent)
+      (with-foreign-slots ((notify signo value
+                            notify-function notify-attributes
+                            #+linux notify-thread-id)
+                           se sigevent)
+        (with-foreign-slots ((int) value sigval)
+          (setf notify notify-method)
+          (cond ((= notify-method sigev-none))
+                ((= notify-method sigev-signal)
+                 (setf signo signal
+                       int notify-value))
+                #+linux
+                ((= notify-method (logior sigev-signal sigev-thread-id))
+                 (setf signo signal
+                       notify-thread-id thread-id
+                       int notify-value))
+                ((= notify-method sigev-thread)
+                 (setf notify-function function
+                       notify-attributes attributes
+                       int notify-value))
+                (t (error "bad timer notification method")))
+          (with-foreign-object (timer 'timer)
+            (%timer-create clock-id se timer)
+            (mem-ref timer :int))))))
+
+  (defsyscall ("timer_delete" timer-delete) :int
+    "Deletes the timer identified by TIMER-ID."
+    (timer-id timer))
+
+  (defsyscall ("timer_getoverrun" timer-getoverrun) :int
+    "Returns the overrun count for the timer identified by TIMER-ID."
+    (timer-id timer))
+
+  (defsyscall ("timer_gettime" %timer-gettime) :int
+    (timer timer)
+    (itimerspec :pointer))
+
+  (defun deconstruct-itimerspec (its)
+    (with-foreign-slots ((interval value) its itimerspec)
+      (with-foreign-slots ((sec nsec) interval timespec)
+        (let ((interval-sec sec)
+              (interval-nsec nsec))
+          (with-foreign-slots ((sec nsec) value timespec)
+            (values interval-sec interval-nsec sec nsec))))))
+
+  (defun timer-gettime (timer-id)
+    "Returns the interval and the time until next expiration for the
+timer specified by TIMER-ID.  Both the interval and the time are returned
+as seconds and nanoseconds, so four values are returned."
+    (with-foreign-object (its 'itimerspec)
+      (%timer-gettime timer-id its)
+      (values-list (multiple-value-list (deconstruct-itimerspec its)))))
+
+  (defsyscall ("timer_settime" %timer-settime) :int
+    (timer timer)
+    (flags :int)
+    (new :pointer)
+    (old :pointer))
+
+  (defun timer-settime (timer-id flags interval-sec interval-nsec
+                        initial-sec initial-nsec
+                        &optional return-previous-p)
+    "Arms or disarms the timer identified by TIMER-ID."
+    (with-foreign-object (new 'itimerspec)
+      (with-foreign-slots ((interval value) new itimerspec)
+        (with-foreign-slots ((sec nsec) interval timespec)
+          (setf sec interval-sec
+                nsec interval-nsec)
+          (with-foreign-slots ((sec nsec) value timespec)
+            (setf sec initial-sec
+                  nsec initial-nsec)
+            (with-foreign-object (old 'itimerspec)
+              (let ((result (%timer-settime timer-id flags new old)))
+                (if return-previous-p
+                    (values-list (multiple-value-list (deconstruct-itimerspec old)))
+                    result)))))))))
 
 ;;;; sys/stat.h
 
