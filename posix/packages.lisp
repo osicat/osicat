@@ -99,6 +99,7 @@
    #:gettimeofday
    #:getuid
    #:ioctl
+   #:isatty
    #:kill
    #:link
    #:lockf
@@ -157,6 +158,8 @@
    #:sync
    #:sysconf
    #:syslog
+   #:tcgetattr
+   #:tcsetattr
    #:telldir
    #:time
    #:timer-create
@@ -210,6 +213,13 @@
    #:stat-atime
    #:stat-mtime
    #:stat-ctime
+
+   #:termios
+   #:iflag
+   #:oflag
+   #:cflag
+   #:lflag
+   #:cc
 
    #:winsize
    #:row
@@ -350,7 +360,21 @@
    #:cflag-vmin #:cflag-vlnext #:cflag-vquit #:cflag-veol #:cflag-vreprint
    #:cflag-vtime #:cflag-vstop #:cflag-veol2 #:cflag-vwerase #:cflag-veof
    #:cflag-vsusp #:cflag-vintr #:cflag-vkill #:cflag-vstart #:cflag-verase
-   #:cflag-vdiscard #:cflag-vswtc
+   #:cflag-vdiscard #:cflag-vswtc #:cflag-vstatus #:cflag-vdsusp
+
+   #:tty-echo
+   #:tty-icanon
+   #:tty-icrnl
+   #:tty-inlcr
+   #:tty-ixon
+   #:tty-ixoff
+   #:tty-ocrnl
+   #:tty-onlcr
+
+   #:tcsanow
+   #:tcsadrain
+   #:tcsaflush
+
    #:posix-vdisable
 
    ;; Misc
