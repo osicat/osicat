@@ -632,3 +632,26 @@
       (nix:posix-error (c)
         (nix:posix-error-syscall c)))
   nix:mkdir)
+
+(define-posix-test isatty.1
+    (let (fd)
+      (unwind-protect
+           (progn
+             (setf fd (nix:open "/tmp/isatty.test" nix:o-creat))
+             (nix:isatty fd))
+        (when fd
+          (nix:close fd))))
+  0)
+
+(define-posix-test isatty.1
+    (let (fd)
+      (unwind-protect
+           (progn
+             (setf fd (ignore-errors (nix:open "/dev/tty" nix:o-rdwr)))
+             (if fd
+                 (nix:isatty fd)
+                 ;; FIXME: add pty stuff for proper testing
+                 "could not open /dev/tty for testing isatty"))
+        (when fd
+          (nix:close fd))))
+  1)
