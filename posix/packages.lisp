@@ -351,6 +351,7 @@
    #:cflag-vtime #:cflag-vstop #:cflag-veol2 #:cflag-vwerase #:cflag-veof
    #:cflag-vsusp #:cflag-vintr #:cflag-vkill #:cflag-vstart #:cflag-verase
    #:cflag-vdiscard #:cflag-vswtc
+   #:posix-vdisable
 
    ;; Misc
    #:repeat-upon-condition

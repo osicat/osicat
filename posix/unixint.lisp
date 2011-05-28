@@ -504,6 +504,8 @@
 
 (ctype useconds "useconds_t")
 
+(constant (posix-vdisable "_POSIX_VDISABLE"))
+
 ;;;; from pwd.h
 
 (cstruct passwd "struct passwd"
@@ -588,6 +590,7 @@
 (constant (cflag-VWERASE "VWERASE"))
 (constant (cflag-VLNEXT "VLNEXT"))
 (constant (cflag-VEOL2 "VEOL2"))
+(constant (cflag-VSTATUS "VSTATUS"))
 
 (constant (TCSANOW "TCSANOW"))
 (constant (TCSADRAIN "TCSADRAIN"))
