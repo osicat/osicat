@@ -229,8 +229,10 @@
 
    ;; Platform-specific Functions
 
+   #+linux #:gettid
    #+linux #:fdatasync
    #+linux #:mremap
+   #+linux #:syscall
 
    ;; Constants
 
@@ -264,6 +266,7 @@
 
    #+linux #:mremap-maymove
    #+linux #:mremap-fixed
+   #+linux #:sys-gettid
 
    #:ms-async #:ms-sync #:ms-invalidate
 

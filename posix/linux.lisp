@@ -31,3 +31,14 @@
 
 (defsyscall "fdatasync" :int
   (fd file-descriptor-designator))
+
+;;;; sys/syscall.h
+
+(defsyscall ("syscall" syscall) :int
+  "Invoke the system call whose assembly language interface is selected
+with NUMBER."
+  (number :int))
+
+(defun gettid ()
+  "Returns the thread ID of the calling thread."
+  (syscall sys-gettid))

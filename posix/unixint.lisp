@@ -41,7 +41,8 @@
 (include "sys/types.h" "sys/stat.h" "sys/mman.h" "sys/wait.h" "fcntl.h"
          "errno.h" "signal.h" "unistd.h" "termios.h" "sys/ioctl.h" "limits.h"
          "sys/uio.h"  "time.h" "dirent.h" "pwd.h" "grp.h" "syslog.h"
-         "sys/resource.h" "stdlib.h" "sys/utsname.h" "sys/statvfs.h")
+         "sys/resource.h" "stdlib.h" "sys/utsname.h" "sys/statvfs.h"
+         #+linux "sys/syscall.h")
 
 (in-package #:osicat-posix)
 
@@ -761,3 +762,8 @@
 
 (constant (wnohang "WNOHANG"))
 (constant (wuntraced "WUNTRACED"))
+
+;;;; from sys/syscall.h
+
+#+linux
+(constant (sys-gettid "SYS_gettid"))
