@@ -212,7 +212,8 @@
            (subdir (ensure-directories-exist
                     (merge-pathnames "subdir/" dir))))
       (unwind-protect
-           (remove-if #'null (mapdir #'pathname-name dir))
+           (let ((result (remove-if #'null (mapdir #'pathname-name dir))))
+             (sort result #'string<))
         (osicat-posix:unlink file1)
         (osicat-posix:unlink file2)
         (delete-directory subdir)
@@ -227,7 +228,8 @@
            (subdir (ensure-directories-exist
                     (merge-pathnames "subdir/" dir))))
       (unwind-protect
-           (sort (mapdir #'namestring dir) #'string<)
+           (let ((result (mapdir #'namestring dir)))
+             (sort result #'string<))
         (osicat-posix:unlink file1)
         (osicat-posix:unlink file2)
         (delete-directory subdir)
