@@ -643,7 +643,7 @@
           (nix:close fd))))
   0)
 
-(define-posix-test isatty.1
+(define-posix-test isatty.2
     (let (fd)
       (unwind-protect
            (progn
