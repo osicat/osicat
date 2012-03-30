@@ -59,6 +59,6 @@
 (defun our-getuid ()
   #+sbcl (sb-unix:unix-getuid)
   #+cmu (unix:unix-getuid)
-  #+clisp (posix:getuid)
+  #+clisp (posix:uid)
   #+allegro (excl.osi:getuid)
   #-(or sbcl cmu clisp allegro) 0) ; A sane enough default for testing?
