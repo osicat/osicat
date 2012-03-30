@@ -394,8 +394,10 @@
     (with-foreign-object (ts 'timespec)
       (with-foreign-slots ((sec nsec) ts timespec)
         (%clock-settime clock-id ts)
-        (values sec nsec))))
+        (values sec nsec)))))
 
+#-(or darwin openbsd)
+(progn
   (defsyscall ("timer_create" %timer-create) :int
     (clockid clockid)
     (sigevent :pointer)
@@ -646,21 +648,22 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (result  :pointer))
 
 (defun funcall-getpw (fn arg)
+  ;; http://pubs.opengroup.org/onlinepubs/009695399/functions/getpwnam.html
+  ;; "Applications wishing to check for error situations should set
+  ;; errno to 0 before calling getpwnam(). If getpwnam() returns null
+  ;; pointer and errno is non-zero, an error occured.
+  (set-errno 0)
   (with-foreign-objects ((pw 'passwd) (pwp :pointer))
     (with-foreign-pointer (buf 4096 bufsize)
       (with-foreign-slots ((name passwd uid gid gecos dir shell) pw passwd)
         (let ((ret (funcall fn arg pw buf bufsize pwp)))
-          ;; Darwin's getpwnam_r() is broken a returns -1 when the
-          ;; user is not found.  Not sure if it returns the error
-          ;; number as specified by posix.
-          #+darwin
-          (when (= ret -1)
-            (return-from funcall-getpw nil))
-          (if (zerop ret)
-              (if (null-pointer-p (mem-ref pwp :pointer))
-                  nil
-                  (values name passwd uid gid gecos dir shell))
-              (posix-error ret)))))))
+          (cond ((and (null-pointer-p (mem-ref pwp :pointer))
+                      (not (zerop (get-errno))))
+                 (posix-error ret))
+                ((and (null-pointer-p (mem-ref pwp :pointer))
+                      (zerop (get-errno)))
+                 nil)
+                (t (values name passwd uid gid gecos dir shell))))))))
 
 (defun getpwuid (uid)
   "Gets the password-entry of a user, by user id."

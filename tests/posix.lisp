@@ -139,9 +139,9 @@
 (define-posix-test mkdir.error.2
     (handler-case
         (nix:mkdir "/" 0)
-      (#+darwin nix:eisdir
+      (#+(or darwin openbsd) nix:eisdir
        #+windows nix:eacces
-       #-(or darwin windows) nix:eexist () 'failed))
+       #-(or darwin windows openbsd) nix:eexist () 'failed))
   failed)
 
 (define-eacces-test mkdir.error.3
@@ -189,9 +189,9 @@
 (define-posix-test rmdir.error.3
     (handler-case
         (nix:rmdir "/")
-      (#+darwin nix:eisdir
+      (#+(or darwin openbsd) nix:eisdir
        #+windows nix:eacces
-       #-(or darwin windows) nix:ebusy () 'failed))
+       #-(or darwin windows openbsd) nix:ebusy () 'failed))
   failed)
 
 (define-posix-test rmdir.error.4
@@ -206,7 +206,7 @@
           (nix:rmdir dir)
           ;; documented by POSIX
           (not (null (member (system-error-identifier c)
-                             '(:eexist :enotempty #+darwin :enonet
+                             '(:eexist :enotempty #+(or darwin openbsd) :enonet
                                #+windows :enosr)))))))
   t)
 

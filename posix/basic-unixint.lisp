@@ -286,11 +286,17 @@
 (ctype dev "dev_t")
 (ctype ino "ino_t")
 
-#-windows
+#-(or windows openbsd)
 (progn
   (ctype nlink "nlink_t")
   (ctype blksize "blksize_t")
   (ctype blkcnt "blkcnt_t"))
+
+#+openbsd
+(progn
+  (ctype nlink "nlink_t")
+  (ctype blksize "long")
+  (ctype blkcnt "long"))
 
 (cstruct stat "struct stat"
   (dev     "st_dev"     :type #-mips dev #+mips :unsigned-long)

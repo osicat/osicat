@@ -106,6 +106,7 @@
   (int "sival_int" :type :int)
   (ptr "sival_ptr" :type :pointer))
 
+#-openbsd
 (cstruct sigevent "struct sigevent"
   (notify            "sigev_notify"            :type :int)
   (signo             "sigev_signo"             :type :int)
