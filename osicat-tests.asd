@@ -25,6 +25,9 @@
 ;;; DEALINGS IN THE SOFTWARE.
 
 (defsystem osicat-tests
+  :author "Nikodemus Siivola <nikodemus@random-state.net>"
+  :description "Osicat test suite"
+  :license "MIT"
   :depends-on (osicat rt)
   :components
   ((:module tests

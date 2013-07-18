@@ -34,6 +34,9 @@
 ;;; that might be useful.  --luis
 
 (defsystem osicat
+  :author "Nikodemus Siivola <nikodemus@random-state.net>"
+  :description "A lightweight operating system interface"
+  :license "MIT"
   :depends-on (cffi cffi-grovel alexandria trivial-features)
   :components
   ((:module osicat-sys
