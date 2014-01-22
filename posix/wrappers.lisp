@@ -60,9 +60,8 @@
 
 #-windows
 (defwrapper "mmap" ("void*" (errno-wrapper
-                             :long
-                             :error-predicate (lambda (p) (= p map-failed))
-                             :return-filter make-pointer))
+                             :pointer
+                             :error-predicate (lambda (p) (pointer-eq p *map-failed-pointer*))))
   (start :pointer)
   (length ("size_t" size))
   (prot :int)
@@ -72,9 +71,8 @@
 
 #+linux
 (defwrapper "mremap" ("void*" (errno-wrapper
-                               :long
-                               :error-predicate (lambda (p) (= p map-failed))
-                               :return-filter make-pointer))
+                               :pointer
+                               :error-predicate (lambda (p) (pointer-eq p *map-failed-pointer*))))
   (old-address :pointer)
   (old-size ("size_t" size))
   (new-size ("size_t" size))

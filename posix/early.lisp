@@ -119,6 +119,18 @@
    (object :initarg :object :reader errno-object)
    (function-name :initarg :function-name :reader function-name)))
 
+;; NOTE: this is an ugly type-punning. An alternative is to compute
+;; this value from (cffi:foreign-type-size :uintptr), but it requires
+;; also knowing how many bits are in a byte.
+(defconstant +most-positive-uintptr+ (with-foreign-object (p :intptr)
+                                       (setf (mem-ref p :intptr) -1)
+                                       (mem-ref p :uintptr)))
+
+;; on some systems, map-failed is groveled as -1 :(
+#-windows
+(defvar *map-failed-pointer* (make-pointer (logand map-failed +most-positive-uintptr+)))
+
+
 ;;; FIXME: undocumented in cffi-grovel.
 (defun make-from-pointer-function-name (type-name)
   (format-symbol t "~A-~A-~A-~A" '#:make type-name '#:from '#:pointer))
