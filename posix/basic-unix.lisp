@@ -44,7 +44,14 @@
   (let ((errno (if (keywordp err)
                    (foreign-enum-value 'errno-values err)
                    err)))
+    #-linux ; XSI-compliant strerror_r() always stores the error
+            ; message in the user-supplied buffer.
     (with-foreign-pointer-as-string ((buf bufsiz) 1024)
+      (strerror-r errno buf bufsiz))
+    #+linux ; GNU strerror_r() doesn't always store the error message
+            ; in the user-supplied buffer, but it returns a string
+            ; instead of an int.
+    (with-foreign-pointer (buf 1024 bufsiz)
       (strerror-r errno buf bufsiz))))
 
 (defmethod print-object ((posix-error posix-error) stream)

@@ -157,8 +157,11 @@
   "errno = value;"
   "return errno;")
 
+;; Note: since we define _GNU_SOURCE on Linux (to get at mremap()), we
+;; get the GNU version of strerror_r() which doesn't always store the
+;; result in `buf'.
 #-windows
-(defwrapper "strerror_r" :int
+(defwrapper "strerror_r" #+linux :string #-linux :int
   (errnum :int)
   (buf :string)
   (buflen ("size_t" size)))
