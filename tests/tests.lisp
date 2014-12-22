@@ -28,9 +28,15 @@
 
 (defpackage #:osicat-tests
   (:use #:common-lisp #:rtest #:osicat)
-  (:export #:do-tests))
+  (:export #:run))
 
 (in-package #:osicat-tests)
+
+(defun run ()
+  (let ((*package* (find-package :osicat-tests)))
+    (do-tests)
+    (null (set-difference (rtest:pending-tests)
+                          rtest::*expected-failures*))))
 
 ;;; Utilities
 
