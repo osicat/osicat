@@ -19,6 +19,9 @@ env:
 
 install:
   - curl -L https://github.com/luismbo/cl-travis/raw/master/install.sh | sh
+  - if [ "${LISP:(-2)}" = "32" ]; then
+      sudo apt-get install libc6-dev-i386;
+    fi
 
 script:
   - cl -e '(ql:quickload :cffi-grovel)
