@@ -53,7 +53,7 @@ fi
 ### Determine new version number
 
 if [ -z "$VERSION" ]; then
-    CURRENT_VERSION=$(git tag -l release-* | head -n1 | cut -d- -f2)
+    CURRENT_VERSION=$(git tag -l v* | head -n1 | cut -d- -f2)
 
     dots=$(echo "$CURRENT_VERSION" | tr -cd '.')
     count=$(expr length "$dots" + 1)
@@ -98,7 +98,7 @@ SIGNATURE="$TARBALL.asc"
 #darcs record -m "update $ASDF_FILE for version $VERSION"
 
 echo "Tagging the tree..."
-git tag "release-$VERSION"
+git tag "v$VERSION"
 
 echo "Creating distribution..."
 mkdir "$DIST_NAME"
