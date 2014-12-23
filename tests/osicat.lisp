@@ -365,15 +365,31 @@
         (eql (read stream) 'bar)))
   t)
 
+(defun call-with-temporary-nofile-rlimit (limit function)
+  #-unix (declare (ignore limit))
+  #+unix
+  (multiple-value-bind (soft hard)
+      (nix:getrlimit nix:rlimit-nofile)
+    (nix:setrlimit nix:rlimit-nofile limit hard)
+    (unwind-protect
+         (funcall function)
+      (nix:setrlimit nix:rlimit-nofile soft hard)))
+  #-unix
+  (funcall function))
+
+(defmacro with-temporary-nofile-rlimit (limit &body body)
+  `(call-with-temporary-nofile-rlimit ,limit (lambda () ,@body)))
+
 ;;; Test failure condition of OPEN-TEMPORARY-FILE.  So far, opening too
 ;;; many fds is all I can determine as a way to do this.
 (deftest temporary-file.2
     (let ((fds))
       (handler-case
           (unwind-protect
-               (do ((ctr 1024 (1- ctr))) ; 1024 fds is usually too many.
-                   ((zerop ctr))
-                 (push (open-temporary-file) fds))
+               (with-temporary-nofile-rlimit 512
+                 (do ((ctr 1024 (1- ctr)))
+                     ((zerop ctr))
+                   (push (open-temporary-file) fds)))
             (mapcar #'close fds))
         (file-error () t)))
   t)
