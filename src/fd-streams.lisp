@@ -29,10 +29,8 @@
 
 ;;; Note: we could use the streams library from iolib here though it
 ;;; would add quite a heavy dependency.
-;;;
-;;; Also, this is unused for now.
 
-#+(or sbcl cmu openmcl scl)
+#+(or sbcl cmu scl)
 (pushnew :osicat-fd-streams *features*)
 
 #+sbcl
@@ -63,14 +61,3 @@
                         :element-type element-type
                         :external-format external-format
                         :pathname pathname :file file)))
-
-;;; KLUDGE: This is kind of evil, because MAKE-FD-STREAM isn't
-;;; exported from CCL in OpenMCL.  However, it seems to have been
-;;; around for a while, and the developers have said that they don't
-;;; have any plans to change it any time soon.
-#+(or ccl openmcl)
-(defun make-fd-stream (fd &key direction element-type external-format
-                       pathname file)
-  (declare (ignore external-format pathname file))
-  (ccl::make-fd-stream fd :direction direction :element-type element-type
-                       :class 'file-stream))
