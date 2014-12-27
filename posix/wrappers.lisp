@@ -38,7 +38,7 @@
          "fcntl.h" "unistd.h" "dirent.h"  "sys/time.h")
 
 #-windows
-(include "syslog.h" "sys/mman.h" "sys/resource.h" "sys/statvfs.h")
+(include "syslog.h" "sys/mman.h" "sys/resource.h" "sys/statvfs.h" "sys/wait.h")
 
 ;;;; Large-file support
 
@@ -213,3 +213,51 @@
 
 ;; (defwrapper* "fileno" :int ((fp ("FILE *" :pointer)))
 ;;   "return fileno(fp);")
+
+
+
+;; wrap C macros that decode wait/waitpid return value
+#-windows
+(defwrapper* "wifexited" ("int" :boolean) ((status :int))
+  "return WIFEXITED(status);")
+
+#-windows
+(defwrapper* "wifsignaled" ("int" :boolean) ((status :int))
+  "return WIFEXITED(status);")
+
+#-windows
+(defwrapper* "wcoredump" ("int" :boolean) ((status :int))
+  "
+#ifdef WCOREDUMP
+  return WCOREDUMP(status);
+#else
+  return 0;
+#endif
+")
+
+#-windows
+(defwrapper* "wifcontinued" ("int" :boolean) ((status :int))
+  "
+#ifdef WIFCONTINUED
+  return WIFCONTINUED(status);
+#else
+  return 0;
+#endif
+")
+
+#-windows
+(defwrapper* "wifstopped" ("int" :boolean) ((status :int))
+  "return WIFSTOPPED(status);")
+
+
+#-windows
+(defwrapper* "wexitstatus" :int ((status :int))
+  "return WEXITSTATUS(status);")
+
+#-windows
+(defwrapper* "wtermsig" :int ((status :int))
+  "return WTERMSIG(status);")
+
+#-windows
+(defwrapper* "wstopsig" :int ((status :int))
+  "return WSTOPSIG(status);")

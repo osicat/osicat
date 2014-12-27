@@ -189,6 +189,14 @@
    #:s-islnk
    #:s-issock
    ;; #:fileno
+   #:wifexited
+   #:wifsignaled
+   #:wcoredump
+   #:wifcontinued
+   #:wifstopped
+   #:wexitstatus
+   #:wtermsig
+   #:wstopsig
 
    ;; Special Variables
    #:*environ*
