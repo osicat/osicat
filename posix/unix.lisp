@@ -51,8 +51,11 @@
     (with-foreign-string (ptr (filename template))
       (values (%mkstemp ptr) (foreign-string-to-lisp ptr)))))
 
-(defsyscall "mkdtemp" :string
+(defsyscall ("mkdtemp" %mkdtemp) :string
   (template filename-designator))
+
+(defun mkdtemp (&optional (template ""))
+  (%mkdtemp (concatenate 'string template "XXXXXX")))
 
 ;;;; unistd.h
 
