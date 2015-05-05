@@ -352,8 +352,8 @@
 
 (defun gettimeofday ()
   "Return the time in seconds and microseconds."
-  (with-foreign-object (tv 'timeval)
-    (with-foreign-slots ((sec usec) tv timeval)
+  (with-foreign-object (tv '(:struct timeval))
+    (with-foreign-slots ((sec usec) tv (:struct timeval))
       (%gettimeofday tv (null-pointer))
       (values sec usec))))
 
@@ -372,8 +372,8 @@
     (res     :pointer))
 
   (defun clock-getres (clock-id)
-    (with-foreign-object (ts 'timespec)
-      (with-foreign-slots ((sec nsec) ts timespec)
+    (with-foreign-object (ts '(:struct timespec))
+      (with-foreign-slots ((sec nsec) ts (:struct timespec))
         (%clock-getres clock-id ts)
         (values sec nsec))))
 
@@ -383,8 +383,8 @@
 
   (defun clock-gettime (clock-id)
     "Returns the time of the clock CLOCKID."
-    (with-foreign-object (ts 'timespec)
-      (with-foreign-slots ((sec nsec) ts timespec)
+    (with-foreign-object (ts '(:struct timespec))
+      (with-foreign-slots ((sec nsec) ts (:struct timespec))
         (%clock-gettime clock-id ts)
         (values sec nsec))))
 
@@ -394,8 +394,8 @@
 
   (defun clock-settime (clock-id)
     "Sets the time of the clock CLOCKID."
-    (with-foreign-object (ts 'timespec)
-      (with-foreign-slots ((sec nsec) ts timespec)
+    (with-foreign-object (ts '(:struct timespec))
+      (with-foreign-slots ((sec nsec) ts (:struct timespec))
         (%clock-settime clock-id ts)
         (values sec nsec)))))
 
@@ -410,12 +410,12 @@
                        &key signal notify-value function attributes
                             #+linux thread-id)
     "Creates a new per-process interval timer."
-    (with-foreign-object (se 'sigevent)
+    (with-foreign-object (se '(:struct sigevent))
       (with-foreign-slots ((notify signo value
                             notify-function notify-attributes
                             #+linux notify-thread-id)
-                           se sigevent)
-        (with-foreign-slots ((int) value sigval)
+                           se (:struct sigevent))
+        (with-foreign-slots ((int) value (:union sigval))
           (setf notify notify-method)
           (cond ((= notify-method sigev-none))
                 ((= notify-method sigev-signal)
@@ -448,18 +448,18 @@
     (itimerspec :pointer))
 
   (defun deconstruct-itimerspec (its)
-    (with-foreign-slots ((interval value) its itimerspec)
-      (with-foreign-slots ((sec nsec) interval timespec)
+    (with-foreign-slots ((interval value) its (:struct itimerspec))
+      (with-foreign-slots ((sec nsec) interval (:struct timespec))
         (let ((interval-sec sec)
               (interval-nsec nsec))
-          (with-foreign-slots ((sec nsec) value timespec)
+          (with-foreign-slots ((sec nsec) value (:struct timespec))
             (values interval-sec interval-nsec sec nsec))))))
 
   (defun timer-gettime (timer-id)
     "Returns the interval and the time until next expiration for the
 timer specified by TIMER-ID.  Both the interval and the time are returned
 as seconds and nanoseconds, so four values are returned."
-    (with-foreign-object (its 'itimerspec)
+    (with-foreign-object (its '(:struct itimerspec))
       (%timer-gettime timer-id its)
       (values-list (multiple-value-list (deconstruct-itimerspec its)))))
 
@@ -473,15 +473,15 @@ as seconds and nanoseconds, so four values are returned."
                         initial-sec initial-nsec
                         &optional return-previous-p)
     "Arms or disarms the timer identified by TIMER-ID."
-    (with-foreign-object (new 'itimerspec)
-      (with-foreign-slots ((interval value) new itimerspec)
-        (with-foreign-slots ((sec nsec) interval timespec)
+    (with-foreign-object (new '(:struct itimerspec))
+      (with-foreign-slots ((interval value) new (:struct itimerspec))
+        (with-foreign-slots ((sec nsec) interval (:struct timespec))
           (setf sec interval-sec
                 nsec interval-nsec)
-          (with-foreign-slots ((sec nsec) value timespec)
+          (with-foreign-slots ((sec nsec) value (:struct timespec))
             (setf sec initial-sec
                   nsec initial-nsec)
-            (with-foreign-object (old 'itimerspec)
+            (with-foreign-object (old '(:struct itimerspec))
               (let ((result (%timer-settime timer-id flags new old)))
                 (if return-previous-p
                     (values-list (multiple-value-list (deconstruct-itimerspec old)))
@@ -546,14 +546,14 @@ than C's printf) with format string FORMAT and arguments ARGS."
 ;;;; sys/resource.h
 
 (defun getrlimit (resource)
-  (with-foreign-object (rl 'rlimit)
-    (with-foreign-slots ((cur max) rl rlimit)
+  (with-foreign-object (rl '(:struct rlimit))
+    (with-foreign-slots ((cur max) rl (:struct rlimit))
       (%getrlimit resource rl)
       (values cur max))))
 
 (defun setrlimit (resource soft-limit hard-limit)
-  (with-foreign-object (rl 'rlimit)
-    (with-foreign-slots ((cur max) rl rlimit)
+  (with-foreign-object (rl '(:struct rlimit))
+    (with-foreign-slots ((cur max) rl (:struct rlimit))
       (setf cur soft-limit
             max hard-limit)
       (%setrlimit resource rl))))
@@ -565,19 +565,23 @@ than C's printf) with format string FORMAT and arguments ARGS."
 ;;; TODO: it might be more convenient to return a wrapper object here
 ;;; instead like we do in STAT.
 (defun getrusage (who)
-  (with-foreign-object (ru 'rusage)
+  (with-foreign-object (ru '(:struct rusage))
     (%getrusage who ru)
     (with-foreign-slots ((maxrss ixrss idrss isrss minflt majflt nswap inblock
                           oublock msgsnd msgrcv nsignals nvcsw nivcsw)
-                         ru rusage)
-      (values (foreign-slot-value (foreign-slot-pointer ru 'rusage 'utime)
-                                  'timeval 'sec)
-              (foreign-slot-value (foreign-slot-pointer ru 'rusage 'utime)
-                                  'timeval 'usec)
-              (foreign-slot-value (foreign-slot-pointer ru 'rusage 'stime)
-                                  'timeval 'sec)
-              (foreign-slot-value (foreign-slot-pointer ru 'rusage 'stime)
-                                  'timeval 'usec)
+                         ru (:struct rusage))
+      (values (foreign-slot-value
+               (foreign-slot-pointer ru '(:struct rusage) 'utime)
+               '(:struct timeval) 'sec)
+              (foreign-slot-value
+               (foreign-slot-pointer ru '(:struct rusage) 'utime)
+               '(:struct timeval) 'usec)
+              (foreign-slot-value
+               (foreign-slot-pointer ru '(:struct rusage) 'stime)
+               '(:struct timeval) 'sec)
+              (foreign-slot-value
+               (foreign-slot-pointer ru '(:struct rusage) 'stime)
+               '(:struct timeval) 'usec)
               maxrss ixrss idrss isrss minflt majflt
               nswap inblock oublock msgsnd
               msgrcv nsignals nvcsw nivcsw))))
@@ -598,12 +602,12 @@ than C's printf) with format string FORMAT and arguments ARGS."
 
 (defun uname ()
   "Get name and information about current kernel."
-  (with-foreign-object (buf 'utsname)
+  (with-foreign-object (buf '(:struct utsname))
     (bzero buf size-of-utsname)
     (%uname buf)
     (macrolet ((utsname-slot (name)
                  `(foreign-string-to-lisp
-                   (foreign-slot-pointer buf 'utsname ',name))))
+                   (foreign-slot-pointer buf '(:struct utsname) ',name))))
       (values (utsname-slot sysname)
               (utsname-slot nodename)
               (utsname-slot release)
@@ -613,11 +617,11 @@ than C's printf) with format string FORMAT and arguments ARGS."
 ;;;; sys/statvfs.h
 
 (defun funcall-statvfs (fn arg)
-  (with-foreign-object (buf 'statvfs)
+  (with-foreign-object (buf '(:struct statvfs))
     (funcall fn arg buf)
     (with-foreign-slots ((bsize frsize blocks bfree bavail files
                           ffree favail fsig flag namemax)
-                         buf statvfs)
+                         buf (:struct statvfs))
       (values bsize frsize blocks bfree bavail files
               ffree favail fsig flag namemax))))
 
@@ -656,9 +660,9 @@ than C's printf) with format string FORMAT and arguments ARGS."
   ;; errno to 0 before calling getpwnam(). If getpwnam() returns null
   ;; pointer and errno is non-zero, an error occured.
   (set-errno 0)
-  (with-foreign-objects ((pw 'passwd) (pwp :pointer))
+  (with-foreign-objects ((pw '(:struct passwd)) (pwp :pointer))
     (with-foreign-pointer (buf 4096 bufsize)
-      (with-foreign-slots ((name passwd uid gid gecos dir shell) pw passwd)
+      (with-foreign-slots ((name passwd uid gid gecos dir shell) pw (:struct passwd))
         (let ((ret (funcall fn arg pw buf bufsize pwp)))
           (cond ((and (null-pointer-p (mem-ref pwp :pointer))
                       (not (zerop (get-errno))))
@@ -693,9 +697,9 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (result  :pointer))
 
 (defun funcall-getgr (fn arg)
-  (with-foreign-objects ((gr 'group) (grp :pointer))
+  (with-foreign-objects ((gr '(:struct group)) (grp :pointer))
     (with-foreign-pointer (buf 4096 bufsize)
-      (with-foreign-slots ((name passwd gid) gr group)
+      (with-foreign-slots ((name passwd gid) gr (:struct group))
         (if (and (zerop (funcall fn arg gr buf bufsize grp))
                  (null-pointer-p (mem-ref grp :pointer)))
             (values)
@@ -721,11 +725,11 @@ than C's printf) with format string FORMAT and arguments ARGS."
 
 (defun readdir (dir)
   "Reads an item from the listing of a directory (reentrant)"
-  (with-foreign-objects ((entry 'dirent) (result :pointer))
+  (with-foreign-objects ((entry '(:struct dirent)) (result :pointer))
     (%readdir-r dir entry result)
     (if (null-pointer-p (mem-ref result :pointer))
         nil
-        (with-foreign-slots ((name type fileno) entry dirent)
+        (with-foreign-slots ((name type fileno) entry (:struct dirent))
           (values (foreign-string-to-lisp name) type fileno)))))
 
 (defsyscall "rewinddir" :void

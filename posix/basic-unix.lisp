@@ -203,7 +203,7 @@
 ;;; If necessary for performance reasons, we can add an optional
 ;;; argument to this function and use that to reuse a wrapper object.
 (defun funcall-stat (fn arg)
-  (with-foreign-object (buf 'stat)
+  (with-foreign-object (buf '(:struct stat))
     (funcall fn arg buf)
     (make-instance 'stat :pointer buf)))
 
