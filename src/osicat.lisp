@@ -103,7 +103,9 @@ of SETF ENVIRONMENT."
             (#.nix:s-ifchr  :character-device)
             (#.nix:s-ifblk  :block-device)
             (#.nix:s-ifreg  :regular-file)
+            #-windows ; KLUDGE
             (#.nix:s-iflnk  :symbolic-link)
+            #-windows ; KLUDGE
             (#.nix:s-ifsock :socket)
             (#.nix:s-ififo  :pipe)
             (otherwise
@@ -523,18 +525,19 @@ not exist, or link exists already."
 ;;;; File permissions
 
 (define-constant +permissions+
-    '((:user-read    . #.nix:s-irusr)
-      (:user-write   . #.nix:s-iwusr)
-      (:user-exec    . #.nix:s-ixusr)
-      (:group-read   . #.nix:s-irgrp)
-      (:group-write  . #.nix:s-iwgrp)
-      (:group-exec   . #.nix:s-ixgrp)
-      (:other-read   . #.nix:s-iroth)
-      (:other-write  . #.nix:s-iwoth)
-      (:other-exec   . #.nix:s-ixoth)
-      (:set-user-id  . #.nix:s-isuid)
-      (:set-group-id . #.nix:s-isgid)
-      (:sticky       . #.nix:s-isvtx))
+    (append '((:user-read    . #.nix:s-irusr)
+              (:user-write   . #.nix:s-iwusr)
+              (:user-exec    . #.nix:s-ixusr))
+            #-windows ; KLUDGE
+            '((:group-read   . #.nix:s-irgrp)
+              (:group-write  . #.nix:s-iwgrp)
+              (:group-exec   . #.nix:s-ixgrp)
+              (:other-read   . #.nix:s-iroth)
+              (:other-write  . #.nix:s-iwoth)
+              (:other-exec   . #.nix:s-ixoth)
+              (:set-user-id  . #.nix:s-isuid)
+              (:set-group-id . #.nix:s-isgid)
+              (:sticky       . #.nix:s-isvtx)))
   :test #'equal)
 
 (defun file-permissions (pathspec)

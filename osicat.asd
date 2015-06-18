@@ -37,7 +37,8 @@
   :author "Nikodemus Siivola <nikodemus@random-state.net>"
   :description "A lightweight operating system interface"
   :license "MIT"
-  :depends-on (cffi cffi-grovel alexandria trivial-features)
+  :depends-on (cffi alexandria trivial-features)
+  :defsystem-depends-on (cffi-grovel)
   :components
   ((:module osicat-sys
     :pathname #p"src/"
