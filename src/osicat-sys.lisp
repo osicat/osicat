@@ -128,11 +128,11 @@
          ()
          (:simple-parser ,ctype)
          (:actual-type ,cffi-type))
-       (defmethod expand-to-foreign (value (type ,ctype))
-         `(convert-to-foreign
-           (let ((,',name ,value))
-             (etypecase ,',name ,@',type-clauses))
-           ,',cffi-type)))))
+       (defmethod translate-to-foreign (,name (type ,ctype))
+         (convert-to-foreign (etypecase ,name ,@type-clauses)
+                             ',cffi-type))
+       (defmethod free-translated-object (value (type ,ctype) param)
+         (free-converted-object value ',cffi-type param)))))
 
 (declaim (inline native-namestring))
 (defun native-namestring (pathname)
