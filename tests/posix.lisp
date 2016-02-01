@@ -655,3 +655,29 @@
         (when fd
           (nix:close fd))))
   1)
+
+(define-posix-test posix-fallocate.test.1
+    (let* ((filename (make-pathname :name "fallocate.test" :type "1"
+                                    :defaults *test-directory*))
+           (fd (nix:open filename (logior nix:o-creat nix:o-rdwr))))
+      (unwind-protect
+           (progn
+             (nix:posix-fallocate fd 0 100)
+             (= 100 (nix:stat-size (nix:fstat fd))))
+        (ignore-errors
+          (nix:close fd)
+          (nix:unlink filename))))
+  t)
+
+(define-posix-test posix-fallocate.error.1
+    (let ((filename (make-pathname :name "fallocate.error" :type "1"
+                                   :defaults *test-directory*)))
+      (handler-case
+          (let* ((fd (nix:open filename nix:o-creat nix:o-rdwr)))
+            (unwind-protect
+                 (nix:posix-fallocate fd 0 -100)
+              (ignore-errors
+                (nix:close fd)
+                (nix:unlink filename))))
+        (nix:einval (c) 'failed)))
+  failed)

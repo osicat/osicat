@@ -28,7 +28,7 @@
 
 (define-unsupported-functions
   clock-getres clock-gettime clock-settime closedir closelog dirfd fchdir
-  fchmod fcntl fork fstatvfs fsync getdomainname getegid geteuid getgid
+  fchmod fcntl posix-fallocate fork fstatvfs fsync getdomainname getegid geteuid getgid
   getgrgid getgrnam getpagesize getpgid getpgrp getpid getppid getpriority
   getpwnam getpwuid getrlimit getrusage gettimeofday getuid ioctl link lockf
   lstat mkdtemp mkfifo mknod mkstemp mlock mlockall mmap mprotect msync munlock

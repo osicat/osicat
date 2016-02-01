@@ -39,7 +39,8 @@
   ((object :initform nil :initarg :object :reader posix-error-object)
    (syscall :initform nil :initarg :syscall :reader posix-error-syscall))
   (:documentation
-   "POSIX-ERRORs are signalled whenever ERRNO is set by a POSIX call."))
+   "POSIX-ERRORs are signalled whenever ERRNO is set by a POSIX call or
+where the POSIX call signals an error via the return value."))
 
 ;;; HASH TABLE mapping keywords (such as :EAGAIN) to symbols denoting
 ;;; subtypes of POSIX-ERROR.
@@ -96,6 +97,9 @@
 (defun syscall-signal-posix-error (return-value object syscall)
   (declare (ignore return-value))
   (posix-error (get-errno) object syscall))
+
+(defun syscall-signal-posix-error-via-return-value (return-value object syscall)
+  (posix-error return-value object syscall))
 
 ;;; Error predicate that always returns NIL.  Not actually used
 ;;; because the ERRNO-WRAPPER optimizes this call away.

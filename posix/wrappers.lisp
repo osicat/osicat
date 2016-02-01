@@ -148,6 +148,14 @@
     ((fd ("int" file-descriptor-designator)) (cmd :int) (arg :pointer))
   "return fcntl(fd, cmd, arg);")
 
+#-windows
+(defwrapper "posix_fallocate" ("int" (errno-wrapper :int
+                                                    :error-predicate (lambda (r) (not (zerop r)))
+                                                    :error-generator syscall-signal-posix-error-via-return-value))
+  (fd ("int" file-descriptor-designator))
+  (offset ("off_t" off))
+  (length ("off_t" off)))
+
 ;;;; Miscellaneous
 
 (defwrapper* "get_errno" :int ()

@@ -224,6 +224,10 @@ stored in this condition and can be accessed with SYSCALL-ERRNO.
 [TBA: some interface to strerror, to get the user-readable translation
 of the error number]
 
+Note, there are calls where "errno" is NOT set and an error code is
+communicated through the return value instead. e.g. posix_fallocate().
+These errors are also signalled as an error.
+
 We do not automatically translate the returned value into "Lispy"
 objects - for example, OSICAT-POSIX:OPEN returns a small integer, not a
 stream.  Exception: boolean-returning functions (or, more commonly,

@@ -72,6 +72,7 @@
    #:fchdir
    #:fchmod
    #:fcntl
+   #:posix-fallocate
    #:fork
    #:fstat
    #:fstatvfs
