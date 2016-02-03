@@ -673,9 +673,9 @@
     (let ((filename (make-pathname :name "fallocate.error" :type "1"
                                    :defaults *test-directory*)))
       (handler-case
-          (let* ((fd (nix:open filename nix:o-creat nix:o-rdwr)))
+          (let* ((fd (nix:open filename (logior nix:o-creat nix:o-rdwr))))
             (unwind-protect
-                 (nix:posix-fallocate fd 0 -100)
+                 (nix:posix-fallocate fd 0 0)
               (ignore-errors
                 (nix:close fd)
                 (nix:unlink filename))))
