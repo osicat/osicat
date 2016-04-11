@@ -110,7 +110,7 @@
 (cstruct sigevent "struct sigevent"
   (notify            "sigev_notify"            :type :int)
   (signo             "sigev_signo"             :type :int)
-  (value             "sigev_value"             :type sigval)
+  (value             "sigev_value"             :type (:union sigval))
   (notify-function   "sigev_notify_function"   :type :pointer)
   (notify-attributes "sigev_notify_attributes" :type :pointer)
   #+linux
@@ -349,8 +349,8 @@
 #-darwin
 (cstruct itimerspec "struct itimerspec"
   "UNIX timer interval and initial expiration."
-  (interval "it_interval" :type timespec)
-  (value    "it_value"    :type timespec))
+  (interval "it_interval" :type (:struct timespec))
+  (value    "it_value"    :type (:struct timespec)))
 
 ;;;; from sys/select.h
 
@@ -412,8 +412,8 @@
   (max "rlim_max" :type rlim))
 
 (cstruct rusage "struct rusage"
-  (utime    "ru_utime"    :type timeval)
-  (stime    "ru_stime"    :type timeval)
+  (utime    "ru_utime"    :type (:struct timeval))
+  (stime    "ru_stime"    :type (:struct timeval))
   (maxrss   "ru_maxrss"   :type :long)
   (ixrss    "ru_ixrss"    :type :long)
   (idrss    "ru_idrss"    :type :long)
