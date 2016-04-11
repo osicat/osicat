@@ -260,20 +260,13 @@ PATHSPEC exists and is a symlink pointing to an existent file."
         (make-pathname :directory '(:absolute "tmp"))
         (pathname (concatenate 'string system-tmpdir "/")))))
 
-(defmacro %close-on-error (close-clause &body body)
-  (with-gensyms (errorp)
-    `(let ((,errorp t))
-       (unwind-protect
-            (multiple-value-prog1 (locally ,@body) (setf ,errorp nil))
-         (when ,errorp ,close-clause)))))
-
 (defun %open-temporary-file/fd-streams (filename element-type external-format)
   (handler-case
       (multiple-value-bind (fd path)
           (nix:mkstemp filename)
-        (%close-on-error
-            (nix:close fd)
-          (nix:unlink path))
+        (unwind-protect-case ()
+            (nix:unlink path)
+          (:abort (nix:close fd)))
         (make-fd-stream fd :direction :io
                         :element-type element-type
                         :external-format external-format
@@ -289,12 +282,13 @@ PATHSPEC exists and is a symlink pointing to an existent file."
            (stream (open path :direction :io
                          :element-type element-type
                          :external-format external-format
-                         :if-exists :error
+                         :if-exists nil
                          :if-does-not-exist :create)))
-      (%close-on-error
-          (close stream :abort t)
-        (nix:unlink path))
-      (return stream))))
+      (when stream
+        (unwind-protect-case ()
+          (nix:unlink path)
+        (:normal (return stream))
+        (:abort (close stream :abort t)))))))
 
 (defun open-temporary-file (&key (pathspec *temporary-directory*)
                             (element-type 'character)
