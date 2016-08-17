@@ -91,38 +91,40 @@ of SETF ENVIRONMENT."
 ;;;        only conditions of type FILE-ERROR, either by
 ;;;        wrapping POSIX-ERRORs or making sure that some
 ;;;        POSIX-ERRORS subclass FILE-ERROR
+(defun %get-file-kind (namestring follow-p)
+  (handler-case
+      (let ((mode (nix:stat-mode
+                   (if follow-p
+                       (nix:stat namestring)
+                       (nix:lstat namestring)))))
+        (case (logand nix:s-ifmt mode)
+          (#.nix:s-ifdir  :directory)
+          (#.nix:s-ifchr  :character-device)
+          (#.nix:s-ifblk  :block-device)
+          (#.nix:s-ifreg  :regular-file)
+          #-windows ; KLUDGE
+          (#.nix:s-iflnk  :symbolic-link)
+          #-windows ; KLUDGE
+          (#.nix:s-ifsock :socket)
+          (#.nix:s-ififo  :pipe)
+          (otherwise
+           (bug "Unknown file mode: ~A." mode))))
+    (nix:enoent ()
+      (cond
+        ;; stat() returned ENOENT: either FILE does not exist
+        ;; or the end of the symlink chain is a broken symlink
+        (follow-p
+         (handler-case
+             (nix:lstat namestring)
+           (nix:enoent ())
+           (:no-error (stat)
+             (declare (ignore stat))
+             (values :symbolic-link :broken))))
+        ;; lstat() returned ENOENT: FILE does not exist
+        (t nil)))))
+
 (defun get-file-kind (file follow-p)
-  (let ((namestring (native-namestring file)))
-    (handler-case
-        (let ((mode (nix:stat-mode
-                     (if follow-p
-                         (nix:stat namestring)
-                         (nix:lstat namestring)))))
-          (case (logand nix:s-ifmt mode)
-            (#.nix:s-ifdir  :directory)
-            (#.nix:s-ifchr  :character-device)
-            (#.nix:s-ifblk  :block-device)
-            (#.nix:s-ifreg  :regular-file)
-            #-windows ; KLUDGE
-            (#.nix:s-iflnk  :symbolic-link)
-            #-windows ; KLUDGE
-            (#.nix:s-ifsock :socket)
-            (#.nix:s-ififo  :pipe)
-            (otherwise
-             (bug "Unknown file mode: ~A." mode))))
-      (nix:enoent ()
-        (cond
-          ;; stat() returned ENOENT: either FILE does not exist
-          ;; or the end of the symlink chain is a broken symlink
-          (follow-p
-           (handler-case
-               (nix:lstat namestring)
-             (nix:enoent ())
-             (:no-error (stat)
-               (declare (ignore stat))
-               (values :symbolic-link :broken))))
-          ;; lstat() returned ENOENT: FILE does not exist
-          (t nil))))))
+  (%get-file-kind (native-namestring file) follow-p))
 
 ;;;; Hopefully portable pathname manipulations
 
@@ -367,7 +369,7 @@ a directory."
                      (cond
                        ((member name '("." "..") :test #'string=)
                         (one-iter))
-                       ((eq :directory (get-file-kind name t))
+                       ((eq :directory (%get-file-kind name t))
                         (make-pathname :directory `(:relative ,name)))
                        (t
                         (let ((dotpos (position #\. name :from-end t)))
