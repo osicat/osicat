@@ -128,6 +128,7 @@
    #:opendir
    #:openlog
    #:pipe
+   #:poll
    #:pread
    #:pwrite
    #:read
@@ -388,6 +389,10 @@
    #:tcsaflush
 
    #:posix-vdisable
+
+   #:pollin
+   #:pollpri
+   #:pollout
 
    ;; Misc
    #:repeat-upon-condition

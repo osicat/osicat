@@ -769,3 +769,21 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (fd      file-descriptor-designator)
   (mode    :int)
   (termios :pointer))
+
+;;;; sys/poll.h
+
+(defsyscall ("poll" %poll) :int
+  (fds     :pointer)
+  (nfds    :unsigned-long)
+  (timeout :int))
+
+(defun poll (fd-specs timeout)
+  "Waits for events on file descriptors. Timeout is the number of milliseconds poll should block for when waiting for events. If timeout is 0 it will return immediately even if there are no events. If timeout is negative it will block indefinitely. fd-specs is a list of specifications of the form (list fd &rest events). For example to wait indefinitely for input events on file descriptors fd1 and fd2 the call would be: (poll (list (list fd1 pollin pollpri) (list fd2 pollin pollpri)) -1)"
+  (let ((nfds (length fd-specs)))
+    (with-foreign-object (struct-fds '(:struct pollfd) nfds)
+      (loop :for i :from 0 :to (- nfds 1)
+         :do (let ((fd-spec (nth i fd-specs)))
+               (with-foreign-slots ((fd events revents) (mem-aptr struct-fds '(:struct pollfd) i) (:struct pollfd))
+                 (setf fd (first fd-spec))
+                 (setf events (apply #'logior (rest fd-spec))))))
+      (%poll struct-fds nfds timeout))))

@@ -42,6 +42,9 @@
          "errno.h" "signal.h" "unistd.h" "termios.h" "sys/ioctl.h" "limits.h"
          "sys/uio.h"  "time.h" "dirent.h" "pwd.h" "grp.h" "syslog.h"
          "sys/resource.h" "stdlib.h" "sys/utsname.h" "sys/statvfs.h"
+         #+linux "sys/poll.h"
+         #+freebsd "poll.h"
+         #+openbsd "poll.h"
          #+linux "sys/syscall.h")
 
 (in-package #:osicat-posix)
@@ -768,3 +771,14 @@
 
 #+linux
 (constant (sys-gettid "SYS_gettid"))
+
+;;;; from sys/poll.h
+
+(cstruct pollfd "struct pollfd"
+         (fd "fd" :type :int)
+         (events "events" :type :short)
+         (revents "revents" :type :short))
+         
+(constant (pollin "POLLIN"))
+(constant (pollpri "POLLPRI"))
+(constant (pollout "POLLOUT"))
