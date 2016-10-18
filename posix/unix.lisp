@@ -777,13 +777,19 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (nfds    :unsigned-long)
   (timeout :int))
 
-(defun poll (fd-specs timeout)
-  "Waits for events on file descriptors. Timeout is the number of milliseconds poll should block for when waiting for events. If timeout is 0 it will return immediately even if there are no events. If timeout is negative it will block indefinitely. fd-specs is a list of specifications of the form (list fd &rest events). For example to wait indefinitely for input events on file descriptors fd1 and fd2 the call would be: (poll (list (list fd1 pollin pollpri) (list fd2 pollin pollpri)) -1)"
+(defun poll (timeout &rest fd-specs)
+  "Waits for events on file descriptors. TIMEOUT is the number of milliseconds poll should block for when waiting for events. If timeout is 0 it will return immediately even if there are no events. If timeout is negative it will block indefinitely. FD-SPECS is a list of specifications of the form (list fd &rest events). For example to wait indefinitely for input events on file descriptors fd1 and fd2 the call would be: (poll (list (list fd1 pollin pollpri) (list fd2 pollin pollpri)) -1)"
   (let ((nfds (length fd-specs)))
     (with-foreign-object (struct-fds '(:struct pollfd) nfds)
       (loop :for i :from 0 :to (- nfds 1)
          :do (let ((fd-spec (nth i fd-specs)))
                (with-foreign-slots ((fd events revents) (mem-aptr struct-fds '(:struct pollfd) i) (:struct pollfd))
                  (setf fd (first fd-spec))
-                 (setf events (apply #'logior (rest fd-spec))))))
-      (%poll struct-fds nfds timeout))))
+                 (setf events (apply #'logior (rest fd-spec)))
+                 (setf revents 0))))
+      (let ((ret (%poll struct-fds nfds timeout)))
+        (values-list (cons ret
+                           (loop :for i :from 0 :to (- nfds 1)
+                              :collecting (let ((fd-spec (nth i fd-specs)))
+                                            (with-foreign-slots ((revents) (mem-aptr struct-fds '(:struct pollfd) i) (:struct pollfd))
+                                              revents)))))))))
