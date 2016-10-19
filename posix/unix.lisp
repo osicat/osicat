@@ -777,27 +777,13 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (nfds    :unsigned-long)
   (timeout :int))
 
-(define-condition poll-error (error) ((fd :initarg :fd :reader poll-error-fd)))
-(define-condition poll-hangup (poll-error) ())
-(define-condition poll-invalid (poll-error) ())
-
-(defmethod print-object ((poll-error poll-error) stream)
-  (format stream "Poll error on file descriptor ~s" (poll-error-fd poll-error)))
-
 (defun poll (pollfds nfds timeout)
   "Wait for events on file descriptors defined by POLLFDS. TIMEOUT is the time in milliseconds to wait for activity; a TIMEOUT of -1 will block indefinitely, a TIMEOUT of 0 will return immediately"
   (let ((r (%poll pollfds nfds timeout)))
     (when (= r -1)
       (posix-error))
-    (when (> r 0)
-        (loop :for i :from 0 :to (- nfds 1)
-           :do (with-foreign-slots ((fd revents) (mem-aptr pollfds '(:struct pollfd) i) (:struct pollfd))
-                 (cond
-                   ((= revents (logand pollerr)) (error 'poll-error :fd fd))
-                   ((= revents (logand pollhup)) (error 'poll-hangup :fd fd))
-                   ((= revents (logand pollnval)) (error 'poll-invalid :fd fd))))
-           :finally (return t)))))
-
+    (> r 0)))
+    
 (defun poll-return-event (pollfd)
   "Access REVENT of pollfd struct"
   (with-foreign-slots ((revents) pollfd (:struct pollfd))
