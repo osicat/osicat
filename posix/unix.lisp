@@ -777,19 +777,42 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (nfds    :unsigned-long)
   (timeout :int))
 
-(defun poll (timeout &rest fd-specs)
-  "Waits for events on file descriptors. TIMEOUT is the number of milliseconds poll should block for when waiting for events. If timeout is 0 it will return immediately even if there are no events. If timeout is negative it will block indefinitely. FD-SPECS is a list of specifications of the form (list fd &rest events). For example to wait indefinitely for input events on file descriptors fd1 and fd2 the call would be: (poll (list (list fd1 pollin pollpri) (list fd2 pollin pollpri)) -1)"
-  (let ((nfds (length fd-specs)))
-    (with-foreign-object (struct-fds '(:struct pollfd) nfds)
-      (loop :for i :from 0 :to (- nfds 1)
-         :do (let ((fd-spec (nth i fd-specs)))
-               (with-foreign-slots ((fd events revents) (mem-aptr struct-fds '(:struct pollfd) i) (:struct pollfd))
-                 (setf fd (first fd-spec))
-                 (setf events (apply #'logior (rest fd-spec)))
-                 (setf revents 0))))
-      (let ((ret (%poll struct-fds nfds timeout)))
-        (values-list (cons ret
-                           (loop :for i :from 0 :to (- nfds 1)
-                              :collecting (let ((fd-spec (nth i fd-specs)))
-                                            (with-foreign-slots ((revents) (mem-aptr struct-fds '(:struct pollfd) i) (:struct pollfd))
-                                              revents)))))))))
+(define-condition poll-error (error) ((fd :initarg :fd :reader poll-error-fd)))
+(define-condition poll-hangup (poll-error) ())
+(define-condition poll-invalid (poll-error) ())
+
+(defmethod print-object ((poll-error poll-error) stream)
+  (format stream "Poll error on file descriptor ~s" (poll-error-fd poll-error)))
+
+(defun poll (pollfds nfds timeout)
+  "Wait for events on file descriptors defined by POLLFDS. TIMEOUT is the time in milliseconds to wait for activity; a TIMEOUT of -1 will block indefinitely, a TIMEOUT of 0 will return immediately"
+  (let ((r (%poll pollfds nfds timeout)))
+    (when (= r -1)
+      (posix-error))
+    (when (> r 0)
+        (loop :for i :from 0 :to (- nfds 1)
+           :do (with-foreign-slots ((fd revents) (mem-aptr pollfds '(:struct pollfd) i) (:struct pollfd))
+                 (cond
+                   ((= revents (logand pollerr)) (error 'poll-error :fd fd))
+                   ((= revents (logand pollhup)) (error 'poll-hangup :fd fd))
+                   ((= revents (logand pollnval)) (error 'poll-invalid :fd fd))))
+           :finally (return t)))))
+
+(defun poll-return-event (pollfd)
+  "Access REVENT of pollfd struct"
+  (with-foreign-slots ((revents) pollfd (:struct pollfd))
+    revents))
+
+(defmacro with-pollfds ((name &rest specs) &body body)
+  (let ((nfds (length specs)))
+    `(with-foreign-object (,name '(:struct pollfd) ,nfds)
+       (let (,@(loop :for i :from 0 :to (- nfds 1)
+                  :collecting (let ((spec (nth i specs)))
+                        `(,(first spec) (mem-aptr ,name '(:struct pollfd) ,i)))))
+         ,@(loop :for i :from 0 :to (- nfds 1)
+              :collecting (let ((spec (nth i specs)))
+                    `(with-foreign-slots ((fd events revents) ,(first spec) (:struct pollfd))
+                       (setf fd ,(second spec))
+                       (setf events (logior ,@(rest (rest spec))))
+                       (setf revents 0))))
+         ,@body))))

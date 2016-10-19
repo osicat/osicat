@@ -782,3 +782,6 @@
 (constant (pollin "POLLIN"))
 (constant (pollpri "POLLPRI"))
 (constant (pollout "POLLOUT"))
+(constant (pollerr "POLLERR"))
+(constant (pollhup "POLLHUP"))
+(constant (pollnval "POLLNVAL"))
