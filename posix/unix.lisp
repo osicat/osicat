@@ -298,7 +298,7 @@
 (defsyscall ("ioctl" %ioctl-with-integer-arg) :int
  (fd      file-descriptor-designator)
  (request :int)
- (arg     :int))
+ (arg     :unsigned-long))
 
 (defun ioctl (fd request &optional (arg nil argp))
   "Control device."
