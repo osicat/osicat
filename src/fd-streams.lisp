@@ -33,6 +33,19 @@
 #+(or sbcl cmu scl)
 (pushnew :osicat-fd-streams *features*)
 
+#+ecl
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (when (> ext:+ecl-version-number+ 160103)
+    (pushnew :osicat-fd-streams *features*)))
+
+#+(and ecl osicat-fd-streams)
+(defun make-fd-stream (fd &key direction element-type external-format
+                            pathname file)
+  (declare (ignore pathname file))
+  (ext:make-stream-from-fd fd direction
+                           :element-type element-type
+                           :external-format external-format))
+
 #+sbcl
 (defun make-fd-stream (fd &key direction element-type external-format
                        pathname file)
