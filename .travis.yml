@@ -28,3 +28,5 @@ script:
            (ql:quickload :osicat-tests)
            (unless (osicat-tests:run)
              (uiop:quit 1))'
+
+sudo: required
