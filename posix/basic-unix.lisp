@@ -223,3 +223,14 @@
   "Create a directory."
   (path filename-designator)
   (mode mode))
+
+(defsyscall ("realpath" %realpath) :string
+  "Returns the canonicalized absolute pathname"  
+  (path filename-designator)
+  (resolved-name :string))
+
+(defun realpath (path)
+  "Returns the canonicalized absolute pathname"
+  (with-foreign-pointer (resolved-name path-max)
+    (%realpath path resolved-name)))
+
