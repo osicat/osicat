@@ -134,6 +134,7 @@
    #:readdir
    #:readlink
    #:readv
+   #:realpath
    #:rename
    #:rewinddir
    #:rmdir
