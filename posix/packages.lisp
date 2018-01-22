@@ -222,6 +222,13 @@
    #:stat-atime
    #:stat-mtime
    #:stat-ctime
+   #:stat-atimespec
+   #:stat-mtimespec
+   #:stat-ctimespec
+   #:stat-birthtimespec
+   #:stat-flags
+   #:stat-gen
+
 
    #:termios
    #:iflag
@@ -235,6 +242,10 @@
    #:col
    #:xpixel
    #:ypixel
+
+   #:timespec
+   #:timespec-sec
+   #:timespec-nsec
 
    ;; Platform-specific Functions
 

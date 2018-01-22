@@ -298,6 +298,10 @@
   (ctype blksize "long")
   (ctype blkcnt "long"))
 
+(cstruct timespec "struct timespec"
+   (sec      "tv_sec"  :type time)
+   (nsec     "tv_nsec" :type :long))
+
 (cstruct stat "struct stat"
   (dev     "st_dev"     :type #-mips dev #+mips :unsigned-long)
   (ino     "st_ino"     :type ino)
@@ -309,6 +313,13 @@
   (size    "st_size"    :type off)
   #-windows (blksize "st_blksize" :type blkcnt)
   #-windows (blocks  "st_blocks"  :type blksize)
-  (atime   "st_atime"   :type time)
-  (mtime   "st_mtime"   :type time)
-  (ctime   "st_ctime"   :type time))
+  #-darwin (atime   "st_atime"   :type time)
+  #-darwin (mtime   "st_mtime"   :type time)
+  #-darwin (ctime   "st_ctime"   :type time)
+  #+darwin (atimespec     "st_atimespec"     :type (:struct timespec))
+  #+darwin (mtimespec     "st_mtimespec"     :type (:struct timespec))
+  #+darwin (ctimespec     "st_ctimespec"     :type (:struct timespec))
+  #+darwin (birthtimespec "st_birthtimespec" :type (:struct timespec))
+  #+darwin (flags         "st_flags"         :type :uint32)
+  #+darwin (gen           "st_gen"           :type :uint32))
+
