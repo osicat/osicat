@@ -174,6 +174,20 @@
   (constant (map-nosync "MAP_NOSYNC"))
   (constant (map-stack "MAP_STACK")))
 
+#+darwin
+(progn
+  (constant (map-rename "MAP_RENAME"))
+  (constant (map-noreserve "MAP_NORESERVE"))
+  (constant (map-noextend "MAP_NOEXTEND"))
+  (constant (map-hassemaphore "MAP_HASSEMAPHORE"))
+  (constant (map-nocache "MAP_NOCACHE"))
+  (constant (map-jit "MAP_JIT"))
+  (constant (map-file "MAP_FILE"))
+  (constant (map-anon "MAP_ANON"))
+  (constant (map-anonymous "MAP_ANONYMOUS"))
+  (constant (map-resilient-codesign "MAP_RESILIENT_CODESIGN"))
+  (constant (map-resilient-media "MAP_RESILIENT_MEDIA")))
+
 ;;; mremap()
 #+linux
 (progn
