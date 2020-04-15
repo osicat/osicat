@@ -598,7 +598,7 @@
 (constant (cflag-VSWTC "VSWTC"))
 (constant (cflag-VSTART "VSTART"))
 (constant (cflag-VSTOP "VSTOP"))
-(constant (cflag-VDSUSP "VDSUSP"))
+(constant (cflag-VDSUSP "VDSUSP") :optional t)
 (constant (cflag-VSUSP "VSUSP"))
 (constant (cflag-VEOL "VEOL"))
 (constant (cflag-VREPRINT "VREPRINT"))
@@ -606,7 +606,7 @@
 (constant (cflag-VWERASE "VWERASE"))
 (constant (cflag-VLNEXT "VLNEXT"))
 (constant (cflag-VEOL2 "VEOL2"))
-(constant (cflag-VSTATUS "VSTATUS"))
+(constant (cflag-VSTATUS "VSTATUS") :optional t)
 
 (constant (TCSANOW "TCSANOW"))
 (constant (TCSADRAIN "TCSADRAIN"))
@@ -769,8 +769,8 @@
 
   (constant (tiocmiwait "TIOCMIWAIT"))
   (constant (tiocgicount "TIOCGICOUNT"))
-  (constant (tiocghayesesp "TIOCGHAYESESP"))
-  (constant (tiocshayesesp "TIOCSHAYESESP"))
+  (constant (tiocghayesesp "TIOCGHAYESESP") :optional t)
+  (constant (tiocshayesesp "TIOCSHAYESESP") :optional t)
   (constant (fioqsize "FIOQSIZE")))
 
 ;;;; from wait.h
