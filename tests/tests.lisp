@@ -26,14 +26,14 @@
 
 (in-package #:cl-user)
 
-(defpackage #:osicat-tests
+(defpackage #:osicat/tests
   (:use #:common-lisp #:rtest #:osicat)
   (:export #:run))
 
-(in-package #:osicat-tests)
+(in-package #:osicat/tests)
 
 (defun run ()
-  (let ((*package* (find-package :osicat-tests)))
+  (let ((*package* (find-package :osicat/tests)))
     (do-tests)
     (null (set-difference (rtest:pending-tests)
                           rtest::*expected-failures*))))

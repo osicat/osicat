@@ -24,7 +24,7 @@
 ;;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ;;; DEALINGS IN THE SOFTWARE.
 
-(in-package #:osicat-tests)
+(in-package #:osicat/tests)
 
 (deftest current-directory.1
     (let ((old (current-directory)))

@@ -28,7 +28,7 @@
 ;;; which unfortunately lacks any copyright information.  We're
 ;;; assuming it was either public domain or MIT-licensed.
 
-(in-package #:osicat-tests)
+(in-package #:osicat/tests)
 
 ;;;; Preliminaries
 
