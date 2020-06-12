@@ -105,7 +105,7 @@
      ;; signal a compile-time warning as well.
      (define-compiler-macro ,name (&whole form &rest args)
        (declare (ignore args))
-       (unless (eq *package* (find-package '#:osicat-tests))
+       (unless (eq *package* (find-package '#:osicat/tests))
          (warn "The function ~S is not present on this platform." ',name))
        form)))
 

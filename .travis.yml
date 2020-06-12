@@ -29,6 +29,6 @@ install:
 
 script:
   - cl -e '(ql:quickload :cffi-grovel)
-           (ql:quickload :osicat-tests)
-           (unless (osicat-tests:run)
+           (ql:quickload :osicat/tests)
+           (unless (osicat/tests:run)
              (uiop:quit 1))'
