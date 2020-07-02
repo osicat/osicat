@@ -729,9 +729,9 @@ than C's printf) with format string FORMAT and arguments ARGS."
     (%readdir-r dir entry result)
     (if (null-pointer-p (mem-ref result :pointer))
         nil
-        #+(or sunos solaris)
-        (values (foreign-string-to-lisp (foreign-slot-pointer entry '(:struct dirent) 'name)))
-        #-(or sunos solaris) (with-foreign-slots ((name type fileno) entry (:struct dirent))
+        #+sunos
+        (values (foreign-string-to-lisp (foreign-slot-pointer entry '(:struct dirent) 'name))t)
+        #-sunos (with-foreign-slots ((name type fileno) entry (:struct dirent))
           (values (foreign-string-to-lisp name) type fileno)))))
 
 (defsyscall "rewinddir" :void
