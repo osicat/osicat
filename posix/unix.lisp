@@ -730,7 +730,7 @@ than C's printf) with format string FORMAT and arguments ARGS."
     (if (null-pointer-p (mem-ref result :pointer))
         nil
         #+sunos
-        (values (foreign-string-to-lisp (foreign-slot-pointer entry '(:struct dirent) 'name))t)
+        (values (foreign-string-to-lisp (foreign-slot-pointer entry '(:struct dirent) 'name)))
         #-sunos (with-foreign-slots ((name type fileno) entry (:struct dirent))
           (values (foreign-string-to-lisp name) type fileno)))))
 
