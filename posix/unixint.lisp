@@ -46,6 +46,12 @@
 
 (in-package #:osicat-posix)
 
+;; Musl Libc defines this macro, glibc does not.
+#+linux
+(c "#ifndef sigev_notify_thread_id
+#define sigev_notify_thread_id _sigev_un._tid
+#endif")
+
 (constant (sighup "SIGHUP") :documentation "terminal line hangup.")
 (constant (sigquit "SIGQUIT") :documentation "quit program.")
 (constant (sigtrap "SIGTRAP") :documentation "trace trap.")
@@ -114,7 +120,7 @@
   (notify-function   "sigev_notify_function"   :type :pointer)
   (notify-attributes "sigev_notify_attributes" :type :pointer)
   #+linux
-  (notify-thread-id  "_sigev_un._tid"          :type pid))
+  (notify-thread-id  "sigev_notify_thread_id"  :type pid))
 
 ;;;; fcntl()
 
