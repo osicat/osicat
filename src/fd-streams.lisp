@@ -49,12 +49,13 @@
 #+sbcl
 (defun make-fd-stream (fd &key direction element-type external-format
                        pathname file)
-  (declare (ignore pathname file))
+  (declare (ignore pathname))
   (let ((in-p (member direction '(:io :input)))
         (out-p (member direction '(:io :output))))
     (sb-sys:make-fd-stream fd :input in-p :output out-p
                            :element-type element-type
-                           :external-format external-format)))
+                           :external-format external-format
+                           :file file)))
 
 #+cmu
 (defun make-fd-stream (fd &key direction element-type external-format
