@@ -282,6 +282,7 @@
 
    #+linux #:gettid
    #+linux #:fdatasync
+   #+linux #:mkstemps
    #+linux #:mremap
    #+linux #:syscall
 
