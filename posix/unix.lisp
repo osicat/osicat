@@ -290,16 +290,22 @@
   (fd      file-descriptor-designator)
   (request :int))
 
-(defsyscall ("ioctl" %ioctl-with-arg) :int
+(defsyscall ("ioctl" %ioctl-with-pointer-arg) :int
  (fd      file-descriptor-designator)
  (request :int)
  (arg     :pointer))
+
+(defsyscall ("ioctl" %ioctl-with-integer-arg) :int
+ (fd      file-descriptor-designator)
+ (request :int)
+ (arg     :unsigned-long))
 
 (defun ioctl (fd request &optional (arg nil argp))
   "Control device."
   (cond
     ((not argp) (%ioctl-without-arg fd request))
-    ((pointerp arg) (%ioctl-with-arg fd request arg))
+    ((pointerp arg) (%ioctl-with-pointer-arg fd request arg))
+    ((integerp arg) (%ioctl-with-integer-arg fd request arg))
     (t (error "Wrong argument to ioctl: ~S" arg))))
 
 ;;;; signal.h
@@ -769,3 +775,36 @@ than C's printf) with format string FORMAT and arguments ARGS."
   (fd      file-descriptor-designator)
   (mode    :int)
   (termios :pointer))
+
+;;;; sys/poll.h
+
+(defsyscall ("poll" %poll) :int
+  (fds     :pointer)
+  (nfds    :unsigned-long)
+  (timeout :int))
+
+(defun poll (pollfds nfds timeout)
+  "Wait for events on file descriptors defined by POLLFDS. TIMEOUT is the time in milliseconds to wait for activity; a TIMEOUT of -1 will block indefinitely, a TIMEOUT of 0 will return immediately"
+  (let ((r (%poll pollfds nfds timeout)))
+    (when (= r -1)
+      (posix-error))
+    (> r 0)))
+    
+(defun poll-return-event (pollfd)
+  "Access REVENT of pollfd struct"
+  (with-foreign-slots ((revents) pollfd (:struct pollfd))
+    revents))
+
+(defmacro with-pollfds ((name &rest specs) &body body)
+  (let ((nfds (length specs)))
+    `(with-foreign-object (,name '(:struct pollfd) ,nfds)
+       (let (,@(loop :for i :from 0 :to (- nfds 1)
+                  :collecting (let ((spec (nth i specs)))
+                        `(,(first spec) (mem-aptr ,name '(:struct pollfd) ,i)))))
+         ,@(loop :for i :from 0 :to (- nfds 1)
+              :collecting (let ((spec (nth i specs)))
+                    `(with-foreign-slots ((fd events revents) ,(first spec) (:struct pollfd))
+                       (setf fd ,(second spec))
+                       (setf events (logior ,@(rest (rest spec))))
+                       (setf revents 0))))
+         ,@body))))

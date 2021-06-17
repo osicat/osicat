@@ -128,6 +128,7 @@
    #:opendir
    #:openlog
    #:pipe
+   #:poll
    #:pread
    #:pwrite
    #:read
@@ -400,6 +401,19 @@
    #:tcsaflush
 
    #:posix-vdisable
+
+   ;; sys/poll.h
+   #:with-pollfds
+   #:poll-return-event
+   #:poll-error
+   #:poll-hangup
+   #:poll-invalid
+   #:pollin
+   #:pollpri
+   #:pollout
+   #:pollerr
+   #:pollhup
+   #:pollnval
 
    ;; Misc
    #:repeat-upon-condition
