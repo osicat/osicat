@@ -27,7 +27,7 @@
 (in-package #:cl-user)
 
 (defpackage #:osicat/tests
-  (:use #:common-lisp #:rtest #:osicat)
+  (:use #:common-lisp #+sbcl #:sb-rt #-sbcl #:rtest #:osicat)
   (:export #:run))
 
 (in-package #:osicat/tests)
@@ -35,8 +35,9 @@
 (defun run ()
   (let ((*package* (find-package :osicat/tests)))
     (do-tests)
-    (null (set-difference (rtest:pending-tests)
-                          rtest::*expected-failures*))))
+    (null (set-difference
+           #+sbcl (sb-rt:pending-tests) #-sbcl (rtest:pending-tests)
+           #+sbcl sb-rt::*expected-failures* #-sbcl rtest::*expected-failures*))))
 
 ;;; Utilities
 

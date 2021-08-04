@@ -83,7 +83,9 @@
   :author "Nikodemus Siivola <nikodemus@random-state.net>"
   :description "Osicat test suite"
   :license "MIT"
-  :depends-on (#:osicat #:rt)
+  :depends-on (#:osicat
+               (:feature :sbcl (:require #:sb-rt))
+               (:feature (:not :sbcl) #:rt))
   :components
   ((:module #:tests
     :serial t
