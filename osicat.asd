@@ -50,28 +50,31 @@
     :components
     ((:file "packages")
      (:cffi-grovel-file "basic-unixint")
-     #-windows (:cffi-grovel-file "unixint")
+     (:cffi-grovel-file "unixint" :if-feature (:not :windows))
      (:file "early")
      (:cffi-wrapper-file "wrappers" :soname "libosicat")
      (:file "basic-unix")
-     #-windows (:file "unix")
-     #+linux (:file "linux")
-     #+windows (:file "windows")
+     (:file "unix" :if-feature (:not :windows))
+     (:file "linux" :if-feature :linux)
+     (:file "windows" :if-feature :windows)
      (:file "misc")))
-   #+windows
    (:module #:windows
+    :if-feature :windows
     :depends-on (#:osicat-sys)
     :components
     ((:file "package")
      (:file "windows" :depends-on ("package"))))
-   #+darwin
    (:module #:mach
+    :if-feature :darwin
     :depends-on (#:osicat-sys)
     :components
     ((:file "package")
      (:file "mach" :depends-on ("package"))))
    (:module #:src
-    :depends-on (#:osicat-sys #:posix #+windows #:windows #+darwin #:mach)
+    :depends-on (#:osicat-sys
+                 #:posix
+                 (:feature :windows #:windows)
+                 (:feature :darwin #:mach))
     :components
     ((:file "packages")
      (:file "fd-streams" :depends-on ("packages"))
