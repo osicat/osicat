@@ -53,6 +53,15 @@
    #:eshutdown #:etoomanyrefs #:etimedout #:econnrefused #:ehostdown
    #:ehostunreach #:ealready #:einprogress #:estale #:edquot #:enonet
 
+   ;; Types
+   #:size #:ssize #:pid
+   #-windows #:uid
+   #-windows #:gid
+   #:off #:mode #:time #:dev #:ino
+   #-windows #:nlink
+   #-windows #:blksize
+   #-windows #:blkcnt
+
    ;; Functions
    #:access
    #:bzero
