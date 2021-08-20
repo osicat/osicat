@@ -71,6 +71,7 @@
    #:exit
    #:fchdir
    #:fchmod
+   #:fchown
    #:fcntl
    #:posix-fallocate
    #:fork
@@ -102,6 +103,7 @@
    #:ioctl
    #:isatty
    #:kill
+   #:lchown
    #:link
    #:lockf
    #:lseek
