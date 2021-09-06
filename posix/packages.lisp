@@ -100,6 +100,7 @@
    #:getrusage
    #:gettimeofday
    #:getuid
+   #:initgroups
    #:ioctl
    #:isatty
    #:kill
@@ -145,6 +146,7 @@
    #:setenv
    #:seteuid
    #:setgid
+   #:setgroups
    #:setlogmask
    #:setpgid
    #:setpgrp

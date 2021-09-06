@@ -713,6 +713,20 @@ than C's printf) with format string FORMAT and arguments ARGS."
   "Gets a group-entry, by group name. (reentrant)"
   (funcall-getgr #'%getgrnam-r name))
 
+(defsyscall ("setgroups" %setgroups) :int
+  (count size)
+  (gids :pointer))
+
+(defun setgroups (gids)
+  (with-foreign-object (list 'gid (length gids))
+    (loop for id in gids and i upfrom 0
+          do (setf (mem-aref list 'gid i) id))
+    (%setgroups (length gids) list)))
+
+(defsyscall "initgroups" :int
+  (user :string)
+  (gid gid))
+
 ;;;; dirent.h
 
 (defsyscall "opendir" :pointer
