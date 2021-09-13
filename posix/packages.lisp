@@ -58,6 +58,7 @@
    #:bzero
    #:chdir
    #:chmod
+   #:chown
    #:clock-getres
    #:clock-gettime
    #:clock-settime
