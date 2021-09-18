@@ -102,6 +102,18 @@
     (let ((count (%readlink path buf bufsize)))
       (values (foreign-string-to-lisp buf :count count)))))
 
+(defsyscall ("readlinkat" %readlinkat) ssize
+  (dirfd   file-descriptor-designator)
+  (path    filename-designator)
+  (buf     :pointer)
+  (bufsize size))
+
+(defun readlinkat (dirfd path)
+  "Read value of a symbolic link, relative to a directory."
+  (with-foreign-pointer (buf 4096 bufsize)
+    (let ((count (%readlinkat dirfd path buf bufsize)))
+      (values (foreign-string-to-lisp buf :count count)))))
+
 (defsyscall "symlink" :int
   "Creates a symbolic link"
   (name1 filename-designator)
