@@ -34,6 +34,6 @@
   lstat mkdirat mkdtemp mkfifo mknod mkstemp mlock mlockall mmap mprotect msync munlock
   munlockall munmap nice openat opendir openlog pread pwrite readdir readlink readlinkat
   readv renameat rewinddir seekdir select setegid setenv seteuid setgid setlogmask setpgid
-  setpgrp setpriority setregid setreuid setrlimit setsid setuid statvfs symlink
+  setpgrp setpriority setregid setreuid setrlimit setsid setuid statvfs symlink symlinkat
   sync sysconf syslog telldir truncate uname unlinkat unsetenv usleep writev s-issock
   s-islnk gethostname)
