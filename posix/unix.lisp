@@ -68,6 +68,13 @@
   (path1 filename-designator)
   (path2 filename-designator))
 
+(defsyscall "linkat" :int
+  (olddirfd :int)
+  (oldpath  filename-designator)
+  (newdirfd :int)
+  (newpath  filename-designator)
+  (flags    :int))
+
 (defsyscall "isatty" :int
   (fd file-descriptor-designator))
 

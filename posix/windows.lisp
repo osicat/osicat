@@ -30,7 +30,7 @@
   clock-getres clock-gettime clock-settime closedir closelog dirfd fchdir
   fchmod fcntl posix-fallocate fork fstatvfs fsync getdomainname getegid geteuid getgid
   getgrgid getgrnam getpagesize getpgid getpgrp getpid getppid getpriority
-  getpwnam getpwuid getrlimit getrusage gettimeofday getuid ioctl link lockf
+  getpwnam getpwuid getrlimit getrusage gettimeofday getuid ioctl link linkat lockf
   lstat mkdirat mkdtemp mkfifo mknod mkstemp mlock mlockall mmap mprotect msync munlock
   munlockall munmap nice openat opendir openlog pread pwrite readdir readlink readlinkat
   readv renameat rewinddir seekdir select setegid setenv seteuid setgid setlogmask setpgid

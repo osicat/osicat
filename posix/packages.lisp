@@ -107,6 +107,7 @@
    #:kill
    #:lchown
    #:link
+   #:linkat
    #:lockf
    #:lseek
    #:lstat
@@ -268,7 +269,7 @@
 
    ;; Constants
 
-   #:at-fdcwd #:at-removedir
+   #:at-empty-path #:at-fdcwd #:at-removedir #:at-symlink-follow
 
    #:sighup #:sigint #:sigquit #:sigill #:sigtrap #:sigabrt #:sigemt #:sigfpe
    #:sigkill #:sigbus #:sigsegv #:sigsys #:sigpipe #:sigalrm #:sigterm #:sigurg

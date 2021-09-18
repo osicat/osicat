@@ -145,8 +145,11 @@
   (constant (f-setlease "F_SETLEASE"))
   (constant (f-getlease "F_GETLEASE")))
 
+#+linux
+(constant (at-empty-path "AT_EMPTY_PATH"))
 (constant (at-fdcwd "AT_FDCWD"))
 (constant (at-removedir "AT_REMOVEDIR"))
+(constant (at-symlink-follow "AT_SYMLINK_FOLLOW"))
 
 ;;; lockf()
 (constant (f-lock  "F_LOCK"))
