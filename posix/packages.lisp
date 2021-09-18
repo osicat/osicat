@@ -114,6 +114,7 @@
    #:memset
    #:memmove
    #:mkdir
+   #:mkdirat
    #:mkdtemp
    #:mkfifo
    #:mknod
@@ -264,7 +265,7 @@
 
    ;; Constants
 
-   #:at-removedir
+   #:at-fdcwd #:at-removedir
 
    #:sighup #:sigint #:sigquit #:sigill #:sigtrap #:sigabrt #:sigemt #:sigfpe
    #:sigkill #:sigbus #:sigsegv #:sigsys #:sigpipe #:sigalrm #:sigterm #:sigurg
