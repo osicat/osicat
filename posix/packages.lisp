@@ -139,6 +139,7 @@
    #:read
    #:readdir
    #:readlink
+   #:readlinkat
    #:readv
    #:realpath
    #:rename
