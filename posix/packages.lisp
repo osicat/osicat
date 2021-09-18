@@ -129,6 +129,7 @@
    #:munmap
    #:nice
    #:open
+   #:openat
    #:opendir
    #:openlog
    #:pipe
