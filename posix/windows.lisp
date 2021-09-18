@@ -31,7 +31,7 @@
   fchmod fcntl posix-fallocate fork fstatvfs fsync getdomainname getegid geteuid getgid
   getgrgid getgrnam getpagesize getpgid getpgrp getpid getppid getpriority
   getpwnam getpwuid getrlimit getrusage gettimeofday getuid ioctl link lockf
-  lstat mkdtemp mkfifo mknod mkstemp mlock mlockall mmap mprotect msync munlock
+  lstat mkdirat mkdtemp mkfifo mknod mkstemp mlock mlockall mmap mprotect msync munlock
   munlockall munmap nice openat opendir openlog pread pwrite readdir readlink readv
   rewinddir seekdir select setegid setenv seteuid setgid setlogmask setpgid
   setpgrp setpriority setregid setreuid setrlimit setsid setuid statvfs symlink

@@ -71,6 +71,11 @@
 (defsyscall "isatty" :int
   (fd file-descriptor-designator))
 
+(defsyscall "mkdirat" :int
+  (dirfd    file-descriptor-designator)
+  (pathname filename-designator)
+  (mode     mode))
+
 ;;; files
 
 (defsyscall ("openat" %openat) :int
