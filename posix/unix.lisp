@@ -119,6 +119,11 @@
   (name1 filename-designator)
   (name2 filename-designator))
 
+(defsyscall "symlinkat" :int
+  (target   filename-designator)
+  (newdirfd :int)
+  (linkpath filename-designator))
+
 (defsyscall "chown" :int
   "Change ownership of a file."
   (path  filename-designator)

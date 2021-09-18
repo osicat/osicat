@@ -166,6 +166,7 @@
    #:statvfs
    #:strerror
    #:symlink
+   #:symlinkat
    #:sync
    #:sysconf
    #:syslog
