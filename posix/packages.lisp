@@ -143,6 +143,7 @@
    #:readv
    #:realpath
    #:rename
+   #:renameat
    #:rewinddir
    #:rmdir
    #:seekdir
