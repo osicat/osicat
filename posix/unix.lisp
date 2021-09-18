@@ -136,6 +136,11 @@
   (cmd :int)
   (len off))
 
+(defsyscall "unlinkat" :int
+  (dirfd    :int)
+  (pathname filename-designator)
+  (flags    :int))
+
 ;;; processes
 
 (defcfun ("nice" %nice) :int
