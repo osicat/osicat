@@ -158,6 +158,12 @@
   (pathname filename-designator)
   (flags    :int))
 
+(defsyscall "renameat" :int
+  (olddirfd :int)
+  (oldpath  filename-designator)
+  (newdirfd :int)
+  (newpath  filename-designator))
+
 ;;; processes
 
 (defcfun ("nice" %nice) :int
