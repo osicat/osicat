@@ -145,6 +145,8 @@
   (constant (f-setlease "F_SETLEASE"))
   (constant (f-getlease "F_GETLEASE")))
 
+(constant (at-removedir "AT_REMOVEDIR"))
+
 ;;; lockf()
 (constant (f-lock  "F_LOCK"))
 (constant (f-tlock "F_TLOCK"))

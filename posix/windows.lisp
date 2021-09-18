@@ -35,5 +35,5 @@
   munlockall munmap nice openat opendir openlog pread pwrite readdir readlink readv
   rewinddir seekdir select setegid setenv seteuid setgid setlogmask setpgid
   setpgrp setpriority setregid setreuid setrlimit setsid setuid statvfs symlink
-  sync sysconf syslog telldir truncate uname unsetenv usleep writev s-issock
+  sync sysconf syslog telldir truncate uname unlinkat unsetenv usleep writev s-issock
   s-islnk gethostname)

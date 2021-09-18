@@ -179,6 +179,7 @@
    #:umask
    #:uname
    #:unlink
+   #:unlinkat
    #:unsetenv
    #:usleep
    #:wait
@@ -262,6 +263,8 @@
    #+linux #:syscall
 
    ;; Constants
+
+   #:at-removedir
 
    #:sighup #:sigint #:sigquit #:sigill #:sigtrap #:sigabrt #:sigemt #:sigfpe
    #:sigkill #:sigbus #:sigsegv #:sigsys #:sigpipe #:sigalrm #:sigterm #:sigurg
