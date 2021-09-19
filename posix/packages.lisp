@@ -187,6 +187,7 @@
    #:unlinkat
    #:unsetenv
    #:usleep
+   #:utime
    #:wait
    #:waitpid
    #:write

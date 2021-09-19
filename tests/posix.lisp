@@ -496,6 +496,21 @@
     (plusp (nix:time))
   t)
 
+(define-posix-test utime.1
+    (let ((file (merge-pathnames #p"utime.1" *test-directory*))
+          (atime (random (1- (expt 2 31))))
+          (mtime (random (1- (expt 2 31)))))
+      (with-open-file (stream file :direction :output
+                              :if-exists :supersede
+                              :if-does-not-exist :create)
+        (princ "Hello, utime" stream))
+      (nix:utime file atime mtime)
+      (let* ((stat (nix:stat file)))
+        (delete-file file)
+        (list (= (nix:stat-atime stat) atime)
+              (= (nix:stat-mtime stat) mtime))))
+  (t t))
+
 ;;; TODO: not implemented in NIX yet
 #-(and)
 (define-posix-test utimes.1
