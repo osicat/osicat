@@ -530,6 +530,28 @@
               (= (nix:stat-mtime-nsec stat) (* 1000 mtime-usec)))))
   (t t t t))
 
+(define-posix-test futimens.1
+    (let ((file (merge-pathnames #p"futimens.1" *test-directory*))
+          (atime-sec (random (1- (expt 2 31))))
+          (atime-nsec (random 1000000000))
+          (mtime-sec (random (1- (expt 2 31))))
+          (mtime-nsec (random 1000000000)))
+      (with-open-file (stream file :direction :output
+                                   :if-exists :supersede
+                                   :if-does-not-exist :create)
+        (princ "Hello, futimens" stream))
+      (with-open-file (stream file :direction :output
+                                   :if-exists :append
+                                   :if-does-not-exist :error)
+        (nix:futimens stream atime-sec atime-nsec mtime-sec mtime-nsec))
+      (let* ((stat (nix:stat file)))
+        (delete-file file)
+        (list (= (nix:stat-atime stat) atime-sec)
+              (= (nix:stat-atime-nsec stat) atime-nsec)
+              (= (nix:stat-mtime stat) mtime-sec)
+              (= (nix:stat-mtime-nsec stat) mtime-nsec))))
+  (t t t t))
+
 ;;; readlink tests.
 
 (define-posix-test readlink.1

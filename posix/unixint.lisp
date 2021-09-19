@@ -794,3 +794,8 @@
 
 #+linux
 (constant (sys-gettid "SYS_gettid"))
+
+;;;; from sys/stat.h
+
+(constant (utime-now "UTIME_NOW"))
+(constant (utime-omit "UTIME_OMIT"))

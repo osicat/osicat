@@ -190,6 +190,20 @@
             (foreign-slot-value mtime '(:struct timeval) 'usec) mtime-usec))
     (%utimes filename times)))
 
+(defsyscall ("futimens" %futimens) :int
+  (fd    file-descriptor-designator)
+  (times (:pointer (:array (:struct timespec) 2))))
+
+(defun futimens (fd atime-sec atime-nsec mtime-sec mtime-nsec)
+  "Set file access and modification time with nanosecond precision."
+  (with-foreign-object (times '(:struct timespec) 2)
+    (let ((mtime (inc-pointer times size-of-timespec)))
+      (setf (foreign-slot-value times '(:struct timespec) 'sec) atime-sec
+            (foreign-slot-value times '(:struct timespec) 'nsec) atime-nsec
+            (foreign-slot-value mtime '(:struct timespec) 'sec) mtime-sec
+            (foreign-slot-value mtime '(:struct timespec) 'nsec) mtime-nsec))
+    (%futimens fd times)))
+
 ;;; processes
 
 (defcfun ("nice" %nice) :int
