@@ -188,6 +188,7 @@
    #:unsetenv
    #:usleep
    #:utime
+   #:utimes
    #:wait
    #:waitpid
    #:write

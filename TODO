@@ -11,7 +11,7 @@ cl-posix/iolib-posix/osicat-posix
 * add missing Linux IOCTLs
 * add definitions of struct types used by Linux IOCTLs
 * add FreeBSD IOCTLs
-* add getgroups, alarm, utimes, wait, waitpid, getpagesize,
+* add getgroups, alarm, wait, waitpid, getpagesize,
   things from termios.h
 
 * some ideas:

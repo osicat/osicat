@@ -176,6 +176,20 @@
   (newdirfd :int)
   (newpath  filename-designator))
 
+(defsyscall ("utimes" %utimes) :int
+  (filename filename-designator)
+  (times (:pointer (:array (:struct timeval) 2))))
+
+(defun utimes (filename atime-sec atime-usec mtime-sec mtime-usec)
+  "Set file access and modification time with microsecond precision."
+  (with-foreign-object (times '(:struct timeval) 2)
+    (let ((mtime (inc-pointer times size-of-timeval)))
+      (setf (foreign-slot-value times '(:struct timeval) 'sec) atime-sec
+            (foreign-slot-value times '(:struct timeval) 'usec) atime-usec
+            (foreign-slot-value mtime '(:struct timeval) 'sec) mtime-sec
+            (foreign-slot-value mtime '(:struct timeval) 'usec) mtime-usec))
+    (%utimes filename times)))
+
 ;;; processes
 
 (defcfun ("nice" %nice) :int

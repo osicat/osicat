@@ -511,22 +511,24 @@
               (= (nix:stat-mtime stat) mtime))))
   (t t))
 
-;;; TODO: not implemented in NIX yet
-#-(and)
 (define-posix-test utimes.1
     (let ((file (merge-pathnames #p"utimes.1" *test-directory*))
-          (atime (random (1- (expt 2 31))))
-          (mtime (random (1- (expt 2 31)))))
+          (atime-sec (random (1- (expt 2 31))))
+          (atime-usec (random 1000000))
+          (mtime-sec (random (1- (expt 2 31))))
+          (mtime-usec (random 1000000)))
       (with-open-file (stream file :direction :output
-                              :if-exists :supersede
-                              :if-does-not-exist :create)
+                                   :if-exists :supersede
+                                   :if-does-not-exist :create)
         (princ "Hello, utimes" stream))
-      (nix:utime file atime mtime)
+      (nix:utimes file atime-sec atime-usec mtime-sec mtime-usec)
       (let* ((stat (nix:stat file)))
         (delete-file file)
-        (list (= (nix:stat-atime stat) atime)
-              (= (nix:stat-mtime stat) mtime))))
-  (t t))
+        (list (= (nix:stat-atime stat) atime-sec)
+              (= (nix:stat-atime-nsec stat) (* 1000 atime-usec))
+              (= (nix:stat-mtime stat) mtime-sec)
+              (= (nix:stat-mtime-nsec stat) (* 1000 mtime-usec)))))
+  (t t t t))
 
 ;;; readlink tests.
 
