@@ -42,7 +42,7 @@
   (define "_FILE_OFFSET_BITS" 64))
 
 (include "sys/types.h" "sys/stat.h" "fcntl.h" "errno.h" "signal.h" "unistd.h"
-         "limits.h" "time.h" "stdlib.h")
+         "limits.h" "time.h" "stdlib.h" "utime.h")
 
 (in-package #:osicat-posix)
 
@@ -323,3 +323,8 @@
   #+darwin (flags         "st_flags"         :type :uint32)
   #+darwin (gen           "st_gen"           :type :uint32))
 
+;;;; from utime.h
+
+(cstruct utimbuf "struct utimbuf"
+  (actime  "actime"  :type time)
+  (modtime "modtime" :type time))

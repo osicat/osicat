@@ -175,6 +175,16 @@
   (path filename-designator)
   (mode mode))
 
+(defsyscall ("utime" %utime) :int
+  (filename filename-designator)
+  (times (:pointer (:struct utimbuf))))
+
+(defun utime (filename atime mtime)
+  (with-foreign-object (times '(:struct utimbuf))
+    (setf (foreign-slot-value times '(:struct utimbuf) 'actime) atime
+          (foreign-slot-value times '(:struct utimbuf) 'modtime) mtime)
+    (%utime filename times)))
+
 ;;; environment
 
 (defcvar ("environ" :read-only t) (:pointer :string))
