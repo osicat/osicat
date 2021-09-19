@@ -80,6 +80,7 @@
    #:fstatvfs
    #:fsync
    #:ftruncate
+   #:futimens
    #:getcwd
    #:getdomainname
    #:getegid
@@ -420,6 +421,8 @@
    #:tcsanow
    #:tcsadrain
    #:tcsaflush
+
+   #:utime-now #:utime-omit
 
    #:posix-vdisable
 
