@@ -217,6 +217,29 @@
     (funcall fn arg buf)
     (make-instance 'stat :pointer buf)))
 
+#-windows
+(progn
+  (defun stat-atime (stat)
+    (getf (stat-atimespec stat) 'sec))
+  (defun stat-atime-sec (stat)
+    (getf (stat-atimespec stat) 'sec))
+  (defun stat-atime-nsec (stat)
+    (getf (stat-atimespec stat) 'nsec))
+
+  (defun stat-mtime (stat)
+    (getf (stat-mtimespec stat) 'sec))
+  (defun stat-mtime-sec (stat)
+    (getf (stat-mtimespec stat) 'sec))
+  (defun stat-mtime-nsec (stat)
+    (getf (stat-mtimespec stat) 'nsec))
+
+  (defun stat-ctime (stat)
+    (getf (stat-ctimespec stat) 'sec))
+  (defun stat-ctime-sec (stat)
+    (getf (stat-ctimespec stat) 'sec))
+  (defun stat-ctime-nsec (stat)
+    (getf (stat-ctimespec stat) 'nsec)))
+
 (defun stat (path)
   "Get information about a file."
   (funcall-stat #'%stat path))

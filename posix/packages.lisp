@@ -234,8 +234,14 @@
    #:stat-blksize
    #:stat-blocks
    #:stat-atime
+   #:stat-atime-sec
+   #:stat-atime-nsec
    #:stat-mtime
+   #:stat-mtime-sec
+   #:stat-mtime-nsec
    #:stat-ctime
+   #:stat-ctime-sec
+   #:stat-ctime-nsec
    #:stat-atimespec
    #:stat-mtimespec
    #:stat-ctimespec
