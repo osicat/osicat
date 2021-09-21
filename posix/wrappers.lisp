@@ -87,6 +87,13 @@
   (buf ("struct stat*" :pointer)))
 
 #-windows
+(defwrapper ("fstatat" %fstatat) ("int" (errno-wrapper :int))
+  (dirfd ("int" file-descriptor-designator))
+  (file-name ("const char*" filename-designator))
+  (buf ("struct stat*" :pointer))
+  (flags ("int" :int)))
+
+#-windows
 (defwrapper ("lstat" %lstat) ("int" (errno-wrapper :int))
   (file-name ("const char*" filename-designator))
   (buf ("struct stat*" :pointer)))

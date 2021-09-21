@@ -150,6 +150,7 @@
 (constant (at-fdcwd "AT_FDCWD"))
 (constant (at-removedir "AT_REMOVEDIR"))
 (constant (at-symlink-follow "AT_SYMLINK_FOLLOW"))
+(constant (at-symlink-nofollow "AT_SYMLINK_NOFOLLOW"))
 
 ;;; lockf()
 (constant (f-lock  "F_LOCK"))

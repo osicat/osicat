@@ -77,6 +77,7 @@
    #:posix-fallocate
    #:fork
    #:fstat
+   #:fstatat
    #:fstatvfs
    #:fsync
    #:ftruncate
@@ -279,6 +280,7 @@
    ;; Constants
 
    #:at-empty-path #:at-fdcwd #:at-removedir #:at-symlink-follow
+   #:at-symlink-nofollow
 
    #:sighup #:sigint #:sigquit #:sigill #:sigtrap #:sigabrt #:sigemt #:sigfpe
    #:sigkill #:sigbus #:sigsegv #:sigsys #:sigpipe #:sigalrm #:sigterm #:sigurg
