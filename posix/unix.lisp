@@ -579,6 +579,12 @@ as seconds and nanoseconds, so four values are returned."
   (path filename-designator)
   (mode mode))
 
+(defsyscall "mkfifoat" :int
+  "Create a FIFO (named pipe)."
+  (dirfd :int)
+  (path filename-designator)
+  (mode mode))
+
 ;;;; syslog.h
 
 (defvar *syslog-identity* nil)
