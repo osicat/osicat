@@ -120,6 +120,7 @@
    #:mkdirat
    #:mkdtemp
    #:mkfifo
+   #:mkfifoat
    #:mknod
    #:mkstemp
    #:mktemp
