@@ -248,6 +248,12 @@
   "Get information about a file descriptor"
   (funcall-stat #'%fstat fd))
 
+(defun fstatat (dirfd pathname flags)
+  "Get information about a file located in the DIRFD directory"
+  (with-foreign-object (buf '(:struct stat))
+    (%fstatat dirfd pathname buf flags)
+    (make-instance 'stat :pointer buf)))
+
 (defsyscall "umask" mode
   "Sets the umask and returns the old one"
   (new-mode mode))

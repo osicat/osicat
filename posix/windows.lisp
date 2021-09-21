@@ -28,8 +28,8 @@
 
 (define-unsupported-functions
   clock-getres clock-gettime clock-settime closedir closelog dirfd fchdir
-  fchmod fcntl posix-fallocate fork fstatvfs fsync futimens getdomainname getegid geteuid
-  getgid getgrgid getgrnam getpagesize getpgid getpgrp getpid getppid getpriority
+  fchmod fcntl posix-fallocate fork fstatat fstatvfs fsync futimens getdomainname getegid
+  geteuid getgid getgrgid getgrnam getpagesize getpgid getpgrp getpid getppid getpriority
   getpwnam getpwuid getrlimit getrusage gettimeofday getuid ioctl link linkat lockf
   lstat mkdirat mkdtemp mkfifo mknod mkstemp mlock mlockall mmap mprotect msync munlock
   munlockall munmap nice openat opendir openlog pread pwrite readdir readlink readlinkat
