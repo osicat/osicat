@@ -73,6 +73,7 @@
    #:fchdir
    #:fchmod
    #:fchown
+   #:fchownat
    #:fcntl
    #:posix-fallocate
    #:fork

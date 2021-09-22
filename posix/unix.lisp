@@ -141,6 +141,14 @@
   (owner uid)
   (group uid))
 
+(defsyscall "fchownat" :int
+  "Change ownership of an open file."
+  (dirfd :int)
+  (path  filename-designator)
+  (owner uid)
+  (group uid)
+  (flags :int))
+
 (defsyscall "fchmod" :int
   (fd   file-descriptor-designator)
   (mode mode))
