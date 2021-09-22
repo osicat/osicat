@@ -38,8 +38,10 @@
          "fcntl.h" "unistd.h" "dirent.h"  "sys/time.h")
 
 #-windows
-(include "syslog.h" "sys/mman.h" "sys/resource.h" "sys/statvfs.h" "sys/wait.h"
-         "sys/sysmacros.h")
+(include "syslog.h" "sys/mman.h" "sys/resource.h" "sys/statvfs.h" "sys/wait.h")
+
+#+linux
+(include "sys/sysmacros.h")
 
 ;;;; Large-file support
 
@@ -197,23 +199,23 @@
   (mode ("mode_t" mode))
   (dev ("dev_t" dev)))
 
-#-windows
+#+(and unix (not darwin))
 (defwrapper "mknodat" :int
   (dirfd ("int" :int))
   (path ("const char*" filename-designator))
   (mode ("mode_t" mode))
   (dev ("dev_t" dev)))
 
-#-windows
+#+(and unix (not darwin))
 (defwrapper "makedev" ("dev_t" dev)
   (major ("unsigned int" :uint))
   (minor ("unsigned int" :uint)))
 
-#-windows
+#+(and unix (not darwin))
 (defwrapper "major" ("unsigned int" :uint)
   (dev ("dev_t" dev)))
 
-#-windows
+#+(and unix (not darwin))
 (defwrapper "minor" ("unsigned int" :uint)
   (dev ("dev_t" dev)))
 
