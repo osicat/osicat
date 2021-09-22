@@ -196,6 +196,13 @@
   (mode ("mode_t" mode))
   (dev ("dev_t" dev)))
 
+#-windows
+(defwrapper "mknodat" :int
+  (dirfd ("int" :int))
+  (path ("const char*" filename-designator))
+  (mode ("mode_t" mode))
+  (dev ("dev_t" dev)))
+
 ;;; dirfd() is a macro on BSDs
 ;;;
 ;;; Returns the file descriptor of a directory.

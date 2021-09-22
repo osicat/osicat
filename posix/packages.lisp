@@ -124,6 +124,7 @@
    #:mkfifo
    #:mkfifoat
    #:mknod
+   #:mknodat
    #:mkstemp
    #:mktemp
    #:mlock
