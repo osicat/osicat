@@ -38,7 +38,8 @@
          "fcntl.h" "unistd.h" "dirent.h"  "sys/time.h")
 
 #-windows
-(include "syslog.h" "sys/mman.h" "sys/resource.h" "sys/statvfs.h" "sys/wait.h")
+(include "syslog.h" "sys/mman.h" "sys/resource.h" "sys/statvfs.h" "sys/wait.h"
+         "sys/sysmacros.h")
 
 ;;;; Large-file support
 
@@ -201,6 +202,19 @@
   (dirfd ("int" :int))
   (path ("const char*" filename-designator))
   (mode ("mode_t" mode))
+  (dev ("dev_t" dev)))
+
+#-windows
+(defwrapper "makedev" ("dev_t" dev)
+  (major ("unsigned int" :uint))
+  (minor ("unsigned int" :uint)))
+
+#-windows
+(defwrapper "major" ("unsigned int" :uint)
+  (dev ("dev_t" dev)))
+
+#-windows
+(defwrapper "minor" ("unsigned int" :uint)
   (dev ("dev_t" dev)))
 
 ;;; dirfd() is a macro on BSDs

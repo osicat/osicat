@@ -115,9 +115,12 @@
    #:lockf
    #:lseek
    #:lstat
+   #:makedev
+   #:major
    #:memcpy
    #:memset
    #:memmove
+   #:minor
    #:mkdir
    #:mkdirat
    #:mkdtemp
