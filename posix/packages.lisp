@@ -192,6 +192,7 @@
    #:unsetenv
    #:usleep
    #:utime
+   #:utimensat
    #:utimes
    #:wait
    #:waitpid

@@ -36,4 +36,4 @@
   readlinkat readv renameat rewinddir seekdir select setegid setenv seteuid setgid
   setlogmask setpgid setpgrp setpriority setregid setreuid setrlimit setsid setuid
   statvfs symlink symlinkat sync sysconf syslog telldir truncate uname unlinkat unsetenv
-  usleep utimes writev s-issock s-islnk gethostname)
+  usleep utimensat utimes writev s-issock s-islnk gethostname)
