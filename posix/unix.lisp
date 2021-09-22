@@ -566,6 +566,12 @@ as seconds and nanoseconds, so four values are returned."
   "Get information about a file or symlink."
   (funcall-stat #'%lstat path))
 
+(defun fstatat (dirfd pathname flags)
+  "Get information about a file located in the DIRFD directory"
+  (with-foreign-object (buf '(:struct stat))
+    (%fstatat dirfd pathname buf flags)
+    (make-instance 'stat :pointer buf)))
+
 (defsyscall "mkfifo" :int
   "Create a FIFO (named pipe)."
   (path filename-designator)
