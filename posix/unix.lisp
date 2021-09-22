@@ -35,14 +35,6 @@
 
 ;;;; stdlib.h
 
-(defsyscall ("mktemp" %mktemp) :string
-  (template :pointer))
-
-(defun mktemp (&optional (template ""))
-  (let ((template (concatenate 'string template "XXXXXX")))
-    (with-foreign-string (ptr (filename template))
-      (%mktemp ptr))))
-
 (defsyscall ("mkstemp" %mkstemp) :int
   (template :pointer))
 
