@@ -14,7 +14,8 @@ env:
     # - LISP=abcl
     # - LISP=allegro
 
-jobs:
+matrix:
+  fast_finish: true
   allow_failures:
     # - env: LISP=sbcl
     # - env: LISP=allegro
