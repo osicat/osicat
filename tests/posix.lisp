@@ -537,6 +537,7 @@
               (= (nix:stat-mtime-nsec stat) (* 1000 mtime-usec)))))
   (t t t t))
 
+#+(or ccl ecl sbcl)
 (define-posix-test futimens.1
     (let ((file (merge-pathnames #p"futimens.1" *test-directory*))
           (atime-sec (random (1- (expt 2 31))))
