@@ -163,6 +163,14 @@ different kinds of streams.  Returns the FD of STREAM."))
 (defmethod get-stream-fd ((stream file-stream))
   (sb-sys:fd-stream-fd stream))
 
+#+ecl
+(defmethod get-stream-fd ((stream file-stream))
+  (si:file-stream-fd stream))
+
+#+ccl
+(defmethod get-stream-fd ((stream ccl::basic-file-stream))
+  (ccl::ioblock-device (ccl::basic-stream-ioblock stream)))
+
 (define-designator file-descriptor :int
   (stream (get-stream-fd file-descriptor))
   (integer file-descriptor))
