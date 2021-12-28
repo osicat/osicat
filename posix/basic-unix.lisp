@@ -207,7 +207,7 @@
 
 ;;; environment
 
-(defcvar ("environ" :read-only t) (:pointer :string))
+(defcvar (#+windows "_environ" #-windows "environ" *environ* :read-only t) (:pointer :string))
 
 (defcfun "getenv" :string
   "Returns the value of an environment variable"
