@@ -100,7 +100,7 @@
   `(progn
      (defun ,name (&rest args)
        (declare (ignore args))
-       (error 'unsupported-posix-function :function ',name))
+       (error 'unsupported-function :function ',name))
 
      ;; signal a compile-time warning as well.
      (define-compiler-macro ,name (&whole form &rest args)
