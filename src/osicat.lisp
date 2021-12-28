@@ -27,28 +27,6 @@
 
 (in-package #:osicat)
 
-;;;; Environment access
-(defun (setf environment-variable) (value name)
-  (nix:setenv (to-simple-string name) (to-simple-string value)))
-
-(defun makunbound-environment-variable (name)
-  "Removes the environment variable identified by NAME from the
-current environment.  NAME can be either a string or a symbol.
-Returns the string designated by NAME.  Signals an error on
-failure."
-  (nix:unsetenv (to-simple-string name)))
-
-(defun (setf environment) (alist)
-  (let ((oldenv (environment)))
-    (loop for (var . val) in alist
-          do (setf (environment-variable var) (string val)
-                   oldenv (delete var oldenv
-                                  :key (lambda (x) (string (car x)))
-                                  :test #'string=)))
-    (loop for (var . nil) in oldenv
-          do (makunbound-environment-variable var)))
-  alist)
-
 ;;;; Directory access
 (defun call-with-directory-iterator (pathspec fun)
   (let ((dir (absolute-pathname (pathname pathspec)))

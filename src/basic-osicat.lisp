@@ -46,6 +46,26 @@ identified by NAME to VALUE.  Both NAME and VALUE can be either a
 symbols or strings. Signals an error on failure."
   (nix:getenv (to-simple-string name)))
 
+;;;; Environment access
+(defun (setf environment-variable) (value name)
+  #+windows
+  (progn
+    (unless (null (position #\= (to-simple-string name)))
+      (error "Variable names cannot contain an #\\= character."))
+    (nix:putenv (to-simple-string (format nil "~A=~A" name value))))
+  #-windows
+  (nix:setenv (to-simple-string name) (to-simple-string value)))
+
+(defun makunbound-environment-variable (name)
+  "Removes the environment variable identified by NAME from the
+current environment.  NAME can be either a string or a symbol.
+Returns the string designated by NAME.  Signals an error on
+failure."
+  #+windows
+  (nix:putenv (to-simple-string (format nil "~A=" name)))
+  #-windows
+  (nix:unsetenv (to-simple-string name)))
+
 (defun environment ()
   "ENVIRONMENT returns the current environment as an assoc-list.
 SETF ENVIRONMENT modifies the environment its argument.
@@ -63,6 +83,17 @@ of SETF ENVIRONMENT."
     #-(and)
     (error (e)
       (error "Could not access environment (~S)." e))))
+
+(defun (setf environment) (alist)
+  (let ((oldenv (environment)))
+    (loop for (var . val) in alist
+          do (setf (environment-variable var) (string val)
+                   oldenv (delete var oldenv
+                                  :key (lambda (x) (string (car x)))
+                                  :test #'string=)))
+    (loop for (var . nil) in oldenv
+          do (makunbound-environment-variable var)))
+  alist)
 
 ;;;; Common subroutines
 

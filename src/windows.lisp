@@ -28,9 +28,6 @@
 (in-package #:osicat)
 
 (define-unsupported-functions
-  (setf environment-variable)     ; SETENV is unavailable
-  makunbound-environment-variable ; UNSETENV is unavailable
-  (setf environment)              ; MAKUNBOUND-ENVIRONMENT-VARIABLE is unavailable
   call-with-directory-iterator    ; OPENDIR and READDIR are unavailable
   mapdir                          ; CALL-WITH-DIRECTORY-ITERATOR is unavailable
   list-directory                  ; CALL-WITH-DIRECTORY-ITERATOR is unavailable

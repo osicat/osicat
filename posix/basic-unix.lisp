@@ -213,6 +213,9 @@
   "Returns the value of an environment variable"
   (name :string))
 
+(defsyscall "putenv" :int
+  (string :string))
+
 ;;; time
 
 (defsyscall "sleep" :unsigned-int
