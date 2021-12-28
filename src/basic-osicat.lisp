@@ -271,25 +271,10 @@ PATHSPEC exists and is a symlink pointing to an existent file."
 ;;;; Temporary files
 
 (defvar *temporary-directory*
-  (let ((system-tmpdir (coerce (environment-variable "TMPDIR") 'string)))
+  (let ((system-tmpdir (coerce (environment-variable #+windows "TMP" #-windows "TMPDIR") 'string)))
     (if (string= "" system-tmpdir) ; null or empty
         (make-pathname :directory '(:absolute "tmp"))
         (pathname (concatenate 'string system-tmpdir "/")))))
-
-(defun %open-temporary-file/fd-streams (filename element-type external-format)
-  (handler-case
-      (multiple-value-bind (fd path)
-          (#-windows nix:mkstemp #+windows nix:mktemp filename)
-        (unwind-protect-case ()
-            (nix:unlink path)
-          (:abort (nix:close fd)))
-        (make-fd-stream fd :direction :io
-                        :element-type element-type
-                        :external-format external-format
-                        :pathname (pathname path)
-                        :file path))
-    (nix:posix-error ()
-      (error 'file-error :pathname filename))))
 
 (defun %open-temporary-file/no-fd-streams (filename element-type external-format)
   (do ((counter 100 (1- counter)))
@@ -302,20 +287,27 @@ PATHSPEC exists and is a symlink pointing to an existent file."
                          :if-does-not-exist :create)))
       (when stream
         (unwind-protect-case ()
+          ;; In order to support unlinking an open file, we would need to use
+          ;; CreateFileA/W, with FILE_SHARE_DELETE.
+          #+windows
+          nil
+          #-windows
           (nix:unlink path)
-        (:normal (return stream))
+        (:normal (return (values stream #+windows path)))
         (:abort (close stream :abort t)))))))
 
 (defun open-temporary-file (&key (pathspec *temporary-directory*)
                             (element-type 'character)
                             (external-format :default))
-  "Creates a temporary file setup for input and output, and returns a
-stream connected to that file.
+  "Creates a temporary file setup for input and output, and returns two VALUES:
+the stream connected to that file and the pathname of the file or NIL.
 
-PATHSPEC serves as template for the file to be created: a certain number
-of random characters will be concatenated to the file component of PATHSPEC.
-If PATHSPEC has no directory component, the file will be created inside
-*TEMPORARY-DIRECTORY*. The file itself is unlinked once it has been opened.
+PATHSPEC serves as template for the file to be created: a certain number of
+random characters will be concatenated to the file component of PATHSPEC.  If
+PATHSPEC has no directory component, the file will be created inside
+*TEMPORARY-DIRECTORY*. If possible, the file itself is unlinked once it has
+been opened and the second return value is NIL. Otherwise, you must delete the
+file yourself.
 
 ELEMENT-TYPE specifies the unit of transaction of the stream.
 Consider using WITH-TEMPORARY-FILE instead of this function.
@@ -324,25 +316,33 @@ On failure, a FILE-ERROR may be signalled."
   (let ((filename
          (native-namestring
           (merge-pathnames (pathname pathspec) *temporary-directory*))))
-    #+osicat-fd-streams
+    #+(and osicat-fd-streams (not windows))
     (%open-temporary-file/fd-streams filename element-type external-format)
-    #-osicat-fd-streams
+    #-(and osicat-fd-streams (not windows))
     (%open-temporary-file/no-fd-streams filename element-type external-format)))
 
+(defun call-with-temporary-file (thunk pathspec element-type external-format)
+  (multiple-value-bind (stream pathname)
+      (open-temporary-file :pathspec pathspec
+                           :element-type element-type
+                           :external-format external-format)
+    (unwind-protect
+         (with-open-stream (s stream)
+           (funcall thunk s))
+      (unless (null pathname)
+        (nix:unlink pathname)))))
+
 (defmacro with-temporary-file ((stream &key (pathspec *temporary-directory*)
-                                       (element-type 'character)
+                                       (element-type ''character)
                                        (external-format :default))
                                &body body)
   "Within the lexical scope of the body, STREAM is connected to a
 temporary file as created by OPEN-TEMPORARY-FILE.  The file is
 closed automatically once BODY exits."
-  `(with-open-stream
-       (,stream (open-temporary-file :pathspec ,pathspec
-                                     :element-type ,(if (eq element-type 'character)
-                                                        (quote 'character)
-                                                        element-type)
-                                     :external-format ,external-format))
-     ,@body))
+  `(call-with-temporary-file (lambda (,stream) ,@body)
+                             ,pathspec
+                             ,element-type
+                             ,external-format))
 
 ;;;; Directory access
 

@@ -196,3 +196,19 @@ numerical user ID, as an assoc-list."
             (cons :gecos gecos)
             (cons :home home)
             (cons :shell shell)))))
+
+;;;; Temporary Files
+(defun %open-temporary-file/fd-streams (filename element-type external-format)
+  (handler-case
+      (multiple-value-bind (fd path)
+          (nix:mkstemp filename)
+        (unwind-protect-case ()
+            (nix:unlink path)
+          (:abort (nix:close fd)))
+        (make-fd-stream fd :direction :io
+                        :element-type element-type
+                        :external-format external-format
+                        :pathname (pathname path)
+                        :file path))
+    (nix:posix-error ()
+      (error 'file-error :pathname filename))))
