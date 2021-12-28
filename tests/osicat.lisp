@@ -26,6 +26,7 @@
 
 (in-package #:osicat/tests)
 
+#-windows
 (deftest current-directory.1
     (let ((old (current-directory)))
       (unwind-protect
@@ -62,7 +63,7 @@
 ;;;        CLISP's probe-file doesn't work with directories
 #-(or cmu clisp)
 (deftest environment.1
-    (namestring (probe-file (cdr (assoc "HOME" (environment)
+    (namestring (probe-file (cdr (assoc #+windows "USERPROFILE" #-windows "HOME" (environment)
                                         :test #'equal))))
   #.(namestring (user-homedir-pathname)))
 
@@ -93,6 +94,8 @@
       (makunbound-environment-variable "TEST-VARIABLE"))
   "TEST-VALUE")
 
+;;; Environment variables in Windows are case insensitive.
+#-windows
 (deftest environment-variable.3
     (unwind-protect
          (progn
@@ -118,6 +121,8 @@
                               :defaults *test-directory*))
   nil)
 
+;;; no symlinks on Windows
+#-windows
 (deftest file-kind.3
     (let* ((file (ensure-file "tmp-file"))
            (link (ensure-link "tmp-link" :target file)))
@@ -134,11 +139,15 @@
         (osicat-posix:unlink file)))
   :regular-file)
 
+;;; /tmp/ non-existent on Windows
+#-windows
 (deftest file-permissions.1
     (and (member :other-read (file-permissions "/tmp/"))
          t)
   t)
 
+;;; User-exec does not work on Windows
+#-windows
 (deftest file-permissions.2
     (let ((file (ensure-file "tmp-exec")))
       (unwind-protect
@@ -149,6 +158,8 @@
         (osicat-posix:unlink file)))
   t)
 
+;;; No symlinks on Windows
+#-windows
 (deftest make-link.1
     (let ((link (merge-pathnames "make-link-test-link" *test-directory*))
           (file (ensure-file "tmp-file")))
@@ -160,6 +171,8 @@
         (osicat-posix:unlink file)))
   #.(namestring (merge-pathnames "tmp-file" *test-directory*)))
 
+;;; No symlinks on Windows
+#-windows
 (deftest make-link.2
     (let ((link (merge-pathnames "make-link-test-link" *test-directory*))
           (file (ensure-file "tmp-file")))
@@ -172,6 +185,8 @@
   :symbolic-link)
 
 ;;; Test the case of reading a link to a directory.
+;;; No symlinks on Windows
+#-windows
 (deftest read-link.1
     (let ((link (merge-pathnames "read-link-test-link" *test-directory*)))
       (unwind-protect
@@ -182,6 +197,8 @@
   #.(namestring *test-directory*))
 
 ;;; Test the case of reading a link with a very long name.
+;;; No symlinks on Windows
+#-windows
 (deftest read-link.2
     (let ((link (merge-pathnames "make-link-test-link" *test-directory*))
           (file (ensure-file "a-very-long-tmp-file-name-explicitly-for-the-purpose-of-testing-a-certain-condition-in-read-link-please-ignore-thanks")))
@@ -204,6 +221,7 @@
         (setf (environment-variable :path) old)))
   t)
 
+#-windows
 (deftest mapdir.1
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test/" *test-directory*)))
@@ -220,6 +238,7 @@
         (delete-directory dir)))
   ("file1" "file2"))
 
+#-windows
 (deftest mapdir.2
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test/" *test-directory*)))
@@ -236,6 +255,7 @@
         (delete-directory dir)))
   ("file1" "file2.txt" "subdir/"))
 
+#-windows
 (deftest mapdir.3
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test/" *test-directory*)))
@@ -250,6 +270,7 @@
   (#.(pathname-directory (merge-pathnames "mapdir-test/" *test-directory*))))
 
 ;;; Test that directories of form foo.bar/ don't become foo/bar/.
+#-windows
 (deftest mapdir.4
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test.type/" *test-directory*))))
@@ -265,6 +286,7 @@
   nil)
 
 ;;; Be careful with this test.  It deletes directories recursively.
+#-windows
 (deftest with-directory-iterator.1
     (let ((dirs (list "wdi-test-1/" ".wdi-test.2/" ".wdi.test.3../")))
       (ensure-directories-exist (reduce (lambda (x y) (merge-pathnames y x))
@@ -282,6 +304,7 @@
   nil)
 
 ;;; Test iteration over a variety of objects.
+#-windows
 (deftest with-directory-iterator.2
     (let ((playground '(:directory "wdi-test-2/"
                         (:directory "wdi-test-2-2/"
@@ -325,12 +348,16 @@
   t)
 
 ;;; Test behavior in the case of an obviously incorrect username.
+;;; no getpwnam on Windows
+#-windows
 (deftest user-info.1
     (user-info "definitely_not_a_user!")
   nil)
 
 ;;; Does this test still work in the case of su/sudo?  It should, I
 ;;; think.
+;;; no getpwnam on Windows
+#-windows
 (deftest user-info.2
     (let* ((uid (our-getuid))
            (user-info (user-info uid)))
@@ -341,6 +368,8 @@
 ;;; think this will work 100% of the time, but it should for most
 ;;; people testing the package; given that, would it be even better
 ;;; to compare the value to (user-homedir-pathname)?
+;;; no getpwnam on Windows
+#-windows
 (deftest user-info.3
     (let* ((uid (our-getuid))
            (user-info (user-info uid)))
@@ -350,6 +379,8 @@
 ;;; We'll go out on a limb and assume that not only does the root
 ;;; account exist, but its home directory exists, as well.  Note
 ;;; that this is unfortunately not always true.
+;;; no getpwnam on Windows
+#-windows
 (deftest user-info.4
     (let ((home (cdr (assoc :home (user-info "root")))))
       (file-kind home))
@@ -382,6 +413,7 @@
 
 ;;; Test failure condition of OPEN-TEMPORARY-FILE.  So far, opening too
 ;;; many fds is all I can determine as a way to do this.
+#-windows
 (deftest temporary-file.2
     (let ((fds))
       (handler-case
