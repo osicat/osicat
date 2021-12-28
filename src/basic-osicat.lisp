@@ -107,7 +107,9 @@ of SETF ENVIRONMENT."
                    (if follow-p
                        (nix:stat namestring)
                        #-windows
-                       (nix:lstat namestring)))))
+                       (nix:lstat namestring)
+                       #+windows
+                       (nix:stat namestring)))))
         (case (logand nix:s-ifmt mode)
           (#.nix:s-ifdir  :directory)
           (#.nix:s-ifchr  :character-device)
