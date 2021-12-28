@@ -62,6 +62,7 @@
           ((null kind) (make-link link :target target))
           (t (error "File exists and is not a link.")))))
 
+#-windows
 (defun our-getuid ()
   #+sbcl (sb-unix:unix-getuid)
   #+cmu (unix:unix-getuid)

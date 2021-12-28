@@ -144,6 +144,7 @@
        #-(or darwin windows openbsd) nix:eexist () 'failed))
   failed)
 
+#-windows
 (define-eacces-test mkdir.error.3
     (let* ((dir (test-dir "mkdir.error.3"))
            (dir2 (merge-pathnames
@@ -384,7 +385,13 @@
   nil)
 
 (define-posix-test open.error.1
-    (handler-case (nix:open *test-directory* nix:o-wronly)
+    (handler-case (nix:open
+                   ;; Windows signals ENOENT if the name ends with a directory
+                   ;; separator.
+                   #+windows
+                   (let ((namestring (native-namestring (translate-logical-pathname *test-directory*))))
+                     (subseq namestring 0 (1- (length namestring))))
+                   #-windows *test-directory* nix:o-wronly)
       (#+windows nix:eacces
        #-windows nix:eisdir () 'failed))
   failed)
@@ -672,6 +679,7 @@
         (nix:posix-error-syscall c)))
   nix:mkdir)
 
+#-windows
 (define-posix-test isatty.1
     (let (fd)
       (unwind-protect
@@ -682,6 +690,7 @@
           (nix:close fd))))
   0)
 
+#-windows
 (define-posix-test isatty.2
     (let (fd)
       (unwind-protect
