@@ -145,6 +145,7 @@
    #:openlog
    #:pipe
    #:pread
+   #:putenv
    #:pwrite
    #:read
    #:readdir
