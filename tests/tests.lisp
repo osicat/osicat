@@ -46,7 +46,10 @@
     (make-pathname :directory '(:relative "tmp-test-dir"))
     (make-pathname :directory
                    (pathname-directory
-                    (or *load-truename* *compile-file-truename*))))))
+                    (or *load-truename* *compile-file-truename*))
+                   #+windows :device
+                   #+windows (pathname-device
+                              (or *load-truename* *compile-file-truename*))))))
 
 (defun ensure-file (file &optional (dir *test-directory*))
   (let ((file (merge-pathnames file dir)))

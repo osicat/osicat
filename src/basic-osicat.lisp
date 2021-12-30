@@ -381,6 +381,91 @@ Signals an error if PATHSPEC is wild, doesn't designate a
 directory, or if the directory could not be deleted."
   (zerop (nix:rmdir (absolute-pathname pathspec))))
 
+(defun mapdir (function pathspec)
+  "Applies function to each entry in directory designated by
+PATHSPEC in turn and returns a list of the results.  Binds
+*DEFAULT-PATHNAME-DEFAULTS* to the directory designated by
+pathspec round to function call.
+
+If PATHSPEC designates a symbolic link, it is implicitly resolved.
+
+Signals an error if PATHSPEC is wild or doesn't designate a directory."
+  (with-directory-iterator (next pathspec)
+    (loop for entry = (next)
+          while entry
+          collect (funcall function entry))))
+
+(defun list-directory (pathspec &key bare-pathnames)
+  "Returns a fresh list of pathnames corresponding to all files
+within the directory named by the non-wild pathname designator
+PATHSPEC.
+If BARE-PATHNAMES is non-NIL only the files's bare pathnames are returned
+\(with an empty directory component), otherwise the files' pathnames are
+merged with PATHSPEC."
+  (let ((pathspec (pathname-as-directory pathspec)))
+    (with-directory-iterator (next pathspec)
+      (loop for entry = (next)
+            while entry collect (if bare-pathnames entry
+                                    (merge-pathnames entry pathspec))))))
+
+(defun walk-directory (dirname fn &key directories (if-does-not-exist :error)
+                                    (test (constantly t)))
+  "Recursively applies the function FN to all files within the
+directory named by the non-wild pathname designator DIRNAME and all of
+its sub-directories.  Returns T on success.
+
+FN will only be applied to files for which the function TEST
+returns a true value.  If DIRECTORIES is not NIL, FN and TEST are
+applied to directories as well.  If DIRECTORIES is :DEPTH-FIRST,
+FN will be applied to the directory's contents first.  If
+DIRECTORIES is :BREADTH-FIRST and TEST returns NIL, the
+directory's content will be skipped. IF-DOES-NOT-EXIST must be
+one of :ERROR or :IGNORE where :ERROR means that an error will be
+signaled if the directory DIRNAME does not exist."
+  (labels ((walk (name)
+             (cond
+               ((directory-pathname-p name)
+                ;; the code is written in a slightly awkward way for
+                ;; backward compatibility
+                (cond ((not directories)
+                       (mapdir #'walk name))
+                      ((eql directories :breadth-first)
+                       (when (funcall test name)
+                         (funcall fn name)
+                         (mapdir #'walk name)))
+                      ;; :DEPTH-FIRST is implicit
+                      (t (mapdir #'walk name)
+                         (when (funcall test name)
+                           (funcall fn name)))))
+               ((funcall test name)
+                (funcall fn name)))))
+    (let ((pathname-as-directory (pathname-as-directory dirname)))
+      (case if-does-not-exist
+        (:error
+         (cond ((not (file-exists-p pathname-as-directory))
+                (system-error "File ~S does not exist." pathname-as-directory))
+               (t (walk pathname-as-directory) t)))
+        (:ignore
+         (if (file-exists-p pathname-as-directory)
+             (progn (walk pathname-as-directory) t)
+             nil))
+        (otherwise
+         (error "IF-DOES-NOT-EXIST must be one of :ERROR or :IGNORE."))))))
+
+(defun delete-directory-and-files (dirname &key (if-does-not-exist :error))
+  "Recursively deletes all files and directories within the directory
+designated by the non-wild pathname designator DIRNAME including
+DIRNAME itself.  IF-DOES-NOT-EXIST must be one of :ERROR or :IGNORE
+where :ERROR means that an error will be signaled if the directory
+DIRNAME does not exist."
+  (walk-directory dirname
+                  (lambda (file)
+                    (cond ((directory-pathname-p file)
+                           (delete-directory file))
+                          (t (delete-file file))))
+                  :directories t
+                  :if-does-not-exist if-does-not-exist))
+
 ;;;; File permissions
 
 (define-constant +permissions+

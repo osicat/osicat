@@ -221,7 +221,6 @@
         (setf (environment-variable :path) old)))
   t)
 
-#-windows
 (deftest mapdir.1
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test/" *test-directory*)))
@@ -238,7 +237,6 @@
         (delete-directory dir)))
   ("file1" "file2"))
 
-#-windows
 (deftest mapdir.2
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test/" *test-directory*)))
@@ -255,13 +253,12 @@
         (delete-directory dir)))
   ("file1" "file2.txt" "subdir/"))
 
-#-windows
 (deftest mapdir.3
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test/" *test-directory*)))
            (file (ensure-file "foo" dir)))
       (unwind-protect
-           (let ((*default-directory-defaults* (truename "/tmp/")))
+           (let ((*default-directory-defaults* (truename *temporary-directory*)))
              (mapdir (lambda (x)
                        (pathname-directory (merge-pathnames x)))
                      dir))
@@ -270,7 +267,6 @@
   (#.(pathname-directory (merge-pathnames "mapdir-test/" *test-directory*))))
 
 ;;; Test that directories of form foo.bar/ don't become foo/bar/.
-#-windows
 (deftest mapdir.4
     (let* ((dir (ensure-directories-exist
                  (merge-pathnames "mapdir-test.type/" *test-directory*))))
@@ -286,9 +282,11 @@
   nil)
 
 ;;; Be careful with this test.  It deletes directories recursively.
-#-windows
 (deftest with-directory-iterator.1
-    (let ((dirs (list "wdi-test-1/" ".wdi-test.2/" ".wdi.test.3../")))
+    (let ((dirs (list "wdi-test-1/" ".wdi-test.2/"
+                      #-windows ".wdi.test.3../"
+                      ;; Windows silently strips trailing dots from directories.
+                      #+windows ".wdi-test.3/")))
       (ensure-directories-exist (reduce (lambda (x y) (merge-pathnames y x))
                                         (cons *test-directory* dirs)))
       (labels ((rm-r (dir)

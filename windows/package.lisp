@@ -30,4 +30,9 @@
   (:use #:common-lisp #:cffi)
   (:nicknames #:win)
   (:export
+   #:find-close
+   #:find-data-file-name
+   #:find-data-file-attributes
+   #:find-first-file
+   #:find-next-file
    #:query-performance-counter))
