@@ -240,6 +240,26 @@
     (funcall fn arg buf)
     (make-instance 'stat :pointer buf)))
 
+#+windows
+(progn
+  (defun stat-atime-sec (stat)
+    (stat-atime stat))
+  (defun stat-atime-nsec (stat)
+    (declare (ignore stat))
+    0)
+
+  (defun stat-mtime-sec (stat)
+    (stat-mtime stat))
+  (defun stat-mtime-nsec (stat)
+    (declare (ignore stat))
+    0)
+
+  (defun stat-ctime-sec (stat)
+    (stat-ctime stat))
+  (defun stat-ctime-nsec (stat)
+    (declare (ignore stat))
+    0))
+
 #-windows
 (progn
   (defun stat-atime (stat)
