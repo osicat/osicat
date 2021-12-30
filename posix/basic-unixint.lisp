@@ -298,6 +298,9 @@
   (ctype blksize "long")
   (ctype blkcnt "long"))
 
+#+windows
+(ctype nlink "short")
+
 (cstruct timespec "struct timespec"
    (sec      "tv_sec"  :type time)
    (nsec     "tv_nsec" :type :long))
@@ -306,7 +309,7 @@
   (dev     "st_dev"     :type #-mips dev #+mips :unsigned-long)
   (ino     "st_ino"     :type ino)
   (mode    "st_mode"    :type mode)
-  #-windows (nlink "st_nlink" :type nlink)
+  (nlink   "st_nlink"   :type nlink)
   #-windows (uid   "st_uid"   :type uid)
   #-windows (gid   "st_gid"   :type gid)
   (rdev    "st_rdev"    :type #-mips dev #+mips :unsigned-long)
