@@ -28,12 +28,50 @@
 (in-package #:osicat)
 
 (define-unsupported-functions
-  call-with-directory-iterator    ; OPENDIR and READDIR are unavailable
-  mapdir                          ; CALL-WITH-DIRECTORY-ITERATOR is unavailable
-  list-directory                  ; CALL-WITH-DIRECTORY-ITERATOR is unavailable
-  walk-directory                  ; MAPDIR is unavailable
-  delete-directory-and-files      ; WALK-DIRECTORY is unavailable
   read-link                       ; READLINK is unavailable
   make-link                       ; LINK and SYMLINK are unavailable
   user-info                       ; GETPWNAM and GETPWUID are unavailable
   )
+
+(defun dir-namestring-for-find (dir)
+  (let ((namestring (native-namestring dir)))
+    (concatenate 'string
+                 "\\\\?\\"
+                 namestring
+                 (unless (eql #\\ (aref namestring (1- (length namestring)))) "\\")
+                 "*.*")))
+
+(defun call-with-directory-iterator (pathspec fun)
+  (let* ((dir (absolute-pathname (pathname pathspec)))
+         (old-dir (current-directory))
+         (search-string (dir-namestring-for-find dir))
+         (firstp t))
+    (multiple-value-bind (first-data handle)
+        (win:find-first-file search-string)
+      (labels ((one-iter ()
+                 (let ((data (if firstp
+                                 ;; Don't want to call FIND-NEXT-FILE if there
+                                 ;; is no match...
+                                 (prog1 first-data (setf firstp (null first-data)))
+                                 (win:find-next-file handle))))
+                   (unless (null data)
+                     (let ((name (win:find-data-file-name data))
+                           (attributes (win:find-data-file-attributes data)))
+                       (cond
+                         ((member name '("." "..") :test #'string=)
+                          (one-iter))
+                         ((member :directory attributes)
+                          (make-pathname :directory `(:relative ,name)))
+                         (t
+                          (let ((dotpos (position #\. name :from-end t)))
+                            (if (and dotpos (plusp dotpos))
+                                (make-pathname :name (subseq name 0 dotpos)
+                                               :type (subseq name (1+ dotpos)))
+                                (make-pathname :name name))))))))))
+        (unwind-protect
+             (let ((*default-pathname-defaults* dir))
+               (setf (current-directory) dir)
+               (funcall fun #'one-iter))
+          (unless (null handle)
+            (win:find-close handle))
+          (setf (current-directory) old-dir))))))
