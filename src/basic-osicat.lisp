@@ -466,6 +466,49 @@ DIRNAME does not exist."
                   :directories t
                   :if-does-not-exist if-does-not-exist))
 
+;;;; Symbolic and hard links
+
+(defun make-link (link &key target hard allow-unprivileged-create)
+  "Creates LINK that points to TARGET.  Defaults to a symbolic
+link, but giving a non-NIL value to the keyword argument :HARD
+creates a hard link.  Returns the pathname of the link.
+
+Relative targets are resolved against the directory of the
+link.  Relative links are resolved against
+*DEFAULT-PATHNAME-DEFAULTS*.
+
+Windows only: If ALLOW-UNPRIVILEGED-CREATE is non-NIL, requests
+a symlink is created even if the process does not have
+administrative privileges.  This is only possible if Developer
+mode is enabled.
+
+Signals an error if either target or link is wild, target does
+not exist, or link exists already."
+  (declare (ignorable allow-unprivileged-create))
+  (unless target
+    (error "No target given to MAKE-LINK."))
+  (let* ((link (absolute-pathname (merge-pathnames link)))
+         (link-directory (pathname-directory-pathname link))
+         (merged-target (merge-pathnames target link-directory)))
+    (when (and hard (null (probe-file merged-target)))
+      (error "Target must exist"))
+    (if hard
+        #-windows (nix:link merged-target link)
+        #+windows (win:create-hard-link (escaped-namestring link)
+                                        (escaped-namestring merged-target)
+                                        (null-pointer))
+        #-windows (nix:symlink target link)
+        #+windows (win:create-symbolic-link
+                   (escaped-namestring link)
+                   (if (relative-pathname-p target)
+                       target
+                       (escaped-namestring target))
+                   `(,@(when (or (directory-pathname-p target)
+                                 (eql :directory (file-kind merged-target)))
+                         '(:directory))
+                     ,@(when allow-unprivileged-create '(:allow-unprivileged-create))))))
+  (pathname link))
+
 ;;;; File permissions
 
 (define-constant +permissions+
