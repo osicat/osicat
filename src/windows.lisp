@@ -29,9 +29,11 @@
 
 (define-unsupported-functions
   read-link                       ; READLINK is unavailable
-  make-link                       ; LINK and SYMLINK are unavailable
   user-info                       ; GETPWNAM and GETPWUID are unavailable
   )
+
+(defun escaped-namestring (pn)
+  (concatenate 'string "\\\\?\\" (native-namestring pn)))
 
 (defun dir-namestring-for-find (dir)
   (let ((namestring (native-namestring dir)))

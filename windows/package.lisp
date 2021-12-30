@@ -30,6 +30,8 @@
   (:use #:common-lisp #:cffi)
   (:nicknames #:win)
   (:export
+   #:create-hard-link
+   #:create-symbolic-link
    #:find-close
    #:find-data-file-name
    #:find-data-file-attributes

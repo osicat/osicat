@@ -143,3 +143,17 @@ FIND-DATA instance or NIL."
           (let ((code (get-last-error)))
             (unless (= code +error-no-more-files+)
               (error "Error code ~A" code)))))))
+
+;;; Symbolic links
+
+(defwinapi ("CreateSymbolicLinkW" create-symbolic-link) :bool
+  (symlink-file-name wide-string)
+  (target-file-name wide-string)
+  (flags symbolic-link-flags))
+
+;;; Hard links
+
+(defwinapi ("CreateHardLinkW" create-hard-link) :bool
+  (file-name wide-string)
+  (existing-file-name wide-string)
+  (security-attributes :pointer))

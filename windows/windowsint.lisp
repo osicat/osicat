@@ -86,3 +86,7 @@
          ;; (creator-type "dwCreatorType" :type :uint32)
          ;; (finder-flags "wFinderFlags" :type :uint16)
          )
+
+(bitfield symbolic-link-flags
+          ((:directory "SYMBOLIC_LINK_FLAG_DIRECTORY"))
+          ((:allow-unprivileged-create "SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE")))

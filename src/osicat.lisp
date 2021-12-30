@@ -68,32 +68,6 @@ symbolic link."
   ;; allocates on most lisps.
   (pathname (nix:readlink (absolute-pathname pathspec))))
 
-(defun make-link (link &key target hard)
-  "Creates LINK that points to TARGET.  Defaults to a symbolic
-link, but giving a non-NIL value to the keyword argument :HARD
-creates a hard link.  Returns the pathname of the link.
-
-Relative targets are resolved against the link.  Relative links
-are resolved against *DEFAULT-PATHNAME-DEFAULTS*.
-
-Signals an error if either target or link is wild, target does
-not exist, or link exists already."
-  (unless target
-    (error "No target given to MAKE-LINK."))
-  (let ((old (current-directory)))
-    (unwind-protect
-         ;; KLUDGE: We merge against link for hard links only,
-         ;; since symlink does the right thing once we are in
-         ;; the correct directory.
-         (progn
-           (setf (current-directory)
-                 (absolute-pathname *default-pathname-defaults*))
-           (if hard
-               (nix:link (merge-pathnames target link) link)
-               (nix:symlink target link))
-           (pathname link))
-      (setf (current-directory) old))))
-
 ;;;; USER INFORMATION
 
 (defun user-info (id)
