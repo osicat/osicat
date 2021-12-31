@@ -97,11 +97,11 @@
       (multi-byte-to-wide-char +cp-utf-8+ 0 foreign-string -1 wide-string num-chars)
       wide-string)))
 
-(defun wstring-to-string (wstring &optional (length -1))
-  (let ((num-bytes (wide-char-to-multi-byte +cp-utf-8+ 0 wstring length (null-pointer) 0 (null-pointer) (null-pointer))))
+(defun wstring-to-string (wstring &optional length)
+  (let ((num-bytes (wide-char-to-multi-byte +cp-utf-8+ 0 wstring (or length -1) (null-pointer) 0 (null-pointer) (null-pointer))))
     (with-foreign-object (foreign-string :uchar num-bytes)
-      (wide-char-to-multi-byte +cp-utf-8+ 0 wstring length foreign-string num-bytes (null-pointer) (null-pointer))
-      (foreign-string-to-lisp foreign-string :encoding :utf-8 :count num-bytes))))
+      (wide-char-to-multi-byte +cp-utf-8+ 0 wstring (or length -1) foreign-string num-bytes (null-pointer) (null-pointer))
+      (foreign-string-to-lisp foreign-string :encoding :utf-8 :count (unless (null length) num-bytes)))))
 
 (defmethod translate-to-foreign (string (type wide-string))
   (string-to-wstring string))
@@ -172,3 +172,36 @@ FIND-DATA instance or NIL."
   (file-name wide-string)
   (existing-file-name wide-string)
   (security-attributes :pointer))
+
+;;; File handle creation
+
+(defwinapi ("CreateFileW" create-file-w) handle
+  (file-name wide-string)
+  (desired-access dword)
+  (share-mode share-mode-flags)
+  (security-attributes :pointer)
+  (creation-disposition creation-disposition)
+  (flags-and-attributes dword)
+  (template-file :pointer))
+
+(defun create-file (file-name desired-access share-mode security-attributes
+                    creation-disposition flags-and-attributes
+                    &key (template-file (null-pointer)))
+  (create-file-w file-name desired-access share-mode security-attributes creation-disposition
+                 (logior (foreign-bitfield-value 'file-attributes flags-and-attributes)
+                         (foreign-bitfield-value 'file-flags flags-and-attributes))
+                 template-file))
+
+(defwinapi ("CloseHandle" close-handle) bool
+  (object handle))
+
+(defwinapi ("GetFinalPathNameByHandleW" %get-final-path-name-by-handle-w) dword
+  (file handle)
+  (file-path :pointer)
+  (file-path-size dword)
+  (flags dword))
+
+(defun get-final-path-name-by-handle (handle)
+  (with-foreign-object (wstring :uint16 +max-path+)
+    (%get-final-path-name-by-handle-w handle wstring +max-path+ 0)
+    (wstring-to-string wstring)))
