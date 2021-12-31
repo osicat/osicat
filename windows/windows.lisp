@@ -181,16 +181,14 @@ FIND-DATA instance or NIL."
   (share-mode share-mode-flags)
   (security-attributes :pointer)
   (creation-disposition creation-disposition)
-  (flags-and-attributes dword)
+  (flags-and-attributes file-attributes-and-flags)
   (template-file :pointer))
 
 (defun create-file (file-name desired-access share-mode security-attributes
                     creation-disposition flags-and-attributes
                     &key (template-file (null-pointer)))
   (create-file-w file-name desired-access share-mode security-attributes creation-disposition
-                 (logior (foreign-bitfield-value 'file-attributes flags-and-attributes)
-                         (foreign-bitfield-value 'file-flags flags-and-attributes))
-                 template-file))
+                 flags-and-attributes template-file))
 
 (defwinapi ("CloseHandle" close-handle) bool
   (object handle))
@@ -205,3 +203,32 @@ FIND-DATA instance or NIL."
   (with-foreign-object (wstring :uint16 +max-path+)
     (%get-final-path-name-by-handle-w handle wstring +max-path+ 0)
     (wstring-to-string wstring)))
+
+;;; IO Control
+
+(defun get-symbolic-link-target-by-handle (handle)
+  "Given the handle to a symlink (must be opened with
+:FLAG-OPEN-REPARSE-POINT), return the target."
+  ;; win32 API provides no nice way to do this, so we use an ioctl.
+  (with-foreign-object (buffer '(:struct reparse-data-buffer))
+    (device-io-control handle :fsctl-get-reparse-point
+                       (null-pointer) 0
+                       buffer (foreign-type-size '(:struct reparse-data-buffer))
+                       (null-pointer) (null-pointer))
+    (let* ((buffer-pointer (foreign-slot-pointer buffer '(:struct reparse-data-buffer) 'buffer))
+           (path-buffer-pointer (foreign-slot-pointer buffer-pointer
+                                                      '(:struct symbolic-link-reparse-buffer)
+                                                      'path-buffer))
+           (name-offset (foreign-slot-value buffer-pointer '(:struct symbolic-link-reparse-buffer)
+                                            'substitute-name-offset))
+           (name-length (foreign-slot-value buffer-pointer '(:struct symbolic-link-reparse-buffer)
+                                            'substitute-name-length))
+           (raw-target (wstring-to-string (mem-aptr path-buffer-pointer 'wchar
+                                                    (/ name-offset (foreign-type-size 'wchar)))
+                                          (/ name-length (foreign-type-size 'wchar)))))
+      ;; If the target is absolute, it may start with \??\. If that exists,
+      ;; strip it off.
+      (if (and (>= (length raw-target) 4)
+               (string= "\\??\\" (subseq raw-target 0 4)))
+          (subseq raw-target 4)
+          raw-target))))

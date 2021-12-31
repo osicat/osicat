@@ -30,6 +30,10 @@
   (:use #:common-lisp #:cffi #:osicat-sys)
   (:nicknames #:win)
   (:export
+   #:+generic-all+
+   #:+generic-execute+
+   #:+generic-read+
+   #:+generic-wrtie+
    #:close-handle
    #:create-file
    #:create-hard-link
@@ -40,4 +44,5 @@
    #:find-first-file
    #:find-next-file
    #:get-final-path-name-by-handle
+   #:get-symbolic-link-target-by-handle
    #:query-performance-counter))
