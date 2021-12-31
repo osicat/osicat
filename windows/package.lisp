@@ -30,6 +30,8 @@
   (:use #:common-lisp #:cffi #:osicat-sys)
   (:nicknames #:win)
   (:export
+   #:close-handle
+   #:create-file
    #:create-hard-link
    #:create-symbolic-link
    #:find-close
@@ -37,4 +39,5 @@
    #:find-data-file-attributes
    #:find-first-file
    #:find-next-file
+   #:get-final-path-name-by-handle
    #:query-performance-counter))
