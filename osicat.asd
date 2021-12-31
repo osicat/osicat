@@ -63,8 +63,8 @@
     :depends-on (#:osicat-sys)
     :components
     ((:file "package")
-     (:file "types" :depends-on ("package"))
-     (:cffi-grovel-file "windowsint" :depends-on ("types"))
+     (:file "early" :depends-on ("package"))
+     (:cffi-grovel-file "windowsint" :depends-on ("early"))
      (:file "windows" :depends-on ("windowsint"))))
    (:module #:mach
     :if-feature :darwin

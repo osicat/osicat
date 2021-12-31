@@ -29,16 +29,30 @@
 
 (load-foreign-library "Kernel32.dll")
 
-;;; TODO: use ERRNO-WRAPPER.
-(defmacro defwinapi (name-and-opts return-type &body params)
-  (multiple-value-bind (lisp-name c-name options)
-      (cffi::parse-name-and-options name-and-opts)
-    `(defcfun (,c-name ,lisp-name :convention :stdcall ,@options) ,return-type
-       ,@params)))
-
 ;;; Error Handling
 
-(defwinapi ("GetLastError" get-last-error) :uint32)
+(defrawwinapi ("GetLastError" get-last-error) dword)
+
+(defwinapi ("FormatMessageW" %format-message-w) dword
+  (flags format-message-flags)
+  (source :pointer)
+  (message-id dword)
+  (language-id dword)
+  (buffer :pointer)
+  (size dword)
+  &rest)
+
+(defun get-error-message (error-code)
+  (with-foreign-object (buffer-pointer :uint16 (* 64 1024))
+    (%format-message-w '(:ignore-inserts :from-system)
+                       (null-pointer)
+                       error-code
+                       0
+                       buffer-pointer
+                       (* 64 1024))
+    (wstring-to-string buffer-pointer)))
+
+;;; Performance Counter
 
 (defwinapi ("QueryPerformanceCounter" %query-perf-counter) bool
   (count (:pointer large-integer)))
@@ -58,7 +72,7 @@
 
 (defwinapi ("WideCharToMultiByte" wide-char-to-multi-byte) :int
   (code-page :uint)
-  (flags :uint32)
+  (flags dword)
   (wide-char-str :pointer)
   (wide-char :int)
   (multi-byte-str :pointer)
@@ -68,7 +82,7 @@
 
 (defwinapi ("MultiByteToWideChar" multi-byte-to-wide-char) :int
   (code-page :uint)
-  (flags :uint32)
+  (flags dword)
   (multi-byte-str :pointer)
   (multi-byte :int)
   (wide-char-str :pointer)
@@ -83,11 +97,11 @@
       (multi-byte-to-wide-char +cp-utf-8+ 0 foreign-string -1 wide-string num-chars)
       wide-string)))
 
-(defun wstring-to-string (wstring)
-  (let ((num-bytes (wide-char-to-multi-byte +cp-utf-8+ 0 wstring -1 (null-pointer) 0 (null-pointer) (null-pointer))))
+(defun wstring-to-string (wstring &optional (length -1))
+  (let ((num-bytes (wide-char-to-multi-byte +cp-utf-8+ 0 wstring length (null-pointer) 0 (null-pointer) (null-pointer))))
     (with-foreign-object (foreign-string :uchar num-bytes)
-      (wide-char-to-multi-byte +cp-utf-8+ 0 wstring -1 foreign-string num-bytes (null-pointer) (null-pointer))
-      (foreign-string-to-lisp foreign-string :encoding :utf-8))))
+      (wide-char-to-multi-byte +cp-utf-8+ 0 wstring length foreign-string num-bytes (null-pointer) (null-pointer))
+      (foreign-string-to-lisp foreign-string :encoding :utf-8 :count num-bytes))))
 
 (defmethod translate-to-foreign (string (type wide-string))
   (string-to-wstring string))
@@ -105,11 +119,11 @@
   (file-name wide-string)
   (find-file-data :pointer))
 
-(defwinapi ("FindNextFileW" find-next-file-w) :bool
+(defwinapi ("FindNextFileW" find-next-file-w) bool
   (find-file search-handle)
   (find-file-data :pointer))
 
-(defwinapi ("FindClose" find-close) :bool
+(defwinapi ("FindClose" find-close) bool
   (find-file search-handle))
 
 (define-c-struct-wrapper find-data ())
@@ -129,31 +143,32 @@ value.
 
 When finished, the handle must be passed to FIND-CLOSE."
   (with-foreign-object (buf '(:struct find-data))
-    (let ((handle (find-first-file-w path buf)))
-      (unless (= (pointer-address handle) +invalid-handle-value+)
+    (handler-bind ((win32-error (lambda (c)
+                                  (when (= (system-error-code c) +error-file-not-found+)
+                                    (return-from find-first-file nil)))))
+      (let ((handle (find-first-file-w path buf)))
         (values (make-instance 'find-data :pointer buf) handle)))))
 
 (defun find-next-file (handle)
   "Calls FindNextFileW to continue the search represented by HANDLE. Returns a
 FIND-DATA instance or NIL."
   (with-foreign-object (buf '(:struct find-data))
-    (let ((result (find-next-file-w handle buf)))
-      (if result
-          (make-instance 'find-data :pointer buf)
-          (let ((code (get-last-error)))
-            (unless (= code +error-no-more-files+)
-              (error "Error code ~A" code)))))))
+    (handler-bind ((win32-error (lambda (c)
+                                  (when (= (system-error-code c) +error-no-more-files+)
+                                    (return-from find-next-file nil)))))
+      (find-next-file-w handle buf)
+      (make-instance 'find-data :pointer buf))))
 
 ;;; Symbolic links
 
-(defwinapi ("CreateSymbolicLinkW" create-symbolic-link) :bool
+(defwinapi ("CreateSymbolicLinkW" create-symbolic-link) bool
   (symlink-file-name wide-string)
   (target-file-name wide-string)
   (flags symbolic-link-flags))
 
 ;;; Hard links
 
-(defwinapi ("CreateHardLinkW" create-hard-link) :bool
+(defwinapi ("CreateHardLinkW" create-hard-link) bool
   (file-name wide-string)
   (existing-file-name wide-string)
   (security-attributes :pointer))
