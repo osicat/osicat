@@ -90,3 +90,11 @@
 (bitfield symbolic-link-flags
           ((:directory "SYMBOLIC_LINK_FLAG_DIRECTORY"))
           ((:allow-unprivileged-create "SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE")))
+(bitfield format-message-flags
+          ((:allocate-buffer "FORMAT_MESSAGE_ALLOCATE_BUFFER"))
+          ((:argument-array "FORMAT_MESSAGE_ARGUMENT_ARRAY"))
+          ((:from-hmodule "FORMAT_MESSAGE_FROM_HMODULE"))
+          ((:from-string "FORMAT_MESSAGE_FROM_STRING"))
+          ((:from-system "FORMAT_MESSAGE_FROM_SYSTEM"))
+          ((:ignore-inserts "FORMAT_MESSAGE_IGNORE_INSERTS")))
+

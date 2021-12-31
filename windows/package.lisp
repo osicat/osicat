@@ -27,7 +27,7 @@
 (in-package #:cl-user)
 
 (defpackage #:osicat-windows
-  (:use #:common-lisp #:cffi)
+  (:use #:common-lisp #:cffi #:osicat-sys)
   (:nicknames #:win)
   (:export
    #:create-hard-link
