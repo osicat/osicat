@@ -47,23 +47,23 @@
                   ((:attribute-directory "FILE_ATTRIBUTE_DIRECTORY"))
                   ((:attribute-encrypted "FILE_ATTRIBUTE_ENCRYPTED"))
                   ((:attribute-hidden "FILE_ATTRIBUTE_HIDDEN"))
-                  ((:integrity-stream "FILE_ATTRIBUTE_INTEGRITY_STREAM")
+                  ((:attribute-integrity-stream "FILE_ATTRIBUTE_INTEGRITY_STREAM")
                    :optional t)
-                  ((:normal "FILE_ATTRIBUTE_NORMAL"))
-                  ((:not-content-indexed "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED"))
-                  ((:no-scrub-data "FILE_ATTRIBUTE_NO_SCRUB_DATA")
+                  ((:attribute-normal "FILE_ATTRIBUTE_NORMAL"))
+                  ((:attribute-not-content-indexed "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED"))
+                  ((:attribute-no-scrub-data "FILE_ATTRIBUTE_NO_SCRUB_DATA")
                    :optional t)
-                  ((:offline "FILE_ATTRIBUTE_OFFLINE"))
-                  ((:readonly "FILE_ATTRIBUTE_READONLY"))
-                  ((:recall-on-data-access "FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS")
+                  ((:attribute-offline "FILE_ATTRIBUTE_OFFLINE"))
+                  ((:attribute-readonly "FILE_ATTRIBUTE_READONLY"))
+                  ((:attribute-recall-on-data-access "FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS")
                    :optional t)
-                  ((:recall-on-open "FILE_ATTRIBUTE_RECALL_ON_OPEN")
+                  ((:attribute-recall-on-open "FILE_ATTRIBUTE_RECALL_ON_OPEN")
                    :optional t)
-                  ((:reparse-point "FILE_ATTRIBUTE_REPARSE_POINT"))
-                  ((:sparse-file "FILE_ATTRIBUTE_SPARSE_FILE"))
-                  ((:system "FILE_ATTRIBUTE_SYSTEM"))
-                  ((:temporary "FILE_ATTRIBUTE_TEMPORARY"))
-                  ((:virtual "FILE_ATTRIBUTE_VIRTUAL"))))
+                  ((:attribute-reparse-point "FILE_ATTRIBUTE_REPARSE_POINT"))
+                  ((:attribute-sparse-file "FILE_ATTRIBUTE_SPARSE_FILE"))
+                  ((:attribute-system "FILE_ATTRIBUTE_SYSTEM"))
+                  ((:attribute-temporary "FILE_ATTRIBUTE_TEMPORARY"))
+                  ((:attribute-virtual "FILE_ATTRIBUTE_VIRTUAL"))))
 
   (bitfield file-flags
             . #2=(((:flag-backup-semantics "FILE_FLAG_BACKUP_SEMANTICS"))
@@ -82,27 +82,39 @@
             . #.(append '#1# '#2#)))
 
 (cstruct file-time "struct _FILETIME"
-         (low-date-time "dwLowDateTime" :type :uint32)
-         (high-date-time "dwHighDateTime" :type :uint32))
+         (low-date-time "dwLowDateTime" :type dword)
+         (high-date-time "dwHighDateTime" :type dword))
 
 (cstruct find-data "struct _WIN32_FIND_DATAW"
          (file-attributes "dwFileAttributes" :type file-attributes)
          (creation-time "ftCreationTime" :type (:struct file-time))
          (last-access-time "ftLastAccessTime" :type (:struct file-time))
          (last-write-time "ftLastWriteTime" :type (:struct file-time))
-         (file-size-high "nFileSizeHigh" :type :uint32)
-         (file-size-low "nFileSizeLow" :type :uint32)
-         (reserved-0 "dwReserved0" :type :uint32)
-         (reserved-1 "dwReserved1" :type :uint32)
+         (file-size-high "nFileSizeHigh" :type dword)
+         (file-size-low "nFileSizeLow" :type dword)
+         (reserved-0 "dwReserved0" :type dword)
+         (reserved-1 "dwReserved1" :type dword)
          (file-name "cFileName" :type wide-string :count :auto)
          (alternate-file-name "cAlternateFileName" :type wide-string :count 14)
          ;; The Windows documentation mentions the following three fields, but
          ;; the compiler doesn't seem to know about them.
          ;;
-         ;; (file-type "dwFileType" :type :uint32)
-         ;; (creator-type "dwCreatorType" :type :uint32)
+         ;; (file-type "dwFileType" :type dword)
+         ;; (creator-type "dwCreatorType" :type dword)
          ;; (finder-flags "wFinderFlags" :type :uint16)
          )
+
+(cstruct by-handle-file-information "struct _BY_HANDLE_FILE_INFORMATION"
+         (file-attributes "dwFileAttributes" :type file-attributes)
+         (creation-time "ftCreationTime" :type (:struct file-time))
+         (last-access-time "ftLastAccessTime" :type (:struct file-time))
+         (last-write-time "ftLastWriteTime" :type (:struct file-time))
+         (volume-serial-number "dwVolumeSerialNumber" :type dword)
+         (file-size-high "nFileSizeHigh" :type dword)
+         (file-size-low "nFileSizeLow" :type dword)
+         (number-of-links "nNumberOfLinks" :type dword)
+         (file-index-high "nFileIndexHigh" :type dword)
+         (file-index-low "nFileIndexLow" :type dword))
 
 (bitfield symbolic-link-flags
           ((:directory "SYMBOLIC_LINK_FLAG_DIRECTORY"))
@@ -135,3 +147,6 @@
 
 (cenum device-io-control-code
        ((:fsctl-get-reparse-point "FSCTL_GET_REPARSE_POINT")))
+
+(cenum (io-reparse-tag :base-type :ulong)
+       ((:symlink "IO_REPARSE_TAG_SYMLINK")))

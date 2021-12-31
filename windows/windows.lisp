@@ -204,17 +204,45 @@ FIND-DATA instance or NIL."
     (%get-final-path-name-by-handle-w handle wstring +max-path+ 0)
     (wstring-to-string wstring)))
 
+(defwinapi ("GetFileInformationByHandle" %get-file-information-by-handle) bool
+  (file handle)
+  (file-information :pointer))
+
+(define-c-struct-wrapper by-handle-file-information ())
+
+(defun get-file-information-by-handle (handle)
+  (with-foreign-object (buff '(:struct by-handle-file-information))
+    (%get-file-information-by-handle handle buff)
+    (make-instance 'by-handle-file-information :pointer buff)))
+
+(defun file-information-volume-serial-number (file-information)
+  (slot-value file-information 'volume-serial-number))
+
+(defun file-information-number-of-links (file-information)
+  (slot-value file-information 'number-of-links))
+
+(defun file-information-file-index (file-information)
+  (logior (ash (slot-value file-information 'file-index-high) (* 8 (foreign-type-size 'dword)))
+          (slot-value file-information 'file-index-low)))
+
+(defun file-information-file-attributes (file-information)
+  (slot-value file-information 'file-attributes))
+
 ;;; IO Control
 
 (defun get-symbolic-link-target-by-handle (handle)
   "Given the handle to a symlink (must be opened with
 :FLAG-OPEN-REPARSE-POINT), return the target."
   ;; win32 API provides no nice way to do this, so we use an ioctl.
+  (assert (member :attribute-reparse-point
+                  (file-information-file-attributes (get-file-information-by-handle handle))))
   (with-foreign-object (buffer '(:struct reparse-data-buffer))
     (device-io-control handle :fsctl-get-reparse-point
                        (null-pointer) 0
                        buffer (foreign-type-size '(:struct reparse-data-buffer))
                        (null-pointer) (null-pointer))
+    (let ((reparse-tag (foreign-slot-value buffer '(:struct reparse-data-buffer) 'reparse-tag)))
+      (assert (= reparse-tag (foreign-enum-value 'io-reparse-tag :symlink))))
     (let* ((buffer-pointer (foreign-slot-pointer buffer '(:struct reparse-data-buffer) 'buffer))
            (path-buffer-pointer (foreign-slot-pointer buffer-pointer
                                                       '(:struct symbolic-link-reparse-buffer)

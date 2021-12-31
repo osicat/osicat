@@ -38,11 +38,16 @@
    #:create-file
    #:create-hard-link
    #:create-symbolic-link
+   #:file-information-file-attributes
+   #:file-information-file-index
+   #:file-information-number-of-links
+   #:file-information-volume-serial-number
    #:find-close
    #:find-data-file-name
    #:find-data-file-attributes
    #:find-first-file
    #:find-next-file
+   #:get-file-information-by-handle
    #:get-final-path-name-by-handle
    #:get-symbolic-link-target-by-handle
    #:query-performance-counter))
