@@ -49,6 +49,14 @@
 (define-parse-method wide-string ()
   (make-instance 'wide-string))
 
+
+(define-foreign-type wide-filename ()
+  ()
+  (:actual-type :pointer))
+
+(define-parse-method wide-filename ()
+  (make-instance 'wide-filename))
+
 ;;; Subtypes of WIN32-ERROR correspond to errors detected through the
 ;;; GetLastError mechanism.  These are defined below.
 (define-condition win32-error (system-error)

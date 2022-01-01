@@ -113,6 +113,18 @@
   (declare (ignore param))
   (foreign-free pointer))
 
+(defmethod translate-to-foreign ((filename string) (type wide-filename))
+  (string-to-wstring filename))
+
+(defmethod translate-to-foreign ((filename pathname) (type wide-filename))
+  (when (wild-pathname-p filename)
+    (system-error "Pathname is wild: ~S." filename))
+  (string-to-wstring (native-namestring (translate-logical-pathname filename))))
+
+(defmethod free-translated-object (pointer (type wide-filename) param)
+  (declare (ignore param))
+  (foreign-free pointer))
+
 ;;; readdir/opendir equivalents
 
 (defwinapi ("FindFirstFileW" find-first-file-w) search-handle
@@ -162,21 +174,21 @@ FIND-DATA instance or NIL."
 ;;; Symbolic links
 
 (defwinapi ("CreateSymbolicLinkW" create-symbolic-link) bool
-  (symlink-file-name wide-string)
-  (target-file-name wide-string)
+  (symlink-file-name wide-filename)
+  (target-file-name wide-filename)
   (flags symbolic-link-flags))
 
 ;;; Hard links
 
 (defwinapi ("CreateHardLinkW" create-hard-link) bool
-  (file-name wide-string)
-  (existing-file-name wide-string)
+  (file-name wide-filename)
+  (existing-file-name wide-filename)
   (security-attributes :pointer))
 
 ;;; File handle creation
 
 (defwinapi ("CreateFileW" create-file-w) handle
-  (file-name wide-string)
+  (file-name wide-filename)
   (desired-access dword)
   (share-mode share-mode-flags)
   (security-attributes :pointer)
