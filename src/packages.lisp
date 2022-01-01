@@ -103,6 +103,7 @@ Designated directory
 
    ;; Specials
    #:*temporary-directory*
+   #:*default-allow-unprivileged-create*
 
    ;; Unlink
    #:unlink

@@ -161,7 +161,7 @@
           (file (ensure-file "tmp-file")))
       (unwind-protect
            (progn
-             (make-link link :target file :allow-unprivileged-create t)
+             (make-link link :target file)
              (namestring (read-link link)))
         (osicat-posix:unlink link)
         (osicat-posix:unlink file)))
@@ -172,7 +172,7 @@
           (file (ensure-file "tmp-file")))
       (unwind-protect
            (progn
-             (make-link link :target file :allow-unprivileged-create t)
+             (make-link link :target file)
              (file-kind link))
         (unlink file)
         (unlink link)))
@@ -183,7 +183,7 @@
     (let ((link (merge-pathnames "read-link-test-link" *test-directory*)))
       (unwind-protect
            (progn
-             (make-link link :target *test-directory* :allow-unprivileged-create t)
+             (make-link link :target *test-directory*)
              (namestring (read-link link)))
         (unlink link)))
   #.(namestring *test-directory*))
@@ -194,7 +194,7 @@
           (file (ensure-file "a-very-long-tmp-file-name-explicitly-for-the-purpose-of-testing-a-certain-condition-in-read-link-please-ignore-thanks")))
       (unwind-protect
            (progn
-             (make-link link :target file :allow-unprivileged-create t)
+             (make-link link :target file)
              (equal (native-namestring (merge-pathnames file *test-directory*))
                     (native-namestring (read-link link))))
         (unlink link)
@@ -306,8 +306,7 @@
                (:symbolic-link
                 (handler-case
                     (make-link (merge-pathnames (cadr x) base-dir)
-                               :target (merge-pathnames (caddr x) base-dir)
-                               :allow-unprivileged-create t)
+                               :target (merge-pathnames (caddr x) base-dir))
                   ;; FIXME?
                   #+windows (win:win32-error ())
                   (nix:eexist ())))

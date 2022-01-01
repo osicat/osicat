@@ -62,7 +62,7 @@
          (target (merge-pathnames target *test-directory*))
          (kind (file-kind link)))
     (cond ((eq :symbolic-link kind) link)
-          ((null kind) (make-link link :target target :allow-unprivileged-create t))
+          ((null kind) (make-link link :target target))
           (t (error "File exists and is not a link.")))))
 
 #-windows
