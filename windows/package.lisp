@@ -39,8 +39,11 @@
    #:create-file
    #:create-hard-link
    #:create-symbolic-link
+   #:file-information-creation-time
    #:file-information-file-attributes
    #:file-information-file-index
+   #:file-information-last-access-time
+   #:file-information-last-write-time
    #:file-information-number-of-links
    #:file-information-volume-serial-number
    #:find-close

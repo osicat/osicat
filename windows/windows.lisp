@@ -227,6 +227,20 @@ FIND-DATA instance or NIL."
     (%get-file-information-by-handle handle buff)
     (make-instance 'by-handle-file-information :pointer buff)))
 
+(defun filetime-to-int (filetime)
+  "Returns the number of 100-nanosecond intervals since January 1, 1601 (UTC)."
+  (+ (ash (getf filetime 'high-date-time) (* 8 (foreign-type-size 'dword)))
+     (getf filetime 'low-date-time)))
+
+(defun file-information-creation-time (file-information)
+  (filetime-to-int (slot-value file-information 'creation-time)))
+
+(defun file-information-last-access-time (file-information)
+  (filetime-to-int (slot-value file-information 'last-access-time)))
+
+(defun file-information-last-write-time (file-information)
+  (filetime-to-int (slot-value file-information 'last-write-time)))
+
 (defun file-information-volume-serial-number (file-information)
   (slot-value file-information 'volume-serial-number))
 
