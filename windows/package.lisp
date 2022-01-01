@@ -30,6 +30,7 @@
   (:use #:common-lisp #:cffi #:osicat-sys)
   (:nicknames #:win)
   (:export
+   #:+error-file-not-found+
    #:+generic-all+
    #:+generic-execute+
    #:+generic-read+

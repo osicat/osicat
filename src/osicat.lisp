@@ -105,10 +105,7 @@ of SETF ENVIRONMENT."
 (defun %get-file-kind (namestring follow-p)
   (handler-bind
       ((win:win32-error (lambda (c)
-                          ;; Win32 has waaaaay too many error codes to
-                          ;; enumerate them all as keywords. We know that 2
-                          ;; means file not found.
-                          (when (= (system-error-code c) 2)
+                          (when (= (system-error-code c) win:+error-file-not-found+)
                             (unless follow-p
                               (return-from %get-file-kind nil))
                             (if (eql (%get-file-kind namestring nil) :symbolic-link)
