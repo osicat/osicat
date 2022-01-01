@@ -53,21 +53,6 @@
           (nix:closedir dp)
           (setf (current-directory) old-dir))))))
 
-;;;; Symbolic and hard links
-
-(defun read-link (pathspec)
-  "Returns the pathname pointed to by the symbolic link
-designated by PATHSPEC.  If the link is relative, then the
-returned pathname is relative to the link, not
-*DEFAULT-PATHNAME-DEFAULTS*.
-
-Signals an error if PATHSPEC is wild, or does not designate a
-symbolic link."
-  ;; Note: the previous version tried much harder to provide a buffer
-  ;; big enough to fit the link's name.  OTOH, NIX:READLINK stack
-  ;; allocates on most lisps.
-  (pathname (nix:readlink (absolute-pathname pathspec))))
-
 ;;;; USER INFORMATION
 
 (defun user-info (id)
