@@ -121,15 +121,13 @@
                               :defaults *test-directory*))
   nil)
 
-;;; no symlinks on Windows
-#-windows
 (deftest file-kind.3
     (let* ((file (ensure-file "tmp-file"))
            (link (ensure-link "tmp-link" :target file)))
       (unwind-protect
            (file-kind link)
-        (osicat-posix:unlink link)
-        (osicat-posix:unlink file)))
+        (unlink link)
+        (unlink file)))
   :symbolic-link)
 
 (deftest file-kind.4
@@ -158,57 +156,49 @@
         (osicat-posix:unlink file)))
   t)
 
-;;; No symlinks on Windows
-#-windows
 (deftest make-link.1
     (let ((link (merge-pathnames "make-link-test-link" *test-directory*))
           (file (ensure-file "tmp-file")))
       (unwind-protect
            (progn
-             (make-link link :target file)
+             (make-link link :target file :allow-unprivileged-create t)
              (namestring (read-link link)))
         (osicat-posix:unlink link)
         (osicat-posix:unlink file)))
   #.(namestring (merge-pathnames "tmp-file" *test-directory*)))
 
-;;; No symlinks on Windows
-#-windows
 (deftest make-link.2
     (let ((link (merge-pathnames "make-link-test-link" *test-directory*))
           (file (ensure-file "tmp-file")))
       (unwind-protect
            (progn
-             (make-link link :target file)
+             (make-link link :target file :allow-unprivileged-create t)
              (file-kind link))
-        (osicat-posix:unlink file)
-        (osicat-posix:unlink link)))
+        (unlink file)
+        (unlink link)))
   :symbolic-link)
 
 ;;; Test the case of reading a link to a directory.
-;;; No symlinks on Windows
-#-windows
 (deftest read-link.1
     (let ((link (merge-pathnames "read-link-test-link" *test-directory*)))
       (unwind-protect
            (progn
-             (make-link link :target *test-directory*)
+             (make-link link :target *test-directory* :allow-unprivileged-create t)
              (namestring (read-link link)))
-        (osicat-posix:unlink link)))
+        (unlink link)))
   #.(namestring *test-directory*))
 
 ;;; Test the case of reading a link with a very long name.
-;;; No symlinks on Windows
-#-windows
 (deftest read-link.2
     (let ((link (merge-pathnames "make-link-test-link" *test-directory*))
           (file (ensure-file "a-very-long-tmp-file-name-explicitly-for-the-purpose-of-testing-a-certain-condition-in-read-link-please-ignore-thanks")))
       (unwind-protect
            (progn
-             (make-link link :target file)
+             (make-link link :target file :allow-unprivileged-create t)
              (equal (native-namestring (merge-pathnames file *test-directory*))
                     (native-namestring (read-link link))))
-        (osicat-posix:unlink link)
-        (osicat-posix:unlink file)))
+        (unlink link)
+        (unlink file)))
   t)
 
 (deftest makunbound-environment-variable.1
@@ -302,7 +292,6 @@
   nil)
 
 ;;; Test iteration over a variety of objects.
-#-windows
 (deftest with-directory-iterator.2
     (let ((playground '(:directory "wdi-test-2/"
                         (:directory "wdi-test-2-2/"
@@ -317,8 +306,10 @@
                (:symbolic-link
                 (handler-case
                     (make-link (merge-pathnames (cadr x) base-dir)
-                               :target (merge-pathnames (caddr x) base-dir))
+                               :target (merge-pathnames (caddr x) base-dir)
+                               :allow-unprivileged-create t)
                   ;; FIXME?
+                  #+windows (win:win32-error ())
                   (nix:eexist ())))
                (:directory (ensure-directories-exist (merge-pathnames
                                                       (cadr x) base-dir))
