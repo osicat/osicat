@@ -632,7 +632,11 @@ symbolic link."
       (unless (null handle)
         (win:close-handle handle)))))
 
-(defun make-link (link &key target hard allow-unprivileged-create)
+(defvar *default-allow-unprivileged-create* t
+  "The default value to :ALLOW-UNPRIVILEGED-CREATE argument to MAKE-LINK. Only
+has an effect on Windows.")
+
+(defun make-link (link &key target hard (allow-unprivileged-create *default-allow-unprivileged-create*))
   "Creates LINK that points to TARGET.  Defaults to a symbolic
 link, but giving a non-NIL value to the keyword argument :HARD
 creates a hard link.  Returns the pathname of the link.
