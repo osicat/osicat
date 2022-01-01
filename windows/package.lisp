@@ -58,4 +58,5 @@
    #:get-symbolic-link-target-by-handle
    #:handle-is-symbolic-link-p
    #:query-performance-counter
-   #:win32-error))
+   #:win32-error
+   #:with-create-file))

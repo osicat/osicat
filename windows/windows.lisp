@@ -202,6 +202,26 @@ FIND-DATA instance or NIL."
   (create-file-w file-name desired-access share-mode security-attributes creation-disposition
                  flags-and-attributes template-file))
 
+(defun call-with-create-file (thunk file-name desired-access share-mode security-attributes
+                              creation-disposition flags-and-attributes
+                              &key (template-file (null-pointer)))
+  (let ((handle (create-file file-name desired-access share-mode security-attributes
+                             creation-disposition flags-and-attributes
+                             :template-file template-file)))
+    (unwind-protect
+         (funcall thunk handle)
+      (close-handle handle))))
+
+(defmacro with-create-file ((handle-name
+                             file-name desired-access share-mode security-attributes
+                             creation-disposition flags-and-attributes
+                             &key (template-file '(null-pointer)))
+                            &body body)
+  `(call-with-create-file (lambda (,handle-name) ,@body)
+                          ,file-name ,desired-access ,share-mode ,security-attributes
+                          ,creation-disposition ,flags-and-attributes
+                          :template-file ,template-file))
+
 (defwinapi ("CloseHandle" close-handle) bool
   (object handle))
 

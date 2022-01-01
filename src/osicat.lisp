@@ -111,34 +111,35 @@ of SETF ENVIRONMENT."
                             (if (eql (%get-file-kind namestring nil) :symbolic-link)
                                 (return-from %get-file-kind (values :symbolic-link :broken))
                                 (return-from %get-file-kind nil))))))
-    (let* ((handle (win:create-file (escaped-namestring namestring)
-                                    0
-                                    '(:read :write)
-                                    (null-pointer)
-                                    :open-existing
-                                    `(,@(unless follow-p '(:flag-open-reparse-point))
-                                      ;; Needed to open a directory handle
-                                      :flag-backup-semantics)))
-           (info (win:get-file-information-by-handle handle))
-           (attributes (win:file-information-file-attributes info)))
-      (cond
-        ;; This goes first because symlinks to directories have both flags
-        ;;
-        ;; TODO: Figure out if it's possible to have block devices or sockets
-        ;; on windows.
-        ((and (member :attribute-reparse-point attributes)
-              (win:handle-is-symbolic-link-p handle))
-         :symbolic-link)
-        ((member :attribute-directory attributes)
-         :directory)
-        (t
-         (ecase (win:get-file-type handle)
-           (:disk
-            :regular-file)
-           (:pipe
-            :pipe)
-           (:char
-            :character-device)))))))
+    (win:with-create-file (handle
+                           (escaped-namestring namestring)
+                           0
+                           '(:read :write)
+                           (null-pointer)
+                           :open-existing
+                           `(,@(unless follow-p '(:flag-open-reparse-point))
+                             ;; Needed to open a directory handle
+                             :flag-backup-semantics))
+      (let* ((info (win:get-file-information-by-handle handle))
+             (attributes (win:file-information-file-attributes info)))
+        (cond
+          ;; This goes first because symlinks to directories have both flags
+          ;;
+          ;; TODO: Figure out if it's possible to have block devices or sockets
+          ;; on windows.
+          ((and (member :attribute-reparse-point attributes)
+                (win:handle-is-symbolic-link-p handle))
+           :symbolic-link)
+          ((member :attribute-directory attributes)
+           :directory)
+          (t
+           (ecase (win:get-file-type handle)
+             (:disk
+              :regular-file)
+             (:pipe
+              :pipe)
+             (:char
+              :character-device))))))))
 
 #-windows
 (defun %get-file-kind (namestring follow-p)
@@ -619,21 +620,17 @@ symbolic link."
   #-windows
   (pathname (nix:readlink (absolute-pathname pathspec)))
   #+windows
-  (let ((handle nil))
-    (unwind-protect
-         (progn
-           (setf handle (win:create-file (absolute-pathname pathspec)
-                                         ;; This lets us query metadata without
-                                         ;; needing read/write access.
-                                         0
-                                         '(:read :write)
-                                         (null-pointer) :open-existing
-                                         '(:flag-open-reparse-point
-                                           ;; Needed to open a directory handle
-                                           :flag-backup-semantics)))
-           (pathname (win:get-symbolic-link-target-by-handle handle)))
-      (unless (null handle)
-        (win:close-handle handle)))))
+  (win:with-create-file (handle
+                         (absolute-pathname pathspec)
+                         ;; This lets us query metadata without needing
+                         ;; read/write access.
+                         0
+                         '(:read :write)
+                         (null-pointer) :open-existing
+                         '(:flag-open-reparse-point
+                           ;; Needed to open a directory handle
+                           :flag-backup-semantics))
+    (pathname (win:get-symbolic-link-target-by-handle handle))))
 
 (defvar *default-allow-unprivileged-create* t
   "The default value to :ALLOW-UNPRIVILEGED-CREATE argument to MAKE-LINK. Only
