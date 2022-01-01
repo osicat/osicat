@@ -81,8 +81,7 @@
     :components
     ((:file "packages")
      (:file "fd-streams" :depends-on ("packages"))
-     (:file "basic-osicat" :depends-on ("packages" "fd-streams"))
-     (:file "osicat" :depends-on ("basic-osicat") :if-feature (:not :windows))
+     (:file "osicat" :depends-on ("packages" "fd-streams"))
      (:file "windows" :depends-on ("packages") :if-feature :windows)
      (:file "time" :depends-on ("packages")))))
   :in-order-to ((test-op (test-op :osicat/tests))))
