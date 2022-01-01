@@ -103,4 +103,7 @@ Designated directory
 
    ;; Specials
    #:*temporary-directory*
+
+   ;; Unlink
+   #:unlink
    ))
