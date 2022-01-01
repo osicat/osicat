@@ -268,7 +268,12 @@ FIND-DATA instance or NIL."
                                           (/ name-length (foreign-type-size 'wchar)))))
       ;; If the target is absolute, it may start with \??\. If that exists,
       ;; strip it off.
-      (if (and (>= (length raw-target) 4)
-               (string= "\\??\\" (subseq raw-target 0 4)))
-          (subseq raw-target 4)
-          raw-target))))
+      (when (and (>= (length raw-target) 4)
+                 (string= "\\??\\" (subseq raw-target 0 4)))
+          (setf raw-target (subseq raw-target 4)))
+      ;; Furthermore, the target may start with \\?\ if the pathname is very
+      ;; long. Strip that off as well.
+      (when (and (>= (length raw-target) 4)
+                 (string= "\\\\?\\" (subseq raw-target 0 4)))
+        (setf raw-target (subseq raw-target 4)))
+      raw-target)))
