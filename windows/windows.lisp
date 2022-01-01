@@ -216,6 +216,18 @@ FIND-DATA instance or NIL."
     (%get-final-path-name-by-handle-w handle wstring +max-path+ 0)
     (wstring-to-string wstring)))
 
+;; this function has funky error semantics.
+(defrawwinapi ("GetFileType" %get-file-type) file-type
+  (file handle))
+
+(defun get-file-type (file)
+  (let ((result (%get-file-type file)))
+    (when (eql result :unknown)
+      (let ((error-code (get-last-error)))
+        (unless (= error-code +error-success+)
+          (win32-error error-code 'get-file-type))))
+    result))
+
 (defwinapi ("GetFileInformationByHandle" %get-file-information-by-handle) bool
   (file handle)
   (file-information :pointer))
