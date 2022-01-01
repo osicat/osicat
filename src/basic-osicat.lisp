@@ -468,6 +468,31 @@ DIRNAME does not exist."
 
 ;;;; Symbolic and hard links
 
+(defun read-link (pathspec)
+  "Returns the pathname pointed to by the symbolic link
+designated by PATHSPEC.  If the link is relative, then the
+returned pathname is relative to the link, not
+*DEFAULT-PATHNAME-DEFAULTS*.
+
+Signals an error if PATHSPEC is wild, or does not designate a
+symbolic link."
+  ;; Note: the previous version tried much harder to provide a buffer
+  ;; big enough to fit the link's name.  OTOH, NIX:READLINK stack
+  ;; allocates on most lisps.
+  #-windows
+  (pathname (nix:readlink (absolute-pathname pathspec)))
+  #+windows
+  (let ((handle nil))
+    (unwind-protect
+         (progn
+           (setf handle (win:create-file (absolute-pathname pathspec)
+                                         win:+generic-read+ '(:read :write)
+                                         (null-pointer) :open-existing
+                                         '(:flag-open-reparse-point)))
+           (pathname (win:get-symbolic-link-target-by-handle handle)))
+      (unless (null handle)
+        (win:close-handle handle)))))
+
 (defun make-link (link &key target hard allow-unprivileged-create)
   "Creates LINK that points to TARGET.  Defaults to a symbolic
 link, but giving a non-NIL value to the keyword argument :HARD

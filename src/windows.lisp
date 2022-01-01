@@ -28,7 +28,6 @@
 (in-package #:osicat)
 
 (define-unsupported-functions
-  read-link                       ; READLINK is unavailable
   user-info                       ; GETPWNAM and GETPWUID are unavailable
   )
 
@@ -62,7 +61,7 @@
                        (cond
                          ((member name '("." "..") :test #'string=)
                           (one-iter))
-                         ((member :directory attributes)
+                         ((member :attribute-directory attributes)
                           (make-pathname :directory `(:relative ,name)))
                          (t
                           (let ((dotpos (position #\. name :from-end t)))
