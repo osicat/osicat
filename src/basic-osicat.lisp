@@ -486,9 +486,14 @@ symbolic link."
     (unwind-protect
          (progn
            (setf handle (win:create-file (absolute-pathname pathspec)
-                                         win:+generic-read+ '(:read :write)
+                                         ;; This lets us query metadata without
+                                         ;; needing read/write access.
+                                         0
+                                         '(:read :write)
                                          (null-pointer) :open-existing
-                                         '(:flag-open-reparse-point)))
+                                         '(:flag-open-reparse-point
+                                           ;; Needed to open a directory handle
+                                           :flag-backup-semantics)))
            (pathname (win:get-symbolic-link-target-by-handle handle)))
       (unless (null handle)
         (win:close-handle handle)))))
