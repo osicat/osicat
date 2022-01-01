@@ -124,15 +124,21 @@ of SETF ENVIRONMENT."
       (cond
         ;; This goes first because symlinks to directories have both flags
         ;;
-        ;; TODO: Figure out if it's possible to have character/block devices,
-        ;; sockets, or pipes on windows.
+        ;; TODO: Figure out if it's possible to have block devices or sockets
+        ;; on windows.
         ((and (member :attribute-reparse-point attributes)
               (win:handle-is-symbolic-link-p handle))
          :symbolic-link)
         ((member :attribute-directory attributes)
          :directory)
         (t
-         :regular-file)))))
+         (ecase (win:get-file-type handle)
+           (:disk
+            :regular-file)
+           (:pipe
+            :pipe)
+           (:char
+            :character-device)))))))
 
 #-windows
 (defun %get-file-kind (namestring follow-p)

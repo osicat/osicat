@@ -31,6 +31,7 @@
   (:nicknames #:win)
   (:export
    #:+error-file-not-found+
+   #:+error-success+
    #:+generic-all+
    #:+generic-execute+
    #:+generic-read+
@@ -52,6 +53,7 @@
    #:find-first-file
    #:find-next-file
    #:get-file-information-by-handle
+   #:get-file-type
    #:get-final-path-name-by-handle
    #:get-symbolic-link-target-by-handle
    #:handle-is-symbolic-link-p

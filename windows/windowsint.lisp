@@ -36,6 +36,7 @@
 (constant (+invalid-handle-value+ "INVALID_HANDLE_VALUE"))
 (constant (+cp-utf-8+ "CP_UTF8"))
 
+(constant (+error-success+ "ERROR_SUCCESS"))
 (constant (+error-file-not-found+ "ERROR_FILE_NOT_FOUND"))
 (constant (+error-no-more-files+ "ERROR_NO_MORE_FILES"))
 
@@ -150,3 +151,10 @@
 
 (cenum (io-reparse-tag :base-type :ulong)
        ((:symlink "IO_REPARSE_TAG_SYMLINK")))
+
+(cenum file-type
+       ((:char "FILE_TYPE_CHAR"))
+       ((:disk "FILE_TYPE_DISK"))
+       ((:pipe "FILE_TYPE_PIPE"))
+       ((:remote "FILE_TYPE_REMOTE"))
+       ((:unknown "FILE_TYPE_UNKNOWN")))
