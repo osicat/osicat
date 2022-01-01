@@ -601,3 +601,15 @@ is wild or does not designate a directory."
 
 (defun (setf current-directory) (pathspec)
   (nix:chdir pathspec))
+
+;;;; Unlink
+
+;;; On Windows, nix:unlink will delete symbolic links to files just fine. But
+;;; it gives EACCESS if the symlink points to a directory.
+(defun unlink (pathname)
+  "Unlink the directory entry pointed to by PATHNAME. If PATHNAME is a symbolic
+link, the link is deleted, not the target."
+  #-windows (nix:unlink pathname)
+  #+windows (if (directory-pathname-p (truename pathname))
+                (nix:rmdir pathname)
+                (nix:unlink pathname)))
