@@ -242,6 +242,20 @@ FIND-DATA instance or NIL."
 
 ;;; IO Control
 
+(defun reparse-data-buffer-is-symbolic-link-p (buffer)
+  (let ((reparse-tag (foreign-slot-value buffer '(:struct reparse-data-buffer) 'reparse-tag)))
+    (= reparse-tag (foreign-enum-value 'io-reparse-tag :symlink))))
+
+(defun handle-is-symbolic-link-p (handle)
+  (and (member :attribute-reparse-point
+               (file-information-file-attributes (get-file-information-by-handle handle)))
+       (with-foreign-object (buffer '(:struct reparse-data-buffer))
+         (device-io-control handle :fsctl-get-reparse-point
+                            (null-pointer) 0
+                            buffer (foreign-type-size '(:struct reparse-data-buffer))
+                            (null-pointer) (null-pointer))
+         (reparse-data-buffer-is-symbolic-link-p buffer))))
+
 (defun get-symbolic-link-target-by-handle (handle)
   "Given the handle to a symlink (must be opened with
 :FLAG-OPEN-REPARSE-POINT), return the target."
@@ -253,8 +267,7 @@ FIND-DATA instance or NIL."
                        (null-pointer) 0
                        buffer (foreign-type-size '(:struct reparse-data-buffer))
                        (null-pointer) (null-pointer))
-    (let ((reparse-tag (foreign-slot-value buffer '(:struct reparse-data-buffer) 'reparse-tag)))
-      (assert (= reparse-tag (foreign-enum-value 'io-reparse-tag :symlink))))
+    (assert (reparse-data-buffer-is-symbolic-link-p buffer))
     (let* ((buffer-pointer (foreign-slot-pointer buffer '(:struct reparse-data-buffer) 'buffer))
            (path-buffer-pointer (foreign-slot-pointer buffer-pointer
                                                       '(:struct symbolic-link-reparse-buffer)
