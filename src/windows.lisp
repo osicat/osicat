@@ -31,8 +31,14 @@
   user-info                       ; GETPWNAM and GETPWUID are unavailable
   )
 
+;; SBCL's NATIVE-NAMESTRING adds \\?\ if necessary. But I am doubtful all
+;; implementations do.
 (defun escaped-namestring (pn)
-  (concatenate 'string "\\\\?\\" (native-namestring pn)))
+  (let ((native-namestring (native-namestring pn)))
+    (if (and (>= (length native-namestring) 4)
+             (string= "\\\\?\\" (subseq native-namestring 0 4)))
+        native-namestring
+        (concatenate 'string "\\\\?\\" native-namestring))))
 
 (defun dir-namestring-for-find (dir)
   (let ((namestring (native-namestring dir)))

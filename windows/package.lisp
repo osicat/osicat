@@ -50,4 +50,6 @@
    #:get-file-information-by-handle
    #:get-final-path-name-by-handle
    #:get-symbolic-link-target-by-handle
-   #:query-performance-counter))
+   #:handle-is-symbolic-link-p
+   #:query-performance-counter
+   #:win32-error))

@@ -101,6 +101,43 @@ of SETF ENVIRONMENT."
 ;;;        only conditions of type FILE-ERROR, either by
 ;;;        wrapping POSIX-ERRORs or making sure that some
 ;;;        POSIX-ERRORS subclass FILE-ERROR
+#+windows
+(defun %get-file-kind (namestring follow-p)
+  (handler-bind
+      ((win:win32-error (lambda (c)
+                          ;; Win32 has waaaaay too many error codes to
+                          ;; enumerate them all as keywords. We know that 2
+                          ;; means file not found.
+                          (when (= (system-error-code c) 2)
+                            (unless follow-p
+                              (return-from %get-file-kind nil))
+                            (if (eql (%get-file-kind namestring nil) :symbolic-link)
+                                (return-from %get-file-kind (values :symbolic-link :broken))
+                                (return-from %get-file-kind nil))))))
+    (let* ((handle (win:create-file (escaped-namestring namestring)
+                                    0
+                                    '(:read :write)
+                                    (null-pointer)
+                                    :open-existing
+                                    `(,@(unless follow-p '(:flag-open-reparse-point))
+                                      ;; Needed to open a directory handle
+                                      :flag-backup-semantics)))
+           (info (win:get-file-information-by-handle handle))
+           (attributes (win:file-information-file-attributes info)))
+      (cond
+        ;; This goes first because symlinks to directories have both flags
+        ;;
+        ;; TODO: Figure out if it's possible to have character/block devices,
+        ;; sockets, or pipes on windows.
+        ((and (member :attribute-reparse-point attributes)
+              (win:handle-is-symbolic-link-p handle))
+         :symbolic-link)
+        ((member :attribute-directory attributes)
+         :directory)
+        (t
+         :regular-file)))))
+
+#-windows
 (defun %get-file-kind (namestring follow-p)
   (handler-case
       (let ((mode (nix:stat-mode
