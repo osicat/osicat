@@ -40,6 +40,19 @@
 (constant (+error-file-not-found+ "ERROR_FILE_NOT_FOUND"))
 (constant (+error-no-more-files+ "ERROR_NO_MORE_FILES"))
 
+(constant (+generic-all+ "GENERIC_ALL"))
+(constant (+generic-execute+ "GENERIC_EXECUTE"))
+(constant (+generic-read+ "GENERIC_READ"))
+(constant (+generic-write+ "GENERIC_WRITE"))
+
+(bitfield format-message-flags
+          ((:allocate-buffer "FORMAT_MESSAGE_ALLOCATE_BUFFER"))
+          ((:argument-array "FORMAT_MESSAGE_ARGUMENT_ARRAY"))
+          ((:from-hmodule "FORMAT_MESSAGE_FROM_HMODULE"))
+          ((:from-string "FORMAT_MESSAGE_FROM_STRING"))
+          ((:from-system "FORMAT_MESSAGE_FROM_SYSTEM"))
+          ((:ignore-inserts "FORMAT_MESSAGE_IGNORE_INSERTS")))
+
 (progn
   (bitfield file-attributes
             . #1=(((:attribute-archive "FILE_ATTRIBUTE_ARCHIVE"))
@@ -121,11 +134,6 @@
           ((:directory "SYMBOLIC_LINK_FLAG_DIRECTORY"))
           ((:allow-unprivileged-create "SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE")))
 
-(constant (+generic-all+ "GENERIC_ALL"))
-(constant (+generic-execute+ "GENERIC_EXECUTE"))
-(constant (+generic-read+ "GENERIC_READ"))
-(constant (+generic-write+ "GENERIC_WRITE"))
-
 (bitfield share-mode-flags
           ((:delete "FILE_SHARE_DELETE"))
           ((:read "FILE_SHARE_READ"))
@@ -138,23 +146,15 @@
        ((:open-existing "OPEN_EXISTING"))
        ((:truncate-existing "TRUNCATE_EXISTING")))
 
-(bitfield format-message-flags
-          ((:allocate-buffer "FORMAT_MESSAGE_ALLOCATE_BUFFER"))
-          ((:argument-array "FORMAT_MESSAGE_ARGUMENT_ARRAY"))
-          ((:from-hmodule "FORMAT_MESSAGE_FROM_HMODULE"))
-          ((:from-string "FORMAT_MESSAGE_FROM_STRING"))
-          ((:from-system "FORMAT_MESSAGE_FROM_SYSTEM"))
-          ((:ignore-inserts "FORMAT_MESSAGE_IGNORE_INSERTS")))
-
-(cenum device-io-control-code
-       ((:fsctl-get-reparse-point "FSCTL_GET_REPARSE_POINT")))
-
-(cenum (io-reparse-tag :base-type :ulong)
-       ((:symlink "IO_REPARSE_TAG_SYMLINK")))
-
 (cenum file-type
        ((:char "FILE_TYPE_CHAR"))
        ((:disk "FILE_TYPE_DISK"))
        ((:pipe "FILE_TYPE_PIPE"))
        ((:remote "FILE_TYPE_REMOTE"))
        ((:unknown "FILE_TYPE_UNKNOWN")))
+
+(cenum device-io-control-code
+       ((:fsctl-get-reparse-point "FSCTL_GET_REPARSE_POINT")))
+
+(cenum (io-reparse-tag :base-type :ulong)
+       ((:symlink "IO_REPARSE_TAG_SYMLINK")))

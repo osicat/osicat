@@ -317,6 +317,7 @@ PATHSPEC exists and is a symlink pointing to an existent file."
         (make-pathname :directory '(:absolute "tmp"))
         (pathname (concatenate 'string system-tmpdir "/")))))
 
+;; Windows has no MKSTEMP.
 #-windows
 (defun %open-temporary-file/fd-streams (filename element-type external-format)
   (handler-case
@@ -415,9 +416,8 @@ closed automatically once BODY exits."
 
 #+windows
 (defun dir-namestring-for-find (dir)
-  (let ((namestring (native-namestring dir)))
+  (let ((namestring (escaped-namestring dir)))
     (concatenate 'string
-                 "\\\\?\\"
                  namestring
                  (unless (eql #\\ (aref namestring (1- (length namestring)))) "\\")
                  "*.*")))
