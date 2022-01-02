@@ -89,6 +89,8 @@
   (wide-char :int))
 
 (defun string-to-wstring (string)
+  "Convert a Lisp string to a Windows wide string. Returns a pointer to the
+newly allocated string."
   (with-foreign-string (foreign-string string :encoding :utf-8)
     ;; Compute the size needed to hold the wide string, then actually do the
     ;; conversion.
@@ -98,10 +100,22 @@
       wide-string)))
 
 (defun wstring-to-string (wstring &optional length)
-  (let ((num-bytes (wide-char-to-multi-byte +cp-utf-8+ 0 wstring (or length -1) (null-pointer) 0 (null-pointer) (null-pointer))))
+  "Given a pointer to a Windows wide string, return a Lisp string with its contents.
+
+If LENGTH is provided, it is how many characters to read from the wide
+string. If it is not provided, the wide string must be null terminated.
+"
+  (let ((num-bytes (wide-char-to-multi-byte +cp-utf-8+ 0
+                                            wstring (or length -1)
+                                            (null-pointer) 0
+                                            (null-pointer) (null-pointer))))
     (with-foreign-object (foreign-string :uchar num-bytes)
-      (wide-char-to-multi-byte +cp-utf-8+ 0 wstring (or length -1) foreign-string num-bytes (null-pointer) (null-pointer))
-      (foreign-string-to-lisp foreign-string :encoding :utf-8 :count (unless (null length) num-bytes)))))
+      (wide-char-to-multi-byte +cp-utf-8+ 0
+                               wstring (or length -1)
+                               foreign-string num-bytes
+                               (null-pointer) (null-pointer))
+      (foreign-string-to-lisp foreign-string :encoding :utf-8
+                                             :count (unless (null length) num-bytes)))))
 
 (defmethod translate-to-foreign (string (type wide-string))
   (string-to-wstring string))

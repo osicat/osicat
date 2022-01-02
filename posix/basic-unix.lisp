@@ -240,6 +240,7 @@
     (funcall fn arg buf)
     (make-instance 'stat :pointer buf)))
 
+;;; Windows supports only seconds.
 #+windows
 (progn
   (defun stat-atime-sec (stat)
