@@ -49,6 +49,19 @@
 (defun mkdtemp (&optional (template ""))
   (%mkdtemp (concatenate 'string template "XXXXXX")))
 
+(defsyscall ("mkstemps" %mkstemps) :int
+  (template :pointer)
+  (suffix-length :int))
+
+(defun mkstemps (template suffix)
+  (let ((actual-template (concatenate 'string
+                                      template
+                                      "XXXXXX"
+                                      suffix)))
+    (with-foreign-string (ptr-template actual-template)
+      (values (%mkstemps ptr-template (length suffix))
+              (foreign-string-to-lisp ptr-template)))))
+
 ;;;; unistd.h
 
 ;;; directories

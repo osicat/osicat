@@ -32,19 +32,6 @@
 (defsyscall "fdatasync" :int
   (fd file-descriptor-designator))
 
-(defsyscall ("mkstemps" %mkstemps) :int
-  (template :pointer)
-  (suffix-length :int))
-
-(defun mkstemps (template suffix)
-  (let ((actual-template (concatenate 'string
-                                      template
-                                      "XXXXXX"
-                                      suffix)))
-    (with-foreign-string (ptr-template actual-template)
-      (values (%mkstemps ptr-template (length suffix))
-              (foreign-string-to-lisp ptr-template)))))
-
 ;;;; sys/syscall.h
 
 (defsyscall ("syscall" syscall) :int

@@ -128,6 +128,7 @@
    #:mknod
    #:mknodat
    #:mkstemp
+   #:mkstemps
    #:mktemp
    #:mlock
    #:mlockall
@@ -282,7 +283,6 @@
 
    #+linux #:gettid
    #+linux #:fdatasync
-   #+linux #:mkstemps
    #+linux #:mremap
    #+linux #:syscall
 
