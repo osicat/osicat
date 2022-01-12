@@ -82,7 +82,6 @@
    #:fstatvfs
    #:fsync
    #:ftruncate
-   #:futime
    #:futimens
    #:getcwd
    #:getdomainname

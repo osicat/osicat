@@ -195,16 +195,6 @@
           (foreign-slot-value times '(:struct utimbuf) 'modtime) mtime)
     (%utime filename times)))
 
-(defsyscall ("futime" %futime) :int
-  (fd    file-descriptor-designator)
-  (times (:pointer (:struct utimbuf))))
-
-(defun futime (fd atime mtime)
-  (with-foreign-object (times '(:struct utimbuf))
-    (setf (foreign-slot-value times '(:struct utimbuf) 'actime) atime
-          (foreign-slot-value times '(:struct utimbuf) 'modtime) mtime)
-    (%futime fd times)))
-
 ;;; environment
 
 (defcvar (#+windows "_environ" #-windows "environ" *environ* :read-only t) (:pointer :string))
