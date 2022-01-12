@@ -41,9 +41,9 @@
                                       template
                                       "XXXXXX"
                                       suffix)))
-    (cffi:with-foreign-string (ptr-template actual-template)
+    (with-foreign-string (ptr-template actual-template)
       (%mkstemps ptr-template (length suffix))
-      (cffi:foreign-string-to-lisp ptr-template))))
+      (foreign-string-to-lisp ptr-template))))
 
 ;;;; sys/syscall.h
 
