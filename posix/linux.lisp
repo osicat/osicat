@@ -42,8 +42,8 @@
                                       "XXXXXX"
                                       suffix)))
     (with-foreign-string (ptr-template actual-template)
-      (%mkstemps ptr-template (length suffix))
-      (foreign-string-to-lisp ptr-template))))
+      (values (%mkstemps ptr-template (length suffix))
+              (foreign-string-to-lisp ptr-template)))))
 
 ;;;; sys/syscall.h
 
