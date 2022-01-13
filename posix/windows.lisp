@@ -32,8 +32,8 @@
   getegid geteuid getgid getgrgid getgrnam getpagesize getpgid getpgrp getpid getppid
   getpriority getpwnam getpwuid getrlimit getrusage gettimeofday getuid ioctl link linkat
   lockf lstat makedev major minor mkdirat mkdtemp mkfifo mkfifoat mknod mknodat mkstemp
-  mlock mlockall mmap mprotect msync munlock munlockall munmap nice openat opendir openlog
-  pread pwrite readdir readlink readlinkat readv renameat rewinddir seekdir select setegid
-  setenv seteuid setgid setlogmask setpgid setpgrp setpriority setregid setreuid setrlimit
-  setsid setuid statvfs symlink symlinkat sync sysconf syslog telldir truncate uname
-  unlinkat unsetenv usleep utimensat utimes writev s-issock s-islnk gethostname)
+  mkstemps mlock mlockall mmap mprotect msync munlock munlockall munmap nice openat opendir
+  openlog pread pwrite readdir readlink readlinkat readv renameat rewinddir seekdir select
+  setegid setenv seteuid setgid setlogmask setpgid setpgrp setpriority setregid setreuid
+  setrlimit setsid setuid statvfs symlink symlinkat sync sysconf syslog telldir truncate
+  uname unlinkat unsetenv usleep utimensat utimes writev s-issock s-islnk gethostname)
