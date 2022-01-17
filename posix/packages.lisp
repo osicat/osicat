@@ -128,6 +128,7 @@
    #:mknod
    #:mknodat
    #:mkstemp
+   #:mkstemps
    #:mktemp
    #:mlock
    #:mlockall
