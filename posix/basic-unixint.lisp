@@ -286,20 +286,11 @@
 (ctype dev "dev_t")
 (ctype ino "ino_t")
 
-#-(or windows openbsd)
+#-windows
 (progn
   (ctype nlink "nlink_t")
   (ctype blksize "blksize_t")
   (ctype blkcnt "blkcnt_t"))
-
-#+openbsd
-(progn
-  (ctype nlink "nlink_t")
-  (ctype blksize "long")
-  (ctype blkcnt "long"))
-
-#+windows
-(ctype nlink "short")
 
 (cstruct timespec "struct timespec"
    (sec      "tv_sec"  :type time)
