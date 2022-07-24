@@ -705,6 +705,7 @@
           (nix:close fd))))
   1)
 
+#-(or openbsd netbsd)
 (define-posix-test posix-fallocate.test.1
     (let* ((filename (make-pathname :name "fallocate.test" :type "1"
                                     :defaults *test-directory*))
@@ -718,6 +719,7 @@
           (nix:unlink filename))))
   t)
 
+#-(or openbsd netbsd)
 (define-posix-test posix-fallocate.error.1
     (let ((filename (make-pathname :name "fallocate.error" :type "1"
                                    :defaults *test-directory*)))
