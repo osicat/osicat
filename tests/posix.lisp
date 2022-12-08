@@ -139,9 +139,9 @@
 (define-posix-test mkdir.error.2
     (handler-case
         (nix:mkdir "/" 0)
-      (#+(or darwin openbsd) nix:eisdir
+      (#+(or darwin openbsd freebsd) nix:eisdir
        #+windows nix:eacces
-       #-(or darwin windows openbsd) nix:eexist () 'failed))
+       #-(or darwin windows openbsd freebsd) nix:eexist () 'failed))
   failed)
 
 #-windows
@@ -190,9 +190,9 @@
 (define-posix-test rmdir.error.3
     (handler-case
         (nix:rmdir "/")
-      (#+(or darwin openbsd) nix:eisdir
+      (#+(or darwin openbsd freebsd) nix:eisdir
        #+windows nix:eacces
-       #-(or darwin windows openbsd) nix:ebusy () 'failed))
+       #-(or darwin windows openbsd freebsd) nix:ebusy () 'failed))
   failed)
 
 (define-posix-test rmdir.error.4
@@ -207,7 +207,7 @@
           (nix:rmdir dir)
           ;; documented by POSIX
           (not (null (member (system-error-identifier c)
-                             '(:eexist :enotempty #+(or darwin openbsd) :enonet
+                             '(:eexist :enotempty #+(or darwin openbsd freebsd) :enonet
                                #+windows :enosr)))))))
   t)
 
@@ -705,7 +705,7 @@
           (nix:close fd))))
   1)
 
-#-(or openbsd netbsd)
+#-(or openbsd netbsd freebsd)
 (define-posix-test posix-fallocate.test.1
     (let* ((filename (make-pathname :name "fallocate.test" :type "1"
                                     :defaults *test-directory*))
@@ -719,7 +719,7 @@
           (nix:unlink filename))))
   t)
 
-#-(or openbsd netbsd)
+#-(or openbsd netbsd freebsd)
 (define-posix-test posix-fallocate.error.1
     (let ((filename (make-pathname :name "fallocate.error" :type "1"
                                    :defaults *test-directory*)))
