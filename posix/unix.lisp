@@ -835,6 +835,17 @@ than C's printf) with format string FORMAT and arguments ARGS."
   "Gets a group-entry, by group name. (reentrant)"
   (funcall-getgr #'%getgrnam-r name))
 
+(defsyscall ("getgroups" %getgroups) :int
+  (count :int)
+  (gids :pointer))
+
+(defun getgroups ()
+  (let ((count (%getgroups 0 (null-pointer))))
+    (unless (zerop count)
+      (with-foreign-object (gids 'gid count)
+        (loop for i below (%getgroups count gids)
+              collect (mem-aref gids 'gid i))))))
+
 (defsyscall ("setgroups" %setgroups) :int
   (count size)
   (gids :pointer))
