@@ -91,6 +91,7 @@
    #:getgid
    #:getgrgid
    #:getgrnam
+   #:getgroups
    #:gethostname
    #:getpagesize
    #:getpgid
