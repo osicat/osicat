@@ -292,6 +292,8 @@
   (ctype blksize "blksize_t")
   (ctype blkcnt "blkcnt_t"))
 
+#+windows (ctype nlink "short")
+
 (cstruct timespec "struct timespec"
    (sec      "tv_sec"  :type time)
    (nsec     "tv_nsec" :type :long))
