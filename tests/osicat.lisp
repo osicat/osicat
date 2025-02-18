@@ -271,6 +271,30 @@
         (delete-directory dir)))
   nil)
 
+;;; Test that symbolic links to directories are interpreted as directory
+;;; designators
+(deftest mapdir.5
+  (let* ((dir (merge-pathnames "mapdir-test.5/" *test-directory*))
+         (link (merge-pathnames "link" dir))
+         (target (merge-pathnames "." dir)))
+    (ensure-directories-exist dir)
+    (ensure-link link :target target)
+    (mapdir #'namestring dir))
+  ("link/"))
+
+;;; Test that :TRAVERSE-SYMLINKS NIL prohibit interpreting symbolic links to
+;;; directories as directory designators
+;;; TRAVERSE-SYMLINKS not implemented on Windows
+#-windows
+(deftest mapdir.6
+  (let* ((dir (merge-pathnames "mapdir-test.6/" *test-directory*))
+         (link (merge-pathnames "link" dir))
+         (target (merge-pathnames "." dir)))
+    (ensure-directories-exist dir)
+    (ensure-link link :target target)
+    (mapdir #'namestring dir :traverse-symlinks nil))
+  ("link"))
+
 ;;; Be careful with this test.  It deletes directories recursively.
 (deftest with-directory-iterator.1
     (let ((dirs (list "wdi-test-1/" ".wdi-test.2/"
