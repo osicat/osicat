@@ -175,14 +175,27 @@
   "errno = value;"
   "return errno;")
 
-;; Note: since we define _GNU_SOURCE on Linux (to get at mremap()), we
-;; get the GNU version of strerror_r() which doesn't always store the
-;; result in `buf'.
+;; Note: We define _GNU_SOURCE on Linux to get at mremap(). Therefore, we
+;; get the GNU version of strerror_r() when gnu-libc is used and the XSI
+;; version when another libc is used (e.g. musl-libc on apline).
+;; Since there is no way to check at lisp level which libc is in use, we
+;; use an additional wrapper at C-level to provide a consistent interface
 #-windows
-(defwrapper "strerror_r" #+linux :string #-linux :int
-  (errnum :int)
-  (buf :string)
-  (buflen ("size_t" size)))
+(defwrapper* "my_strerror_r" :int
+  ((errnum :int)
+   (buf :string)
+   (buflen ("size_t" size)))
+  "#if defined(_GNU_SOURCE) && defined(__GLIBC__)"
+  "    char *ret = strerror_r (errnum, buf, buflen);"
+  "    if (ret != buf) {"
+  "        buf[0] = 0;"
+  "        strncat (buf, ret, buflen - 1);"
+  "    }"
+  "    return 0;"
+  "#else"
+  "    return strerror_r (errnum, buf, buflen);"
+  "# endif"
+  )
 
 #-windows
 (defwrapper* "log_mask" :int ((priority :int))
