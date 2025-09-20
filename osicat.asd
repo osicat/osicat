@@ -53,6 +53,7 @@
      (:cffi-grovel-file "unixint" :if-feature (:not :windows))
      (:file "early")
      (:cffi-wrapper-file "wrappers" :soname "libosicat")
+     (:cffi-wrapper-file "wrapper-mremap" :soname "libosicat-mremap")
      (:file "basic-unix")
      (:file "unix" :if-feature (:not :windows))
      (:file "linux" :if-feature :linux)
