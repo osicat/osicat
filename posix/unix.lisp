@@ -396,20 +396,16 @@
 
 ;;;; ioctl.h
 
-(defsyscall ("ioctl" %ioctl-without-arg) :int
+(defsyscall ("ioctl" %ioctl) :int
   (fd      file-descriptor-designator)
-  (request :int))
-
-(defsyscall ("ioctl" %ioctl-with-arg) :int
- (fd      file-descriptor-designator)
- (request :int)
- (arg     :pointer))
+  (request :int)
+  &rest)
 
 (defun ioctl (fd request &optional (arg nil argp))
   "Control device."
   (cond
-    ((not argp) (%ioctl-without-arg fd request))
-    ((pointerp arg) (%ioctl-with-arg fd request arg))
+    ((not argp) (%ioctl fd request))
+    ((pointerp arg) (%ioctl fd request :pointer arg))
     (t (error "Wrong argument to ioctl: ~S" arg))))
 
 ;;;; signal.h
