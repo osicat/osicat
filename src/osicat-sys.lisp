@@ -175,6 +175,9 @@ different kinds of streams.  Returns the FD of STREAM."))
   (stream (get-stream-fd file-descriptor))
   (integer file-descriptor))
 
+(defmethod get-stream-fd ((stream synonym-stream))
+  (get-stream-fd (symbol-value (synonym-stream-symbol stream))))
+
 ;;;; Sizes of Standard Types
 
 (defconstant size-of-char (foreign-type-size :char))
