@@ -27,9 +27,6 @@
 #.(unless (or #+asdf3.1 (version<= "3.1" (asdf-version)))
     (error "You need ASDF >= 3.1 to load this system correctly."))
 
-(eval-when (:load-toplevel :execute)
-  (asdf:load-system 'trivial-features))
-
 ;;; We could split these modules into separate systems if anyone feels
 ;;; that might be useful.  --luis
 
@@ -38,7 +35,7 @@
   :description "A lightweight operating system interface"
   :license "MIT"
   :depends-on (:alexandria :cffi :trivial-features)
-  :defsystem-depends-on (:cffi-grovel)
+  :defsystem-depends-on (:cffi-grovel :trivial-features)
   :components
   ((:module #:osicat-sys
     :pathname "src/"
