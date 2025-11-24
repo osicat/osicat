@@ -31,7 +31,6 @@
 (define "_LARGEFILE_SOURCE")
 (define "_LARGEFILE64_SOURCE")
 (define "_FILE_OFFSET_BITS" 64)
-(define "_GNU_SOURCE")
 (c "#endif")
 
 (include "string.h" "errno.h"  "sys/types.h" "sys/stat.h"
@@ -71,15 +70,6 @@
   (flags :int)
   (fd ("int" file-descriptor-designator))
   (offset ("off_t" off)))
-
-#+linux
-(defwrapper "mremap" ("void*" (errno-wrapper
-                               :pointer
-                               :error-predicate (lambda (p) (pointer-eq p *map-failed-pointer*))))
-  (old-address :pointer)
-  (old-size ("size_t" size))
-  (new-size ("size_t" size))
-  (flags :int))
 
 (defwrapper ("stat" %stat) ("int" (errno-wrapper :int))
   (file-name ("const char*" filename-designator))
@@ -175,11 +165,8 @@
   "errno = value;"
   "return errno;")
 
-;; Note: since we define _GNU_SOURCE on Linux (to get at mremap()), we
-;; get the GNU version of strerror_r() which doesn't always store the
-;; result in `buf'.
 #-windows
-(defwrapper "strerror_r" #+linux :string #-linux :int
+(defwrapper "strerror_r" :int
   (errnum :int)
   (buf :string)
   (buflen ("size_t" size)))

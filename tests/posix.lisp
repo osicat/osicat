@@ -732,3 +732,15 @@
                 (nix:unlink filename))))
         (nix:einval (c) 'failed)))
   failed)
+
+(define-posix-test errno.1
+    (nix:strerror :eperm)
+  "Operation not permitted")
+
+(define-posix-test errno.2
+    (nix:strerror :enoent)
+  "No such file or directory")
+
+(define-posix-test errno.3
+    (nix:strerror :eacces)
+  "Permission denied")
