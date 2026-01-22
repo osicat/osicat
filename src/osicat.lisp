@@ -423,7 +423,10 @@ closed automatically once BODY exits."
                  "*.*")))
 
 #+windows
-(defun call-with-directory-iterator (pathspec fun)
+(defun call-with-directory-iterator (pathspec fun &key (traverse-symlinks t))
+  ; traverse-symlinks is only present in order to have the same lambda list
+  ; both on windos and non-windows OSes
+  (declare (ignore traverse-symlinks))
   (let* ((dir (absolute-pathname (pathname pathspec)))
          (old-dir (current-directory))
          (search-string (dir-namestring-for-find dir))
@@ -459,7 +462,7 @@ closed automatically once BODY exits."
           (setf (current-directory) old-dir))))))
 
 #-windows
-(defun call-with-directory-iterator (pathspec fun)
+(defun call-with-directory-iterator (pathspec fun &key (traverse-symlinks t))
   (let ((dir (absolute-pathname (pathname pathspec)))
         (old-dir (current-directory)))
     (let ((dp (nix:opendir dir)))
@@ -469,7 +472,7 @@ closed automatically once BODY exits."
                      (cond
                        ((member name '("." "..") :test #'string=)
                         (one-iter))
-                       ((eq :directory (%get-file-kind name t))
+                       ((eq :directory (%get-file-kind name traverse-symlinks))
                         (make-pathname :directory `(:relative ,name)))
                        (t
                         (let ((dotpos (position #\. name :from-end t)))
@@ -484,7 +487,9 @@ closed automatically once BODY exits."
           (nix:closedir dp)
           (setf (current-directory) old-dir))))))
 
-(defmacro with-directory-iterator ((iterator pathspec) &body body)
+(defmacro with-directory-iterator ((iterator pathspec
+                                             &key (traverse-symlinks t))
+                                   &body body)
   "PATHSPEC must be a valid directory designator:
 *DEFAULT-PATHNAME-DEFAULTS* is bound, and (CURRENT-DIRECTORY) is set
 to the designated directory for the dynamic scope of the body.
@@ -496,8 +501,9 @@ are returned, except '.' and '..'.  The order of entries is not
 guaranteed.  The entries are returned as relative pathnames
 against the designated directory.  Entries that are symbolic
 links are not resolved, but links that point to directories are
-interpreted as directory designators.  Once all entries have been
-returned, further invocations of (ITERATOR) will all return NIL.
+interpreted as directory designators unless TRAVERSE-SYMLINKS is NIL.
+Once all entries have been returned, further invocations of
+(ITERATOR) will all return NIL.
 
 The value returned is the value of the last form evaluated in
 body.  Signals an error if PATHSPEC is wild or does not designate
@@ -509,7 +515,8 @@ a directory."
         (declare (type function ,one-iter))
         (macrolet ((,iterator ()
                      `(funcall ,',one-iter)))
-          ,@body)))))
+          ,@body))
+      :traverse-symlinks ,traverse-symlinks)))
 
 (defun delete-directory (pathspec)
   "Deletes the directory designated by PATHSPEC.  Returns T.  The
@@ -519,16 +526,19 @@ Signals an error if PATHSPEC is wild, doesn't designate a
 directory, or if the directory could not be deleted."
   (zerop (nix:rmdir (absolute-pathname pathspec))))
 
-(defun mapdir (function pathspec)
+(defun mapdir (function pathspec &key (traverse-symlinks t))
   "Applies function to each entry in directory designated by
 PATHSPEC in turn and returns a list of the results.  Binds
 *DEFAULT-PATHNAME-DEFAULTS* to the directory designated by
 pathspec round to function call.
 
 If PATHSPEC designates a symbolic link, it is implicitly resolved.
+Entries that are symbolic links are not resolved, but links that
+point to directories are interpreted as directory designators unless
+TRAVERSE-SYMLINKS is NIL.
 
 Signals an error if PATHSPEC is wild or doesn't designate a directory."
-  (with-directory-iterator (next pathspec)
+  (with-directory-iterator (next pathspec :traverse-symlinks traverse-symlinks)
     (loop for entry = (next)
           while entry
           collect (funcall function entry))))
@@ -547,6 +557,7 @@ merged with PATHSPEC."
                                     (merge-pathnames entry pathspec))))))
 
 (defun walk-directory (dirname fn &key directories (if-does-not-exist :error)
+                                    (traverse-symlinks t)
                                     (test (constantly t)))
   "Recursively applies the function FN to all files within the
 directory named by the non-wild pathname designator DIRNAME and all of
@@ -557,22 +568,27 @@ returns a true value.  If DIRECTORIES is not NIL, FN and TEST are
 applied to directories as well.  If DIRECTORIES is :DEPTH-FIRST,
 FN will be applied to the directory's contents first.  If
 DIRECTORIES is :BREADTH-FIRST and TEST returns NIL, the
-directory's content will be skipped. IF-DOES-NOT-EXIST must be
-one of :ERROR or :IGNORE where :ERROR means that an error will be
-signaled if the directory DIRNAME does not exist."
+directory's content will be skipped.
+
+Symbolic links that point to directories are traversed unless
+TRAVERSE-SYMLINKS is NIL.
+
+IF-DOES-NOT-EXIST must be one of :ERROR or :IGNORE where :ERROR
+means that an error will be signaled if the directory DIRNAME
+does not exist."
   (labels ((walk (name)
              (cond
                ((directory-pathname-p name)
                 ;; the code is written in a slightly awkward way for
                 ;; backward compatibility
                 (cond ((not directories)
-                       (mapdir #'walk name))
+                       (mapdir #'walk name :traverse-symlinks traverse-symlinks))
                       ((eql directories :breadth-first)
                        (when (funcall test name)
                          (funcall fn name)
-                         (mapdir #'walk name)))
+                         (mapdir #'walk name :traverse-symlinks traverse-symlinks)))
                       ;; :DEPTH-FIRST is implicit
-                      (t (mapdir #'walk name)
+                      (t (mapdir #'walk name :traverse-symlinks traverse-symlinks)
                          (when (funcall test name)
                            (funcall fn name)))))
                ((funcall test name)
