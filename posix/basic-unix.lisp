@@ -133,7 +133,7 @@
 (defsyscall ("open" %open) :int
   (pathname filename-designator)
   (flags    :int)
-  (mode     mode))
+  &rest)
 
 (defvar *default-open-mode* #o666)
 
@@ -141,7 +141,7 @@
   ;; Let's just use O_BINARY always unless there's a good reason not to.
   #+windows (setq flags (logior flags o-binary))
   (cond
-    ((integerp mode) (%open pathname flags mode))
+    ((integerp mode) (%open pathname flags :unsigned-int mode))
     (t (error "Wrong mode: ~S" mode))))
 
 (defsyscall "creat" :int

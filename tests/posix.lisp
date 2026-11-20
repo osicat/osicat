@@ -732,3 +732,34 @@
                 (nix:unlink filename))))
         (nix:einval (c) 'failed)))
   failed)
+
+;;; open(2) and openat(2) are variadic; MODE must be passed as a vararg
+;;; or it is lost on platforms such as arm64 macOS.
+#-windows
+(define-posix-test open.mode.1
+    (let ((filename (make-pathname :name "open-mode" :type "1"
+                                   :defaults *test-directory*))
+          (old-umask (nix:umask 0)))
+      (unwind-protect
+           (let ((fd (nix:open filename (logior nix:o-creat nix:o-wronly) #o640)))
+             (nix:close fd)
+             (logand (nix:stat-mode (nix:stat filename)) #o777))
+        (nix:umask old-umask)
+        (ignore-errors (nix:unlink filename))))
+  #o640)
+
+#-windows
+(define-posix-test openat.mode.1
+    (let ((filename (make-pathname :name "openat-mode" :type "1"
+                                   :defaults *test-directory*))
+          (old-umask (nix:umask 0))
+          (dirfd (nix:open *test-directory* nix:o-rdonly)))
+      (unwind-protect
+           (let ((fd (nix:openat dirfd "openat-mode.1"
+                                 (logior nix:o-creat nix:o-wronly) #o604)))
+             (nix:close fd)
+             (logand (nix:stat-mode (nix:stat filename)) #o777))
+        (nix:umask old-umask)
+        (nix:close dirfd)
+        (ignore-errors (nix:unlink filename))))
+  #o604)
