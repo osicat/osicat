@@ -94,13 +94,13 @@
   (dirfd    :int)
   (pathname filename-designator)
   (flags    :int)
-  (mode     mode))
+  &rest)
 
 (defun openat (dirfd pathname flags &optional (mode *default-open-mode*))
   ;; Let's just use O_BINARY always unless there's a good reason not to.
   #+windows (setq flags (logior flags o-binary))
   (cond
-    ((integerp mode) (%openat dirfd pathname flags mode))
+    ((integerp mode) (%openat dirfd pathname flags :unsigned-int mode))
     (t (error "Wrong mode: ~S" mode))))
 
 (defsyscall ("readlink" %readlink) ssize
